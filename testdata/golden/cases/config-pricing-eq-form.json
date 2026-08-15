@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--json", "--offline", "--mode", "calculate", "--config=$FIXTURE/config/pricing.json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/pricing"}}

@@ -1,0 +1,4 @@
+{
+  "args": ["hermes", "monthly", "--json", "--offline"],
+  "env": {"HERMES_HOME": "$FIXTURE/hermes-home"}
+}

@@ -1,0 +1,2 @@
+WARN  Missing pricing for test-advisor-fixture-model; cost excludes this model. Update pricing or run again after LiteLLM has the model.
+WARN  Missing pricing for test-advisor-fixture-model-2; cost excludes this model. Update pricing or run again after LiteLLM has the model.

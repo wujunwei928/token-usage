@@ -1,0 +1,4 @@
+{
+  "args": ["hermes", "session", "--offline"],
+  "env": {"HERMES_HOME": "$FIXTURE/hermes-home"}
+}

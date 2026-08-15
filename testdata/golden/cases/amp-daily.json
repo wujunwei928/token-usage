@@ -1,0 +1,1 @@
+{"args": ["amp", "daily", "--offline"], "env": {"AMP_DATA_DIR": "$FIXTURE/amp"}}

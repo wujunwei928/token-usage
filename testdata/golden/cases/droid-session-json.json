@@ -1,0 +1,4 @@
+{
+  "args": ["droid", "session", "--json", "--offline"],
+  "env": {"DROID_SESSIONS_DIR": "$FIXTURE/droid/sessions"}
+}

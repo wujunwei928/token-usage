@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--offline", "--config", "$FIXTURE/config/unknown-keys.json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

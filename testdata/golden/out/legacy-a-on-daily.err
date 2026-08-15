@@ -1,0 +1,2 @@
+Agent filters like -a are not supported. Use "ccusage <agent> <report>", for example "ccusage codex daily".
+Run 'ccusage --help' for usage.

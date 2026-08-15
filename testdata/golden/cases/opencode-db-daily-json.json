@@ -1,0 +1,1 @@
+{"args": ["opencode", "daily", "--json", "--offline"], "env": {"OPENCODE_DATA_DIR": "$FIXTURE/opencode/mixed"}}

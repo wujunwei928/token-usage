@@ -1,0 +1,96 @@
+{
+  "daily": [
+    {
+      "cacheCreationTokens": 1800000,
+      "cacheReadTokens": 20500000,
+      "date": "2026-02-10",
+      "inputTokens": 10400000,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 1500000,
+          "cacheReadTokens": 20000000,
+          "cost": 126.39,
+          "inputTokens": 10000000,
+          "modelName": "claude-sonnet-4-20250514",
+          "outputTokens": 2000000
+        },
+        {
+          "cacheCreationTokens": 300000,
+          "cacheReadTokens": 500000,
+          "cost": 38.94,
+          "inputTokens": 400000,
+          "modelName": "claude-sonnet-4",
+          "outputTokens": 100000
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4-20250514",
+        "claude-sonnet-4"
+      ],
+      "outputTokens": 2100000,
+      "totalCost": 165.32999999999998,
+      "totalTokens": 34800000
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 10000,
+      "date": "2026-02-11",
+      "inputTokens": 400000,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 10000,
+          "cost": 7.26,
+          "inputTokens": 400000,
+          "modelName": "gpt-5.6-sol",
+          "outputTokens": 100000
+        }
+      ],
+      "modelsUsed": [
+        "gpt-5.6-sol"
+      ],
+      "outputTokens": 100000,
+      "totalCost": 7.26,
+      "totalTokens": 510000
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 2000000,
+      "date": "2026-02-12",
+      "inputTokens": 1100000,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 2000000,
+          "cost": 22.0,
+          "inputTokens": 1000000,
+          "modelName": "claude-opus-4-8-fast",
+          "outputTokens": 200000
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 100000,
+          "modelName": "totally-unknown-model",
+          "outputTokens": 50000
+        }
+      ],
+      "modelsUsed": [
+        "claude-opus-4-8-fast",
+        "totally-unknown-model"
+      ],
+      "outputTokens": 250000,
+      "totalCost": 22.0,
+      "totalTokens": 3350000
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 1800000,
+    "cacheReadTokens": 22510000,
+    "inputTokens": 11900000,
+    "outputTokens": 2450000,
+    "totalCost": 194.58999999999997,
+    "totalTokens": 38660000
+  }
+}

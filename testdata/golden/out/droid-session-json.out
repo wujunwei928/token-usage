@@ -1,0 +1,78 @@
+{
+  "sessions": [
+    {
+      "cacheCreationTokens": 20,
+      "cacheReadTokens": 10,
+      "inputTokens": 100,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 10,
+          "cost": 0.001203,
+          "inputTokens": 100,
+          "modelName": "claude-sonnet-4",
+          "outputTokens": 50
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4"
+      ],
+      "outputTokens": 50,
+      "sessionId": "session-a",
+      "totalCost": 0.001203,
+      "totalTokens": 185
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "inputTokens": 1000,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.022250000000000002,
+          "inputTokens": 1000,
+          "modelName": "gpt-5",
+          "outputTokens": 2000
+        }
+      ],
+      "modelsUsed": [
+        "gpt-5"
+      ],
+      "outputTokens": 2000,
+      "sessionId": "session-c",
+      "totalCost": 0.022250000000000002,
+      "totalTokens": 3100
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "inputTokens": 10,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0006000000000000001,
+          "inputTokens": 10,
+          "modelName": "claude-opus-4-5-thinking",
+          "outputTokens": 20
+        }
+      ],
+      "modelsUsed": [
+        "claude-opus-4-5-thinking"
+      ],
+      "outputTokens": 20,
+      "sessionId": "sidecar",
+      "totalCost": 0.0006000000000000001,
+      "totalTokens": 32
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 20,
+    "cacheReadTokens": 10,
+    "inputTokens": 1110,
+    "outputTokens": 2070,
+    "totalCost": 0.024053,
+    "totalTokens": 3317
+  }
+}

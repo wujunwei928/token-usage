@@ -1,0 +1,16 @@
+{
+  "id": "T-thread-delta",
+  "usageLedger": {},
+  "messages": [
+    {
+      "role": "assistant",
+      "messageId": 1,
+      "usage": {
+        "model": "claude-sonnet-4-20250514",
+        "inputTokens": 30,
+        "outputTokens": 40,
+        "timestamp": "2026-02-01T18:30:00.000Z"
+      }
+    }
+  ]
+}

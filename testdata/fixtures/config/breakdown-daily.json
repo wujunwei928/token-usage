@@ -1,0 +1,10 @@
+{
+	"commands": {
+		"daily": {
+			"breakdown": true
+		},
+		"monthly": {
+			"breakdown": true
+		}
+	}
+}

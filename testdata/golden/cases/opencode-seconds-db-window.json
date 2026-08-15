@@ -1,0 +1,1 @@
+{"args": ["opencode", "daily", "--json", "--offline", "--since", "20260101", "--until", "20260103"], "env": {"OPENCODE_DATA_DIR": "$FIXTURE/opencode/secondsdb"}}

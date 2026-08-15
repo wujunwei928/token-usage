@@ -1,0 +1,12 @@
+# Build output
+/bin/
+dist/
+
+# Go test and profiling artifacts
+*.test
+*.prof
+coverage.out
+
+# Editor / OS noise
+.DS_Store
+*.swp

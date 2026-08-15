@@ -1,0 +1,1 @@
+{"args": ["claude", "blocks", "--session-length", "2"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

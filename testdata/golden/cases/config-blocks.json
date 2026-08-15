@@ -1,0 +1,1 @@
+{"args": ["claude", "blocks", "--json", "--offline", "--config", "$FIXTURE/config/blocks-config.json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

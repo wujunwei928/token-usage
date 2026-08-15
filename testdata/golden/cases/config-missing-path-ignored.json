@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--json", "--offline", "--config", "$FIXTURE/config/no-such-file.json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

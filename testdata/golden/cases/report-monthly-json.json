@@ -1,0 +1,1 @@
+{"args": ["claude", "monthly", "--json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

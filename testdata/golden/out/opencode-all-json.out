@@ -1,0 +1,160 @@
+{
+  "daily": [
+    {
+      "agent": "all",
+      "cacheCreationTokens": 20,
+      "cacheReadTokens": 60,
+      "inputTokens": 210,
+      "metadata": {
+        "agents": [
+          "opencode"
+        ]
+      },
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 10,
+          "cost": 0.02,
+          "inputTokens": 100,
+          "modelName": "claude-sonnet-4-20250514",
+          "outputTokens": 50
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 50,
+          "cost": 0.000143,
+          "inputTokens": 100,
+          "modelName": "k2p6",
+          "outputTokens": 10
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.000027999999999999996,
+          "inputTokens": 10,
+          "modelName": "claude-3-5-haiku-20241022",
+          "outputTokens": 5
+        }
+      ],
+      "modelsUsed": [
+        "claude-3-5-haiku-20241022",
+        "claude-sonnet-4-20250514",
+        "k2p6"
+      ],
+      "outputTokens": 65,
+      "period": "2026-01-02",
+      "totalCost": 0.020171,
+      "totalTokens": 355
+    },
+    {
+      "agent": "all",
+      "cacheCreationTokens": 25,
+      "cacheReadTokens": 50,
+      "inputTokens": 300,
+      "metadata": {
+        "agents": [
+          "opencode"
+        ]
+      },
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.01,
+          "inputTokens": 200,
+          "modelName": "claude-haiku-4-5",
+          "outputTokens": 20
+        },
+        {
+          "cacheCreationTokens": 25,
+          "cacheReadTokens": 50,
+          "cost": 0.0005587500000000001,
+          "inputTokens": 100,
+          "modelName": "claude-sonnet-4.5",
+          "outputTokens": 10
+        }
+      ],
+      "modelsUsed": [
+        "claude-haiku-4-5",
+        "claude-sonnet-4.5"
+      ],
+      "outputTokens": 30,
+      "period": "2026-01-03",
+      "totalCost": 0.01055875,
+      "totalTokens": 405
+    },
+    {
+      "agent": "all",
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "inputTokens": 1000,
+      "metadata": {
+        "agents": [
+          "opencode"
+        ]
+      },
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.001722,
+          "inputTokens": 0,
+          "modelName": "gpt-5.2-codex",
+          "outputTokens": 123
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 1000,
+          "modelName": "gemini-3-pro-high",
+          "outputTokens": 100
+        }
+      ],
+      "modelsUsed": [
+        "gemini-3-pro-high",
+        "gpt-5.2-codex"
+      ],
+      "outputTokens": 223,
+      "period": "2026-01-06",
+      "totalCost": 0.001722,
+      "totalTokens": 1223
+    },
+    {
+      "agent": "all",
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "inputTokens": 100,
+      "metadata": {
+        "agents": [
+          "opencode"
+        ]
+      },
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.00015,
+          "inputTokens": 100,
+          "modelName": "claude-haiku-4-5",
+          "outputTokens": 10
+        }
+      ],
+      "modelsUsed": [
+        "claude-haiku-4-5"
+      ],
+      "outputTokens": 10,
+      "period": "2026-02-05",
+      "totalCost": 0.00015,
+      "totalTokens": 110
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 45,
+    "cacheReadTokens": 110,
+    "inputTokens": 1610,
+    "outputTokens": 328,
+    "totalCost": 0.03260175,
+    "totalTokens": 2093
+  }
+}

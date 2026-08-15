@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--json", "--offline", "--order", "asc", "--config", "$FIXTURE/config/cli-precedence.json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/pricing"}}

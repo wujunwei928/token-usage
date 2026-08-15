@@ -1,0 +1,1 @@
+{"args": ["pi", "daily", "--offline"], "env": {"PI_AGENT_DIR": "$FIXTURE/pi/sessions"}}

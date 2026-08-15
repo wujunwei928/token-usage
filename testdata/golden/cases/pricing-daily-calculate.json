@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--mode", "calculate", "-O"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/pricing"}}

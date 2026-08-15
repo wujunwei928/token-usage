@@ -1,0 +1,1 @@
+{"id":"msg_beta_1","sessionID":"ses_beta","providerID":"github-copilot","modelID":"claude-sonnet-4.5","time":{"created":1767398400000},"tokens":{"input":100,"output":10,"cache":{"read":50,"write":25},"total":185},"cost":0}

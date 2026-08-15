@@ -1,0 +1,109 @@
+{
+  "sessions": [
+    {
+      "cacheCreationTokens": 20,
+      "cacheReadTokens": 10,
+      "inputTokens": 300,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 10,
+          "cost": 0.02,
+          "inputTokens": 100,
+          "modelName": "claude-sonnet-4-20250514",
+          "outputTokens": 50
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0010500000000000002,
+          "inputTokens": 200,
+          "modelName": "gpt-5",
+          "outputTokens": 80
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4-20250514",
+        "gpt-5"
+      ],
+      "outputTokens": 130,
+      "sessionId": "session-a",
+      "totalCost": 0.02105,
+      "totalTokens": 465
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "inputTokens": 0,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0005148,
+          "inputTokens": 0,
+          "modelName": "glm-4.7",
+          "outputTokens": 234
+        }
+      ],
+      "modelsUsed": [
+        "glm-4.7"
+      ],
+      "outputTokens": 234,
+      "sessionId": "session-b",
+      "totalCost": 0.0005148,
+      "totalTokens": 234
+    },
+    {
+      "cacheCreationTokens": 300,
+      "cacheReadTokens": 200,
+      "inputTokens": 1000,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 300,
+          "cacheReadTokens": 200,
+          "cost": 0.0,
+          "inputTokens": 1000,
+          "modelName": "claude-haiku-4-5",
+          "outputTokens": 500
+        }
+      ],
+      "modelsUsed": [
+        "claude-haiku-4-5"
+      ],
+      "outputTokens": 500,
+      "sessionId": "session-c",
+      "totalCost": 0.0,
+      "totalTokens": 2100
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "inputTokens": 10,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 10,
+          "modelName": "unknown-model-xyz",
+          "outputTokens": 20
+        }
+      ],
+      "modelsUsed": [
+        "unknown-model-xyz"
+      ],
+      "outputTokens": 20,
+      "sessionId": "session-d",
+      "totalCost": 0.0,
+      "totalTokens": 30
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 320,
+    "cacheReadTokens": 210,
+    "inputTokens": 1310,
+    "outputTokens": 884,
+    "totalCost": 0.0215648,
+    "totalTokens": 2829
+  }
+}

@@ -1,0 +1,23 @@
+{
+	"defaults": {
+		"order": "asc"
+	},
+	"commands": {
+		"daily": {
+			"order": "desc"
+		},
+		"claude:daily": {
+			"order": "desc"
+		}
+	},
+	"claude": {
+		"defaults": {
+			"order": "asc"
+		},
+		"commands": {
+			"daily": {
+				"order": "desc"
+			}
+		}
+	}
+}

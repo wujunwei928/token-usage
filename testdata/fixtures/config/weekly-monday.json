@@ -1,0 +1,7 @@
+{
+	"commands": {
+		"weekly": {
+			"startOfWeek": "monday"
+		}
+	}
+}

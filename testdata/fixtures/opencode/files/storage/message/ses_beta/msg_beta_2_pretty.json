@@ -1,0 +1,15 @@
+{
+  "id": "msg_beta_2",
+  "sessionID": "ses_beta",
+  "role": "assistant",
+  "providerID": "anthropic",
+  "modelID": "claude-haiku-4-5",
+  "time": {
+    "created": 1767402000000
+  },
+  "tokens": {
+    "input": 200,
+    "output": 20
+  },
+  "cost": 0.01
+}

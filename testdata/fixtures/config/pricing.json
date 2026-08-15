@@ -1,0 +1,11 @@
+{
+	"$schema": "https://ccusage.com/config-schema.json",
+	"defaults": {
+		"pricingOverrides": {
+			"claude-sonnet-4": {
+				"inputCostPerToken": 0.00003,
+				"outputCostPerToken": 0.0003
+			}
+		}
+	}
+}

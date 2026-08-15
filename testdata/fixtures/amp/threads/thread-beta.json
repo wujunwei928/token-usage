@@ -1,0 +1,49 @@
+{
+  "id": "T-thread-beta",
+  "messages": [
+    { "role": "user", "content": "hi" },
+    {
+      "role": "assistant",
+      "messageId": 7,
+      "usage": {
+        "model": "claude-haiku-4-5-20251001",
+        "inputTokens": 10,
+        "outputTokens": 178,
+        "cacheCreationInputTokens": 986,
+        "cacheReadInputTokens": 11372,
+        "timestamp": "2026-01-21T11:42:10.652Z"
+      }
+    },
+    {
+      "role": "assistant",
+      "messageId": 8,
+      "usage": {
+        "model": "claude-haiku-4-5-20251001",
+        "inputTokens": 5,
+        "outputTokens": 42,
+        "cacheReadInputTokens": 12000,
+        "timestamp": "2026-01-22T11:43:00.000Z",
+        "credits": 2
+      }
+    },
+    {
+      "role": "assistant",
+      "messageId": 9,
+      "usage": {
+        "model": "claude-haiku-4-5-20251001",
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "timestamp": "2026-01-22T12:00:00.000Z"
+      }
+    },
+    {
+      "role": "assistant",
+      "messageId": 10,
+      "usage": {
+        "model": "claude-haiku-4-5-20251001",
+        "totalTokens": 345,
+        "timestamp": "2026-01-23T08:00:00.000Z"
+      }
+    }
+  ]
+}

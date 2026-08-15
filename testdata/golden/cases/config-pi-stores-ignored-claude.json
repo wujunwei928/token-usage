@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--json", "--offline", "--config", "$FIXTURE/config/pi-stores-invalid.json"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

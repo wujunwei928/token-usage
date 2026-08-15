@@ -1,0 +1,12 @@
+{
+	"defaults": {
+		"pricingOverrides": {
+			"claude-sonnet-4": {
+				"inputCostPerToken": "not-a-number"
+			},
+			"claude-opus-4-8": {
+				"inputCostPerToken": 0.00001
+			}
+		}
+	}
+}

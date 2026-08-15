@@ -1,0 +1,1 @@
+{"args": ["opencode", "daily", "--offline"], "env": {"OPENCODE_DATA_DIR": "$FIXTURE/opencode/empty"}}

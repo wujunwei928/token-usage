@@ -1,0 +1,1 @@
+{"timestamp":"2026-01-06T06:00:01.000Z","version":"1.2.3","sessionId":"session-dedup","message":{"id":"msg_haiku","model":"claude-haiku-4-5-20251001","role":"assistant","usage":{"input_tokens":20,"output_tokens":2,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}},"requestId":"req_haiku","costUSD":0.06}

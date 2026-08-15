@@ -1,0 +1,4 @@
+{
+  "args": ["codebuff", "session", "--offline"],
+  "env": {"CODEBUFF_DATA_DIR": "$FIXTURE/codebuff-data"}
+}

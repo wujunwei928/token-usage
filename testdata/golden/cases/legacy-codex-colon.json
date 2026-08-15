@@ -1,0 +1,1 @@
+{"args": ["codex:daily"], "env": {"CODEX_HOME": "/codex", "CLAUDE_CONFIG_DIR": "/empty"}}

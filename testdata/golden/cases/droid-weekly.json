@@ -1,0 +1,4 @@
+{
+  "args": ["droid", "weekly"],
+  "env": {"DROID_SESSIONS_DIR": "$FIXTURE/droid/sessions"}
+}

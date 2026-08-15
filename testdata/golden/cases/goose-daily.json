@@ -1,0 +1,1 @@
+{"args": ["goose", "daily", "--offline"], "env": {"GOOSE_PATH_ROOT": "$FIXTURE/goose"}}

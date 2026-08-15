@@ -1,0 +1,1 @@
+{"args": ["daily", "--sections", "monthly", "--jq", ".monthly | length"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

@@ -1,0 +1,4 @@
+jq: error: syntax error, unexpected $end, expecting FORMAT or QQSTRING_START (Unix shell quoting issues?) at <top-level>, line 1:
+.totals.       
+jq: 1 compile error
+Error: CliError("jq failed")

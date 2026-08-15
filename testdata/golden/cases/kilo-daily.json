@@ -1,0 +1,1 @@
+{"args": ["kilo", "daily", "--offline"], "env": {"KILO_DATA_DIR": "$FIXTURE/kilo"}}

@@ -1,0 +1,1 @@
+WARN  Missing embedded pricing for gemini-3-pro-high; cost excludes this model. Run without --offline or update ccusage after pricing is added.

@@ -1,0 +1,1 @@
+{"args": ["amp", "monthly", "--offline"], "env": {"AMP_DATA_DIR": "$FIXTURE/amp"}}

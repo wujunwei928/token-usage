@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--color"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}, "env_remove": ["NO_COLOR"]}

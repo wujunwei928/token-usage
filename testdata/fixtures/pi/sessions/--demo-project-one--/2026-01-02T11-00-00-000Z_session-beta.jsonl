@@ -1,0 +1,6 @@
+{"type":"message","id":"b1","parentId":null,"timestamp":"2026-01-02T11:00:00.000Z","message":{"role":"assistant","content":"total fallback","provider":"openai","model":"gpt-5","usage":{"input":100,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":333},"stopReason":"stop"}}
+{"type":"message","id":"b2","parentId":"b1","timestamp":"2026-01-02T11:05:00.000Z","message":{"role":"assistant","content":"unknown model","provider":"custom-gateway","model":"unknown-model-xyz","usage":{"input":100,"output":200,"cacheRead":0,"cacheWrite":0,"totalTokens":300},"stopReason":"stop"}}
+{"type":"message","id":"b3","parentId":"b2","timestamp":"2026-01-04T08:00:00.000Z","message":{"role":"assistant","content":"extra remainder","provider":"zai","model":"glm-4.7","usage":{"input":700,"output":300,"cacheRead":40,"cacheWrite":60,"totalTokens":1400,"cost":{"total":0.0456}},"stopReason":"stop"}}
+{"type":"message","id":"b4","parentId":"b3","timestamp":"2026-01-04T08:05:00.000Z","message":{"role":"assistant","content":"no tokens at all","provider":"zai","model":"glm-4.7","usage":{},"stopReason":"stop"}}
+not valid json
+{"type":"other","id":"x1","timestamp":"2026-01-04T09:00:00.000Z","message":{"role":"assistant","model":"gpt-5","usage":{"input":1,"output":1,"totalTokens":2}}}

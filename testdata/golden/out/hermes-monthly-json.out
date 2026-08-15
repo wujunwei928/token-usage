@@ -1,0 +1,44 @@
+{
+  "monthly": [
+    {
+      "cacheCreationTokens": 20,
+      "cacheReadTokens": 50,
+      "inputTokens": 1700,
+      "messageCount": 49,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 50,
+          "cost": 0.34,
+          "inputTokens": 1200,
+          "modelName": "claude-sonnet-4-20250514",
+          "outputTokens": 300
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.007000000000000001,
+          "inputTokens": 500,
+          "modelName": "gpt-5.5",
+          "outputTokens": 100
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4-20250514",
+        "gpt-5.5"
+      ],
+      "month": "2025-06",
+      "outputTokens": 400,
+      "totalCost": 0.34700000000000003,
+      "totalTokens": 2230
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 20,
+    "cacheReadTokens": 50,
+    "inputTokens": 1700,
+    "outputTokens": 400,
+    "totalCost": 0.34700000000000003,
+    "totalTokens": 2230
+  }
+}

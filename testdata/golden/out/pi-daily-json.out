@@ -1,0 +1,118 @@
+{
+  "daily": [
+    {
+      "cacheCreationTokens": 10,
+      "cacheReadTokens": 50,
+      "date": "2026-01-02",
+      "inputTokens": 1200,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 10,
+          "cacheReadTokens": 50,
+          "cost": 0.014755,
+          "inputTokens": 1100,
+          "modelName": "[pi] gpt-5",
+          "outputTokens": 433
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 100,
+          "modelName": "[pi] unknown-model-xyz",
+          "outputTokens": 200
+        }
+      ],
+      "modelsUsed": [
+        "[pi] gpt-5",
+        "[pi] unknown-model-xyz"
+      ],
+      "outputTokens": 633,
+      "totalCost": 0.014755,
+      "totalTokens": 1893
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "date": "2026-01-03",
+      "inputTokens": 510,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.003,
+          "inputTokens": 500,
+          "modelName": "[pi] claude-sonnet-4-20250514",
+          "outputTokens": 100
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0000625,
+          "inputTokens": 10,
+          "modelName": "[pi] gpt-5",
+          "outputTokens": 5
+        }
+      ],
+      "modelsUsed": [
+        "[pi] claude-sonnet-4-20250514",
+        "[pi] gpt-5"
+      ],
+      "outputTokens": 105,
+      "totalCost": 0.0030625,
+      "totalTokens": 615
+    },
+    {
+      "cacheCreationTokens": 60,
+      "cacheReadTokens": 40,
+      "date": "2026-01-04",
+      "inputTokens": 700,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 60,
+          "cacheReadTokens": 40,
+          "cost": 0.0456,
+          "inputTokens": 700,
+          "modelName": "[pi] glm-4.7",
+          "outputTokens": 300
+        }
+      ],
+      "modelsUsed": [
+        "[pi] glm-4.7"
+      ],
+      "outputTokens": 300,
+      "totalCost": 0.0456,
+      "totalTokens": 1400
+    },
+    {
+      "cacheCreationTokens": 220,
+      "cacheReadTokens": 110,
+      "date": "2026-02-05",
+      "inputTokens": 880,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 220,
+          "cacheReadTokens": 110,
+          "cost": 0.08678999999999999,
+          "inputTokens": 880,
+          "modelName": "[pi] glm-4.7",
+          "outputTokens": 440
+        }
+      ],
+      "modelsUsed": [
+        "[pi] glm-4.7"
+      ],
+      "outputTokens": 440,
+      "totalCost": 0.08678999999999999,
+      "totalTokens": 1650
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 290,
+    "cacheReadTokens": 200,
+    "inputTokens": 3290,
+    "outputTokens": 1478,
+    "totalCost": 0.1502075,
+    "totalTokens": 5558
+  }
+}

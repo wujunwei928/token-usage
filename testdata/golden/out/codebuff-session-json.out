@@ -1,0 +1,67 @@
+{
+  "sessions": [
+    {
+      "cacheCreationTokens": 20,
+      "cacheReadTokens": 10,
+      "credits": 1.25,
+      "inputTokens": 100,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.004560000000000001,
+          "inputTokens": 0,
+          "modelName": "gpt-5",
+          "outputTokens": 456
+        },
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 10,
+          "cost": 0.001128,
+          "inputTokens": 100,
+          "modelName": "claude-sonnet-4-20250514",
+          "outputTokens": 50
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4-20250514",
+        "gpt-5"
+      ],
+      "outputTokens": 506,
+      "sessionId": "codebuff-data/project-a/2026-01-02T03-04-05.000Z",
+      "totalCost": 0.005688,
+      "totalTokens": 636
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 10,
+      "inputTokens": 100,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 10,
+          "cost": 0.00062625,
+          "inputTokens": 100,
+          "modelName": "gpt-5",
+          "outputTokens": 50
+        }
+      ],
+      "modelsUsed": [
+        "gpt-5"
+      ],
+      "outputTokens": 50,
+      "sessionId": "codebuff-data/project-b/2026-01-04T05-06-07.000Z",
+      "totalCost": 0.00062625,
+      "totalTokens": 160
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 20,
+    "cacheReadTokens": 20,
+    "credits": 1.25,
+    "inputTokens": 200,
+    "outputTokens": 556,
+    "totalCost": 0.00631425,
+    "totalTokens": 796
+  }
+}

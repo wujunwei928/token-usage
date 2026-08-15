@@ -1,0 +1,2 @@
+The --last option cannot be combined with --since or --until.
+Run 'ccusage --help' for usage.

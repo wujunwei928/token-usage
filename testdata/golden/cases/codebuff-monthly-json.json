@@ -1,0 +1,4 @@
+{
+  "args": ["codebuff", "monthly", "--json", "--offline"],
+  "env": {"CODEBUFF_DATA_DIR": "$FIXTURE/codebuff-data"}
+}

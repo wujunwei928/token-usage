@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--jq", ".totals.totalCost"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

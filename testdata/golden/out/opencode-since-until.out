@@ -1,0 +1,43 @@
+{
+  "daily": [
+    {
+      "cacheCreationTokens": 25,
+      "cacheReadTokens": 50,
+      "date": "2026-01-03",
+      "inputTokens": 300,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.01,
+          "inputTokens": 200,
+          "modelName": "claude-haiku-4-5",
+          "outputTokens": 20
+        },
+        {
+          "cacheCreationTokens": 25,
+          "cacheReadTokens": 50,
+          "cost": 0.0005587500000000001,
+          "inputTokens": 100,
+          "modelName": "claude-sonnet-4.5",
+          "outputTokens": 10
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4.5",
+        "claude-haiku-4-5"
+      ],
+      "outputTokens": 30,
+      "totalCost": 0.01055875,
+      "totalTokens": 405
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 25,
+    "cacheReadTokens": 50,
+    "inputTokens": 300,
+    "outputTokens": 30,
+    "totalCost": 0.01055875,
+    "totalTokens": 405
+  }
+}

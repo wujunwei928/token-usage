@@ -1,0 +1,74 @@
+{
+  "daily": [
+    {
+      "cacheCreationTokens": 25,
+      "cacheReadTokens": 123,
+      "date": "2026-04-11",
+      "inputTokens": 19689,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 25,
+          "cacheReadTokens": 123,
+          "cost": 0.06425265000000001,
+          "inputTokens": 19329,
+          "modelName": "claude-sonnet-4",
+          "outputTokens": 281
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.00009,
+          "inputTokens": 60,
+          "modelName": "gpt-5.4-mini",
+          "outputTokens": 10
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 300,
+          "modelName": "test-copilot-model",
+          "outputTokens": 40
+        }
+      ],
+      "modelsUsed": [
+        "gpt-5.4-mini",
+        "claude-sonnet-4",
+        "test-copilot-model"
+      ],
+      "outputTokens": 331,
+      "totalCost": 0.06434265000000002,
+      "totalTokens": 20308
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "date": "2026-04-12",
+      "inputTokens": 0,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 0,
+          "modelName": "test-copilot-model",
+          "outputTokens": 567
+        }
+      ],
+      "modelsUsed": [
+        "test-copilot-model"
+      ],
+      "outputTokens": 567,
+      "totalCost": 0.0,
+      "totalTokens": 567
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 25,
+    "cacheReadTokens": 123,
+    "inputTokens": 19689,
+    "outputTokens": 898,
+    "totalCost": 0.06434265000000002,
+    "totalTokens": 20875
+  }
+}

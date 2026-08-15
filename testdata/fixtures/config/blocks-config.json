@@ -1,0 +1,8 @@
+{
+	"commands": {
+		"blocks": {
+			"tokenLimit": "300000",
+			"sessionLength": 6
+		}
+	}
+}

@@ -1,0 +1,1 @@
+{"args": ["claude", "daily", "--last", "1", "--since", "20260101"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/ref/claude"}}

@@ -1,0 +1,1 @@
+{"args": ["copilot", "monthly", "--offline"], "env": {"COPILOT_OTEL_FILE_EXPORTER_PATH": "$FIXTURE/copilot/otel.jsonl"}}

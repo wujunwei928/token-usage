@@ -1,0 +1,16 @@
+{
+	"totallyUnknownSection": {
+		"json": true
+	},
+	"defaults": {
+		"unknownOption": "x",
+		"json": "not-a-bool",
+		"order": 42,
+		"breakdown": true
+	},
+	"commands": {
+		"daily": {
+			"bogus": {"nested": true}
+		}
+	}
+}
