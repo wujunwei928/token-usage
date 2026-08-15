@@ -10,11 +10,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/claude"
-	"github.com/wujunwei/ccusage-go/internal/blocks"
-	"github.com/wujunwei/ccusage-go/internal/config"
-	"github.com/wujunwei/ccusage-go/internal/core"
-	"github.com/wujunwei/ccusage-go/internal/statusline"
+	"github.com/wujunwei928/token-usage/internal/adapter/claude"
+	"github.com/wujunwei928/token-usage/internal/blocks"
+	"github.com/wujunwei928/token-usage/internal/config"
+	"github.com/wujunwei928/token-usage/internal/core"
+	"github.com/wujunwei928/token-usage/internal/statusline"
 )
 
 // ParseError reports a CLI usage error: printed without prefix, exit code 2.
@@ -23,7 +23,7 @@ type ParseError struct{ Message string }
 func (e *ParseError) Error() string { return e.Message }
 
 func parseErr(format string, args ...any) error {
-	return &ParseError{fmt.Sprintf(format, args...) + "\nRun 'ccusage --help' for usage."}
+	return &ParseError{fmt.Sprintf(format, args...) + "\nRun 'token-usage --help' for usage."}
 }
 
 // sharedFlags holds the raw flag values resolved into SharedArgs at run time.
@@ -151,7 +151,7 @@ func newClaudeCommand() *cobra.Command {
 
 // newClaudeStatuslineCommand builds `claude statusline`: it registers only the
 // statusline-specific flags (shared report flags are rejected, like the
-// reference parser) and applies ccusage.json config under CLI precedence.
+// reference parser) and applies token-usage config under CLI precedence.
 func newClaudeStatuslineCommand() *cobra.Command {
 	var offline bool
 	var noOffline bool
@@ -174,7 +174,7 @@ func newClaudeStatuslineCommand() *cobra.Command {
 	flags.BoolVar(&noOffline, "no-offline", false, "Negatable of -O, --offline")
 	flags.StringVarP(&visualBurnRateRaw, "visual-burn-rate", "B", "off", "Controls the visualization of the burn rate status (default: off, choices: off | emoji | text | emoji-text)")
 	flags.Lookup("visual-burn-rate").NoOptDefVal = "off"
-	flags.StringVar(&costSourceRaw, "cost-source", "auto", "Session cost source (default: auto, choices: auto | ccusage | cc | both)")
+	flags.StringVar(&costSourceRaw, "cost-source", "auto", "Session cost source (default: auto, choices: auto | token-usage | cc | both; legacy value \"ccusage\" still accepted)")
 	flags.Lookup("cost-source").NoOptDefVal = "auto"
 	flags.BoolVar(&cache, "cache", true, "Enable cache for status line output (default: true)")
 	flags.BoolVar(&noCache, "no-cache", false, "Negatable of --cache")
@@ -460,7 +460,7 @@ func newClaudeReportCommand(kind reportKind) *cobra.Command {
 	if kind == reportDaily {
 		cmd.Flags().BoolVarP(&instances, "instances", "i", false, "Show usage breakdown by project/instance (default: false)")
 		cmd.Flags().StringVarP(&projectFilter, "project", "p", "", "Filter to specific project name")
-		cmd.Flags().StringVar(&projectAliases, "project-aliases", "", "Comma-separated project aliases (e.g., 'ccusage=Usage Tracker,myproject=My Project')")
+		cmd.Flags().StringVar(&projectAliases, "project-aliases", "", "Comma-separated project aliases (e.g., 'token-usage=Usage Tracker,myproject=My Project')")
 	}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if err := f.resolve(); err != nil {

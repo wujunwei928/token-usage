@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // DailyArgs mirrors the daily-specific report args.

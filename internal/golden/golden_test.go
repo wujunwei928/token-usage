@@ -1,4 +1,4 @@
-// Package golden runs the built ccusage-go binary against every golden case
+// Package golden runs the built token-usage binary against every golden case
 // and byte-compares stdout/stderr/exit code with files generated from the
 // reference binary by scripts/golden.sh.
 //
@@ -7,7 +7,8 @@
 //	NO_COLOR=1 TZ=UTC LANG=C.UTF-8 LC_ALL=C.UTF-8 TERM=dumb COLUMNS=100
 //	HOME=<repo>/testdata/fixtures/home
 //	PATH=/usr/local/bin:/usr/bin:/bin
-//	CLAUDE_CONFIG_DIR and XDG_CONFIG_HOME unset unless the case sets them.
+//	CLAUDE_CONFIG_DIR, TOKEN_USAGE_CONFIG_DIR, and XDG_CONFIG_HOME unset
+//	unless the case sets them.
 //
 // A case's "env" object overrides base values. Its "env_remove" list names env
 // vars removed AFTER overrides are applied, so a case can set FORCE_COLOR=1
@@ -31,13 +32,13 @@ import (
 var binPath string
 
 func TestMain(m *testing.M) {
-	tmp, err := os.MkdirTemp("", "ccusage-go-test")
+	tmp, err := os.MkdirTemp("", "token-usage-test")
 	if err != nil {
 		panic(err)
 	}
 	defer os.RemoveAll(tmp)
-	binPath = filepath.Join(tmp, "ccusage")
-	build := exec.Command("go", "build", "-o", binPath, "./cmd/ccusage")
+	binPath = filepath.Join(tmp, "token-usage")
+	build := exec.Command("go", "build", "-o", binPath, "./cmd/token-usage")
 	build.Dir = repoRoot()
 	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {

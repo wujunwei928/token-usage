@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/kimi"
+	"github.com/wujunwei928/token-usage/internal/adapter/kimi"
 )
 
 func init() {

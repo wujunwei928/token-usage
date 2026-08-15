@@ -1,5 +1,7 @@
 # ccusage-go 重写方案
 
+> 历史文档:本方案属"ccusage-go 移植阶段",工具现已更名为 token-usage(ADR 0008),结构描述仍大体适用。
+
 以 `/code/ai/ccusage/ccusage`(Rust v20.0.19)为基准的完整对等 Go 重写。CLI 框架使用 cobra。
 
 对等承诺(见 ADR-0001~0004):

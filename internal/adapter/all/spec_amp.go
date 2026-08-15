@@ -1,8 +1,8 @@
 package all
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/adapter/amp"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/amp"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // The Amp adapter joins the unified load at roster index 3 (see all.go).

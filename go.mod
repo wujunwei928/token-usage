@@ -1,4 +1,4 @@
-module github.com/wujunwei/ccusage-go
+module github.com/wujunwei928/token-usage
 
 go 1.25.0
 

@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/claude"
-	"github.com/wujunwei/ccusage-go/internal/blocks"
-	"github.com/wujunwei/ccusage-go/internal/core"
-	"github.com/wujunwei/ccusage-go/internal/terminal"
+	"github.com/wujunwei928/token-usage/internal/adapter/claude"
+	"github.com/wujunwei928/token-usage/internal/blocks"
+	"github.com/wujunwei928/token-usage/internal/core"
+	"github.com/wujunwei928/token-usage/internal/terminal"
 )
 
 const millisPerMinute = 60 * 1000
@@ -26,7 +26,7 @@ func renderStatusline(hook *Hook, args *Args, shared *core.SharedArgs, now int64
 			cost := hook.Cost.TotalCostUSD
 			sessionCost = &cost
 		}
-	case CostSourceCcusage:
+	case CostSourceTokenUsage:
 		if cost, err := calculateSessionCost(hook.SessionID, shared); err == nil {
 			sessionCost = &cost
 		}
@@ -39,10 +39,10 @@ func renderStatusline(hook *Hook, args *Args, shared *core.SharedArgs, now int64
 		}
 	}
 
-	var ccusageCost, ccCost *float64
+	var tokenUsageCost, ccCost *float64
 	if args.CostSource == CostSourceBoth {
 		if cost, err := calculateSessionCost(hook.SessionID, shared); err == nil {
-			ccusageCost = &cost
+			tokenUsageCost = &cost
 		}
 		if hook.Cost != nil {
 			cost := hook.Cost.TotalCostUSD
@@ -73,11 +73,11 @@ func renderStatusline(hook *Hook, args *Args, shared *core.SharedArgs, now int64
 		if ccCost != nil {
 			cc = core.FormatCurrency(*ccCost)
 		}
-		ccusage := "N/A"
-		if ccusageCost != nil {
-			ccusage = core.FormatCurrency(*ccusageCost)
+		tokenUsage := "N/A"
+		if tokenUsageCost != nil {
+			tokenUsage = core.FormatCurrency(*tokenUsageCost)
 		}
-		sessionDisplay = fmt.Sprintf("(%s cc / %s ccusage)", cc, ccusage)
+		sessionDisplay = fmt.Sprintf("(%s cc / %s token-usage)", cc, tokenUsage)
 	} else if sessionCost != nil {
 		sessionDisplay = core.FormatCurrency(*sessionCost)
 	} else {
@@ -102,7 +102,7 @@ func renderStatusline(hook *Hook, args *Args, shared *core.SharedArgs, now int64
 	), nil
 }
 
-// calculateSessionCost sums ccusage-computed costs for the hook session.
+// calculateSessionCost sums token-usage-computed costs for the hook session.
 func calculateSessionCost(sessionID string, shared *core.SharedArgs) (float64, error) {
 	entries, err := claude.LoadEntries(claude.LoadOptions{Shared: shared})
 	if err != nil {

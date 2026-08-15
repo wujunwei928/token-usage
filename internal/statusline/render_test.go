@@ -102,7 +102,7 @@ func TestRenderCostSources(t *testing.T) {
 			Model:          HookModel{ID: strPtr("claude-sonnet-4-20250514"), DisplayName: "Sonnet 4"},
 		}
 	}
-	// ccusage-computed cost: 2 x (1000*3e-6 + 500*15e-6) = $0.02.
+	// token-usage-computed cost: 2 x (1000*3e-6 + 500*15e-6) = $0.02.
 	cases := []struct {
 		name       string
 		source     CostSource
@@ -113,9 +113,9 @@ func TestRenderCostSources(t *testing.T) {
 		{"auto without hook cost", CostSourceAuto, nil, "$0.02 session"},
 		{"cc", CostSourceCc, &HookCost{TotalCostUSD: 2.25}, "$2.25 session"},
 		{"cc without hook cost", CostSourceCc, nil, "N/A session"},
-		{"ccusage", CostSourceCcusage, &HookCost{TotalCostUSD: 9.99}, "$0.02 session"},
-		{"both", CostSourceBoth, &HookCost{TotalCostUSD: 2.25}, "($2.25 cc / $0.02 ccusage) session"},
-		{"both without hook cost", CostSourceBoth, nil, "(N/A cc / $0.02 ccusage) session"},
+		{"token-usage", CostSourceTokenUsage, &HookCost{TotalCostUSD: 9.99}, "$0.02 session"},
+		{"both", CostSourceBoth, &HookCost{TotalCostUSD: 2.25}, "($2.25 cc / $0.02 token-usage) session"},
+		{"both without hook cost", CostSourceBoth, nil, "(N/A cc / $0.02 token-usage) session"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

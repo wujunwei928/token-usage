@@ -1,28 +1,38 @@
-# ccusage-go
+# token-usage
 
-分析 Claude Code 及其他 AI 编程 agent 的本地使用记录(JSONL 会话文件),按时间维度聚合 token 用量与成本,输出表格/JSON 报表。本词汇表沿用参考实现(Rust v20)的既定术语,保证两版本文档与代码可互相对照。
+分析 Claude Code 及其他 AI 编程 agent 的本地使用记录(JSONL 会话文件或分析数据库),按时间维度聚合 token 用量与成本,输出表格/JSON 报表。本词汇表沿用参考实现(Rust v20)的既定术语,保证两版本文档与代码可互相对照。
 
 ## Language
 
 ### 数据摄入
 
 **Agent Adapter**:
-一个 agent(如 claude、codex、opencode)的数据源适配器,负责发现该 agent 的会话文件、解析其私有格式、产出统一的 Usage Entry。共 16 个。
+一个 agent(如 claude、codex、opencode、zcode)的数据源适配器,负责发现该 agent 的本地用量记录(JSONL 会话文件或分析数据库)、解析其私有格式、产出统一的 Usage Entry。
 _Avoid_: source, provider, connector
 
 **Usage Entry**:
-一条用量记录:某时刻、某模型、某 session 的一次 API 调用的 token 计数(可能附带 costUSD)。从 JSONL 解析而来。
+一条用量记录:某时刻、某模型、某 session 的一次 API 调用(即一次 Attempt)的 token 计数(可能附带 costUSD)。
 _Avoid_: log line, record, event
+
+**Attempt**:
+一次模型 API 调用尝试;同一逻辑请求的每次重试各自成一次 Attempt,token 独立计入;失败的尝试只要发生消耗即计入。
+_Avoid_: retry(重试只是 Attempt 的一种)
+
+**Auxiliary Call(辅助调用)**:
+agent 自身发起、非用户回合的模型调用(如生成会话标题、目标摘要);属真实消耗,计入用量。
 
 **Token Usage**:
 一个 Usage Entry 的 token 四元组:input、output、cache creation(5m/1h 写缓存)、cache read(读缓存)。
 _Avoid_: token counts, usage stats
 
+**Reasoning Tokens(思考 token)**:
+模型思考/推理阶段的 token 产出;统计口径上并入 output,不单列。
+
 **Dedup Hash**:
 `(message.id, requestId)` 二元组,用于剔除重放的重复条目;sidechain 重放按 `(message.id, 空)` 容错,同 hash 保留"最完整"的条目。
 
 **Session**:
-一次连续对话,对应 `projects/` 下的一个 JSONL 文件(stem 即 session id)。
+一次连续对话,对应 `projects/` 下的一个 JSONL 文件(stem 即 session id);子代理(sidechain/subagent)会话的用量归属其父 Session。
 
 **Project**:
 会话文件在 `projects/` 下的第一级目录名,即用户运行 agent 时的工作目录路径标识。
@@ -53,7 +63,7 @@ Block 内的消耗速率:token/分钟、非缓存 token/分钟、成本/小时,�
 _Avoid_: view, listing
 
 **All-Report**:
-跨全部 16 个 agent 的统一报表(裸 `ccusage` 即 all-daily),支持 `--sections` 一次加载输出多报表、`--by-agent` 按 agent 拆分。
+跨全部 agent 的统一报表(裸 `token-usage` 即 all-daily),支持 `--sections` 一次加载输出多报表、`--by-agent` 按 agent 拆分。
 
 **Statusline**:
 供 Claude Code 状态栏 hook 调用的单行输出模式:从 stdin 读 hook JSON,输出模型/会话成本/当日成本/block 余额/上下文占用一行表情符号摘要。

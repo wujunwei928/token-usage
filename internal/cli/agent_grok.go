@@ -3,8 +3,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/grok"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/grok"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // grok landed upstream after the 20.0.19 release the installed reference

@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
-	"github.com/wujunwei/ccusage-go/internal/report"
+	"github.com/wujunwei928/token-usage/internal/core"
+	"github.com/wujunwei928/token-usage/internal/report"
 )
 
 // Exit codes for scripts: 0 ok, 2 configuration error, 3 network failure,
@@ -33,20 +33,20 @@ func newReportCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 	flags := cmd.Flags()
-	flags.String("server", "", "leaderboard server address (flag > CCUSAGE_REPORT_SERVER > ccusage.json reportServer)")
-	flags.String("token", "", "user report token (flag > CCUSAGE_REPORT_TOKEN > ccusage.json reportToken)")
+	flags.String("server", "", "leaderboard server address (flag > TOKEN_USAGE_REPORT_SERVER, legacy CCUSAGE_REPORT_SERVER > token-usage config reportServer)")
+	flags.String("token", "", "user report token (flag > TOKEN_USAGE_REPORT_TOKEN, legacy CCUSAGE_REPORT_TOKEN > token-usage config reportToken)")
 	flags.String("timezone", "", "timezone for the day/hour split (default: system local)")
 	flags.String("since", "", "backfill mode: report every day from YYYY-MM-DD to today in one request")
-	flags.String("device-file", "", "device identity file (default: CCUSAGE_DEVICE_FILE or <config>/ccusage/device.json)")
+	flags.String("device-file", "", "device identity file (default: TOKEN_USAGE_DEVICE_FILE, legacy CCUSAGE_DEVICE_FILE, or <config>/token-usage/device.json)")
 	flags.Bool("dry-run", false, "build and print the snapshot without sending")
-	flags.Bool("install-timer", false, "install an hourly crontab entry running ccusage report (idempotent)")
+	flags.Bool("install-timer", false, "install an hourly crontab entry running token-usage report (idempotent)")
 	flags.Bool("uninstall-timer", false, "remove the crontab entry installed by --install-timer")
 	flags.Bool("quiet", false, "print only the summary line")
 	return cmd
 }
 
 // ReportError carries the report command's exit code through cobra's error
-// path; cmd/ccusage maps it onto os.Exit.
+// path; cmd/token-usage maps it onto os.Exit.
 type ReportError struct {
 	ExitCode int
 	Err      error
@@ -174,7 +174,7 @@ func sendError(err error) error {
 func adviseConfig(err error) error {
 	switch {
 	case errors.Is(err, report.ErrNoServer):
-		return fmt.Errorf("%w\n  配置方法任选其一:\n  1) ccusage report --server <地址> --token <token>\n  2) 环境变量 CCUSAGE_REPORT_SERVER / CCUSAGE_REPORT_TOKEN\n  3) ccusage.json 里加 {\"reportServer\": ..., \"reportToken\": ...}", err)
+		return fmt.Errorf("%w\n  配置方法任选其一:\n  1) token-usage report --server <地址> --token <token>\n  2) 环境变量 TOKEN_USAGE_REPORT_SERVER / TOKEN_USAGE_REPORT_TOKEN(旧名 CCUSAGE_REPORT_* 亦可)\n  3) token-usage 配置(~/.config/token-usage/config.json)里加 {\"reportServer\": ..., \"reportToken\": ...}", err)
 	case errors.Is(err, report.ErrNoToken):
 		return fmt.Errorf("%w\n  在网页端 登录 → 设置 → 生成 report token,再配置到客户端。", err)
 	}
@@ -200,7 +200,7 @@ func runTimerInstall() error {
 		return &ReportError{reportExitNet, err}
 	}
 	if installed {
-		fmt.Println("✓ 已安装每小时自动上报的 crontab 条目(日志见 /tmp/ccusage-report.log)")
+		fmt.Println("✓ 已安装每小时自动上报的 crontab 条目(日志见 /tmp/token-usage-report.log)")
 	} else {
 		fmt.Println("已存在自动上报条目,无需重复安装")
 	}

@@ -1,2 +1,2 @@
 The --last option is only available for the daily, weekly, and monthly reports.
-Run 'ccusage --help' for usage.
+Run 'token-usage --help' for usage.

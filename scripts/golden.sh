@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Regenerate golden files from the reference ccusage binary.
+# NOTE: since the token-usage rebrand (ADR 0008) our outputs intentionally
+# diverge in branded strings; regenerated files need the ccusage→token-usage
+# adjustments re-applied — the checked-in goldens are the spec.
 #
 # Usage: scripts/golden.sh [path-to-reference-ccusage] [case-name-filter]
 #
@@ -7,7 +10,7 @@
 #   NO_COLOR=1 TZ=UTC LANG=C.UTF-8 LC_ALL=C.UTF-8 TERM=dumb COLUMNS=100
 #   HOME=<repo>/testdata/fixtures/home
 #   PATH=/usr/local/bin:/usr/bin:/bin
-#   CLAUDE_CONFIG_DIR and XDG_CONFIG_HOME unset unless the case sets them.
+#   CLAUDE_CONFIG_DIR, TOKEN_USAGE_CONFIG_DIR, and XDG_CONFIG_HOME unset unless the case sets them.
 # A case's "env" object overrides base values (later duplicate keys collapse to
 # the case value). Its "env_remove" list names env vars removed AFTER overrides
 # are applied, so a case can set FORCE_COLOR=1 while removing NO_COLOR. Args

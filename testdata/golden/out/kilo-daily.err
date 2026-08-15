@@ -1,1 +1,1 @@
-WARN  Missing embedded pricing for unknown-model-xyz; cost excludes this model. Run without --offline or update ccusage after pricing is added.
+WARN  Missing embedded pricing for unknown-model-xyz; cost excludes this model. Run without --offline or update token-usage after pricing is added.

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // ServiceTier classifies a recorded Codex service tier.

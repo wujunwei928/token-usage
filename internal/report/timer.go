@@ -13,7 +13,7 @@ import (
 // stay idempotent even when the user edits their crontab by hand. The
 // crontab-content logic lives in pure functions (unit-tested); only the thin
 // read/write shell touches the real crontab.
-const cronMarker = "# ccusage-report-timer (auto-managed)"
+const cronMarker = "# token-usage-report-timer (auto-managed)"
 
 func readCrontab() (string, error) {
 	out, err := exec.Command("crontab", "-l").Output()
@@ -98,7 +98,7 @@ func InstallTimer() (installed bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	next, changed := installInto(current, reportEntry(self, "/tmp/ccusage-report.log"))
+	next, changed := installInto(current, reportEntry(self, "/tmp/token-usage-report.log"))
 	if !changed {
 		return false, nil
 	}

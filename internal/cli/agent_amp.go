@@ -3,15 +3,15 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/amp"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/amp"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func init() {
 	registerAgentCommand(newAmpCommand)
 }
 
-// newAmpCommand builds the `ccusage amp` command tree: daily (the default when
+// newAmpCommand builds the `token-usage amp` command tree: daily (the default when
 // no report is named), monthly, and session.
 func newAmpCommand() *cobra.Command {
 	cmd := &cobra.Command{Use: "amp", Short: "Show Amp token usage commands"}
@@ -48,7 +48,7 @@ func ampReportArgsError(args []string) error {
 	for _, arg := range args {
 		if !agentReportSupported("amp", arg) {
 			return parseErr(
-				"The %q report is not available for Amp usage.\nUse \"ccusage amp daily\" for Amp usage reports.",
+				"The %q report is not available for Amp usage.\nUse \"token-usage amp daily\" for Amp usage reports.",
 				arg)
 		}
 	}

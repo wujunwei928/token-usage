@@ -6,13 +6,13 @@
 
 ```bash
 # 构建单个二进制(交叉编译同理)
-go build -o lbserver ./cmd/server
+go build -o token-usage-server ./cmd/server
 
 # 建库并创建第一个用户(打印一次性 report token)
-./lbserver add-user -db leaderboard.db --name 你的名字 --city 北京
+./token-usage-server add-user -db leaderboard.db --name 你的名字 --city 北京
 
 # 启动(默认 127.0.0.1:8787)
-./lbserver serve -db leaderboard.db -addr 0.0.0.0:8787
+./token-usage-server serve -db leaderboard.db -addr 0.0.0.0:8787
 ```
 
 浏览器打开 `http://<host>:8787/` 即是排行榜;`/pricing` 价格表、`/about` 数据说明、`/login` `/register` 账号。
@@ -28,16 +28,16 @@ go build -o lbserver ./cmd/server
 ## 客户端接入
 
 ```bash
-ccusage report --server http://<host>:8787 --token <token>   # 手动上报(重跑即覆盖当日)
-ccusage report --install-timer                               # 安装每小时自动上报
-ccusage report --since 2026-02-15                            # 一次性回溯:把该日期至今每天的数据在单个请求里上报
+token-usage report --server http://<host>:8787 --token <token>   # 手动上报(重跑即覆盖当日)
+token-usage report --install-timer                               # 安装每小时自动上报
+token-usage report --since 2026-02-15                            # 一次性回溯:把该日期至今每天的数据在单个请求里上报
 ```
 
 - 稳态语义不变:默认只报今天;`--since` 是一次性回溯(每 (设备, 日期) 仍是独立的 latest-wins 单元,可安全重跑);
 - 回溯单请求上限:550 天 / 20 万行;无数据的天自动跳过,不会清空已有数据;
-- 口径:claude 走与 `ccusage daily` 完全相同的 daily 管道(含 agent-progress 行与相同 dedup 决胜),榜单总量与本地报表可对账;榜单总量含缓存 token(codex 的 cached 计入 cache-read 类,本地 codex daily 的 totalTokens 不含缓存,差额即当日 cached)。
+- 口径:claude 走与 `token-usage daily` 完全相同的 daily 管道(含 agent-progress 行与相同 dedup 决胜),榜单总量与本地报表可对账;榜单总量含缓存 token(codex 的 cached 计入 cache-read 类,本地 codex daily 的 totalTokens 不含缓存,差额即当日 cached)。
 
-或在 `ccusage.json` 里配 `reportServer` / `reportToken`,或用环境变量 `CCUSAGE_REPORT_SERVER` / `CCUSAGE_REPORT_TOKEN`(优先级:flag > env > config)。
+或在 token-usage 配置(`~/.config/token-usage/config.json`,见 ADR 0007)里配 `reportServer` / `reportToken`,或用环境变量 `CCUSAGE_REPORT_SERVER` / `CCUSAGE_REPORT_TOKEN`(优先级:flag > env > config)。
 
 ## 价格表
 

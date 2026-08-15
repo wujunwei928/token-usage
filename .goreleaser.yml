@@ -5,13 +5,13 @@ before:
     - go mod tidy
 
 builds:
-  - id: ccusage
-    main: ./cmd/ccusage
-    binary: ccusage
+  - id: token-usage
+    main: ./cmd/token-usage
+    binary: token-usage
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/wujunwei/ccusage-go/internal/cli.Version={{.Version}}
+      - -s -w -X github.com/wujunwei928/token-usage/internal/cli.Version={{.Version}}
     goos:
       - linux
       - darwin
@@ -21,8 +21,8 @@ builds:
       - arm64
 
 archives:
-  - id: ccusage
-    builds: [ccusage]
+  - id: token-usage
+    builds: [token-usage]
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows

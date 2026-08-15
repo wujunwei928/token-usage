@@ -1,2 +1,2 @@
-Agent filters like --agent are not supported. Use "ccusage <agent> <report>", for example "ccusage codex daily".
-Run 'ccusage --help' for usage.
+Agent filters like --agent are not supported. Use "token-usage <agent> <report>", for example "token-usage codex daily".
+Run 'token-usage --help' for usage.

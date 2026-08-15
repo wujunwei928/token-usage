@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/terminal"
+	"github.com/wujunwei928/token-usage/internal/terminal"
 )
 
 // UsageCompactWidthThreshold is the TTY width below which usage tables compact.
@@ -311,7 +311,7 @@ func PrintMissingPricingWarningsForModels(models []string, offline bool) {
 	sort.Strings(sorted)
 	for _, model := range sorted {
 		if offline {
-			fmt.Fprintf(os.Stderr, "WARN  Missing embedded pricing for %s; cost excludes this model. Run without --offline or update ccusage after pricing is added.\n", model)
+			fmt.Fprintf(os.Stderr, "WARN  Missing embedded pricing for %s; cost excludes this model. Run without --offline or update token-usage after pricing is added.\n", model)
 		} else {
 			fmt.Fprintf(os.Stderr, "WARN  Missing pricing for %s; cost excludes this model. Update pricing or run again after LiteLLM has the model.\n", model)
 		}

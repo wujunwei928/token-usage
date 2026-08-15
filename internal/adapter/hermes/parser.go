@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // hermesEntry mirrors the Rust HermesEntry: one row of the sessions table.

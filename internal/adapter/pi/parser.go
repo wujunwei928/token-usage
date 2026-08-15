@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
-// PiLine is one parsed pi session record; fields ccusage does not consume are
+// PiLine is one parsed pi session record; fields token-usage does not consume are
 // skipped, and unexpected field types degrade leniently like the reference.
 type piLine struct {
 	Type      *string

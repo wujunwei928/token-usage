@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/wujunwei/ccusage-go/internal/server"
+	"github.com/wujunwei928/token-usage/internal/server"
 )
 
 func main() {

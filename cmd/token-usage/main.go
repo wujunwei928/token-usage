@@ -1,4 +1,4 @@
-// ccusage-go: Go implementation of ccusage, byte-compatible with Rust ccusage v20.0.19.
+// token-usage: Go port of ccusage (Rust v20 line), rebranded per ADR 0008;
 package main
 
 import (
@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/wujunwei/ccusage-go/internal/cli"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/cli"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func main() {

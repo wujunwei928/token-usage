@@ -1,1 +1,1 @@
-{"args": ["claude", "daily", "--json", "--offline"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/config/discover"}}
+{"args": ["claude", "daily", "--json", "--offline"], "env": {"CLAUDE_CONFIG_DIR": "$FIXTURE/config/discover", "TOKEN_USAGE_CONFIG_DIR": "$FIXTURE/config/discover"}}

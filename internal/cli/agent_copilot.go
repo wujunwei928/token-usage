@@ -6,15 +6,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/copilot"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/copilot"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func init() {
 	registerAgentCommand(newCopilotCommand)
 }
 
-// newCopilotCommand builds the `ccusage copilot` command tree: daily (the
+// newCopilotCommand builds the `token-usage copilot` command tree: daily (the
 // default when no report is named), monthly, and session.
 func newCopilotCommand() *cobra.Command {
 	cmd := &cobra.Command{Use: "copilot", Short: "Show GitHub Copilot CLI usage commands"}
@@ -51,7 +51,7 @@ func copilotReportArgsError(args []string) error {
 	for _, arg := range args {
 		if !agentReportSupported("copilot", arg) {
 			return parseErr(
-				"The %q report is not available for GitHub Copilot CLI usage.\nUse \"ccusage copilot daily\" for GitHub Copilot CLI usage reports.",
+				"The %q report is not available for GitHub Copilot CLI usage.\nUse \"token-usage copilot daily\" for GitHub Copilot CLI usage reports.",
 				arg)
 		}
 	}

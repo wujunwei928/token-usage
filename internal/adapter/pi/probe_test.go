@@ -3,7 +3,7 @@ package pi
 import (
 	"testing"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func TestProbePiCost(t *testing.T) {

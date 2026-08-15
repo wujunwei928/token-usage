@@ -1,8 +1,8 @@
 package all
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/adapter/hermes"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/hermes"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // Hermes participates in the unified report at roster index 6.

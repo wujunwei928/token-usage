@@ -12,7 +12,7 @@ import (
 
 func TestStatuslineCachePathScheme(t *testing.T) {
 	t.Setenv("TMPDIR", "/tmp/cc-abc")
-	if got := statuslineCachePath("sess-1"); got != filepath.Join("/tmp/cc-abc", "ccusage-semaphore", "sess-1.lock") {
+	if got := statuslineCachePath("sess-1"); got != filepath.Join("/tmp/cc-abc", "token-usage-semaphore", "sess-1.lock") {
 		t.Errorf("cache path = %q", got)
 	}
 }

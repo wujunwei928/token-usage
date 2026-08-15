@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // mustParse parses strict JSON with number preservation, mirroring the loader.
@@ -44,16 +44,16 @@ func TestParseConfigObjectStrictness(t *testing.T) {
 func TestDiscoverConfigPathsOrder(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
-	t.Setenv("CLAUDE_CONFIG_DIR", "/tmp/one, /tmp/two")
+	t.Setenv(TokenUsageConfigDirEnv, "/tmp/one, /tmp/two")
 	home := filepath.Join(dir, "home")
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 
 	paths := DiscoverConfigPaths()
 	want := []string{
-		filepath.Join(dir, ".ccusage", "ccusage.json"),
-		filepath.Join("/tmp/one", "ccusage.json"),
-		filepath.Join("/tmp/two", "ccusage.json"),
+		filepath.Join(dir, ".token-usage", "config.json"),
+		filepath.Join("/tmp/one", "config.json"),
+		filepath.Join("/tmp/two", "config.json"),
 	}
 	if len(paths) != len(want) {
 		t.Fatalf("paths = %v, want %v", paths, want)
@@ -64,13 +64,13 @@ func TestDiscoverConfigPathsOrder(t *testing.T) {
 		}
 	}
 
-	// CLAUDE_CONFIG_DIR replaces the home lookup entirely, like the reference.
-	os.Unsetenv("CLAUDE_CONFIG_DIR")
+	// TOKEN_USAGE_CONFIG_DIR replaces the home lookup entirely.
+	os.Unsetenv(TokenUsageConfigDirEnv)
 	paths = DiscoverConfigPaths()
 	want = []string{
-		filepath.Join(dir, ".ccusage", "ccusage.json"),
-		filepath.Join(home, ".config", "claude", "ccusage.json"),
-		filepath.Join(home, ".claude", "ccusage.json"),
+		filepath.Join(dir, ".token-usage", "config.json"),
+		filepath.Join(home, ".config", "token-usage", "config.json"),
+		filepath.Join(home, ".token-usage", "config.json"),
 	}
 	if len(paths) != len(want) {
 		t.Fatalf("paths without CLAUDE_CONFIG_DIR = %v, want %v", paths, want)
@@ -87,15 +87,15 @@ func TestLoadConfigValueDiscoveryOrder(t *testing.T) {
 	cwd := filepath.Join(root, "cwd")
 	agentDir := filepath.Join(root, "agent")
 	homeDir := filepath.Join(root, "home")
-	for _, dir := range []string{filepath.Join(cwd, ".ccusage"), agentDir, filepath.Join(homeDir, ".claude")} {
+	for _, dir := range []string{filepath.Join(cwd, ".token-usage"), agentDir, filepath.Join(homeDir, ".config", "token-usage")} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 	}
 	t.Chdir(cwd)
 	t.Setenv("HOME", homeDir)
-	// Start without CLAUDE_CONFIG_DIR so the home fallback is in play.
-	os.Unsetenv("CLAUDE_CONFIG_DIR")
+	// Start without TOKEN_USAGE_CONFIG_DIR so the home fallback is in play.
+	os.Unsetenv(TokenUsageConfigDirEnv)
 
 	write := func(path, order string) {
 		t.Helper()
@@ -120,22 +120,22 @@ func TestLoadConfigValueDiscoveryOrder(t *testing.T) {
 	}
 
 	// Home dir only.
-	homeConfig := filepath.Join(homeDir, ".claude", "ccusage.json")
+	homeConfig := filepath.Join(homeDir, ".config", "token-usage", "config.json")
 	write(homeConfig, "desc")
 	if got := orderOf(LoadConfigValue("")); got != "desc" {
 		t.Fatalf("home config not discovered, order=%q", got)
 	}
 
-	// CLAUDE_CONFIG_DIR beats home.
-	t.Setenv("CLAUDE_CONFIG_DIR", agentDir)
-	agentConfig := filepath.Join(agentDir, "ccusage.json")
+	// TOKEN_USAGE_CONFIG_DIR beats home.
+	t.Setenv(TokenUsageConfigDirEnv, agentDir)
+	agentConfig := filepath.Join(agentDir, "config.json")
 	write(agentConfig, "asc")
 	if got := orderOf(LoadConfigValue("")); got != "asc" {
 		t.Fatalf("agent dir should beat home, order=%q", got)
 	}
 
-	// Working dir beats CLAUDE_CONFIG_DIR.
-	cwdConfig := filepath.Join(cwd, ".ccusage", "ccusage.json")
+	// Working dir beats TOKEN_USAGE_CONFIG_DIR.
+	cwdConfig := filepath.Join(cwd, ".token-usage", "config.json")
 	write(cwdConfig, "desc")
 	if got := orderOf(LoadConfigValue("")); got != "desc" {
 		t.Fatalf("cwd config should beat agent dir, order=%q", got)
@@ -507,15 +507,15 @@ func TestNamedPIStoreErrors(t *testing.T) {
 		doc  string
 		want string
 	}{
-		{`{"pi":{"stores":"nope"}}`, "Invalid ccusage config: pi.stores must be an array"},
-		{`{"pi":{"stores":["nope"]}}`, "Invalid ccusage config: pi.stores[0] must contain string fields 'name' and 'path'"},
-		{`{"pi":{"stores":[{"name":"omp"}]}}`, "Invalid ccusage config: pi.stores[0] must contain string fields 'name' and 'path'"},
-		{`{"pi":{"stores":[{"path":"/tmp"}]}}`, "Invalid ccusage config: pi.stores[0] must contain string fields 'name' and 'path'"},
-		{`{"pi":{"stores":[{"name":"omp","path":"  "}]}}`, "Invalid ccusage config: pi.stores[0] ('omp'): path must be a non-empty string"},
-		{`{"pi":{"stores":[{"name":"Omp","path":"/tmp"}]}}`, "Invalid ccusage config: pi.stores[0].name must match ^[a-z][a-z0-9_-]{0,31}$"},
-		{`{"pi":{"stores":[{"name":"pi","path":"/tmp"}]}}`, "Invalid ccusage config: pi.stores name 'pi' collides with a built-in agent"},
-		{`{"pi":{"stores":[{"name":"all","path":"/tmp"}]}}`, "Invalid ccusage config: pi.stores name 'all' collides with a built-in agent"},
-		{`{"pi":{"stores":[{"name":"omp","path":"/a"},{"name":"omp","path":"/b"}]}}`, "Invalid ccusage config: duplicate pi.stores name 'omp'"},
+		{`{"pi":{"stores":"nope"}}`, "Invalid token-usage config: pi.stores must be an array"},
+		{`{"pi":{"stores":["nope"]}}`, "Invalid token-usage config: pi.stores[0] must contain string fields 'name' and 'path'"},
+		{`{"pi":{"stores":[{"name":"omp"}]}}`, "Invalid token-usage config: pi.stores[0] must contain string fields 'name' and 'path'"},
+		{`{"pi":{"stores":[{"path":"/tmp"}]}}`, "Invalid token-usage config: pi.stores[0] must contain string fields 'name' and 'path'"},
+		{`{"pi":{"stores":[{"name":"omp","path":"  "}]}}`, "Invalid token-usage config: pi.stores[0] ('omp'): path must be a non-empty string"},
+		{`{"pi":{"stores":[{"name":"Omp","path":"/tmp"}]}}`, "Invalid token-usage config: pi.stores[0].name must match ^[a-z][a-z0-9_-]{0,31}$"},
+		{`{"pi":{"stores":[{"name":"pi","path":"/tmp"}]}}`, "Invalid token-usage config: pi.stores name 'pi' collides with a built-in agent"},
+		{`{"pi":{"stores":[{"name":"all","path":"/tmp"}]}}`, "Invalid token-usage config: pi.stores name 'all' collides with a built-in agent"},
+		{`{"pi":{"stores":[{"name":"omp","path":"/a"},{"name":"omp","path":"/b"}]}}`, "Invalid token-usage config: duplicate pi.stores name 'omp'"},
 	}
 	for _, tc := range cases {
 		_, err := ParseNamedPIStores(mustParse(t, tc.doc))
@@ -561,7 +561,7 @@ func TestConfigErrorOnlyForAllAgentReports(t *testing.T) {
 	if err == nil {
 		t.Fatal("all-agent daily must surface pi.stores errors")
 	}
-	if !strings.HasPrefix(err.Error(), "Invalid ccusage config: ") {
+	if !strings.HasPrefix(err.Error(), "Invalid token-usage config: ") {
 		t.Errorf("error text = %q", err.Error())
 	}
 }

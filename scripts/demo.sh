@@ -11,7 +11,7 @@ DB="$DEMO/leaderboard.db"
 mkdir -p "$DEMO"
 rm -f "$DB" "$DEMO"/device.json
 
-go build -o "$DEMO/ccusage" ./cmd/ccusage
+go build -o "$DEMO/token-usage" ./cmd/token-usage
 go build -o "$DEMO/server" ./cmd/server
 
 # 演示用户(名字 城市)

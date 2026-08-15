@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // droidEntry mirrors the Rust DroidEntry: one parsed settings snapshot.

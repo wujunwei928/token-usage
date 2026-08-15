@@ -1,8 +1,8 @@
 package all
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/adapter/grok"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/grok"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // Grok participates in the unified report at roster index 15. It is detected

@@ -8,13 +8,13 @@
 # Usage: scripts/compare.sh [go-binary] [reference-binary]
 set -uo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-GO_BIN=${1:-$REPO/bin/ccusage}
+GO_BIN=${1:-$REPO/bin/token-usage}
 REF_BIN=${2:-/home/wujunwei/.nvm/versions/node/v24.17.0/lib/node_modules/ccusage/node_modules/@ccusage/ccusage-linux-x64/bin/ccusage}
 
 if [ ! -x "$GO_BIN" ]; then
   mkdir -p "$REPO/bin"
-  (cd "$REPO" && go build -o bin/ccusage ./cmd/ccusage) || exit 1
-  GO_BIN=$REPO/bin/ccusage
+  (cd "$REPO" && go build -o bin/token-usage ./cmd/token-usage) || exit 1
+  GO_BIN=$REPO/bin/token-usage
 fi
 
 export NO_COLOR=1 TZ=UTC LANG=C.UTF-8 LC_ALL=C.UTF-8 TERM=dumb COLUMNS=100

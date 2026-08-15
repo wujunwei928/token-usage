@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // LoadOptions carries what the loader needs from the CLI layer.
@@ -28,7 +28,7 @@ func loadPricing(shared *core.SharedArgs) *core.PricingMap {
 	if level := core.LogLevel(); level != nil && *level == 0 {
 		refreshLog = false
 	}
-	// Ticket 10: ccusage.json pricingOverrides ride on SharedArgs into the
+	// Ticket 10: token-usage config pricingOverrides ride on SharedArgs into the
 	// pricing map load.
 	return core.LoadWithOverrides(shared.OfflineEffective(), refreshLog, shared.PricingOverrides)
 }

@@ -1,4 +1,4 @@
-// Ticket-10 hook: ccusage.json application for commands that register the
+// Ticket-10 hook: token-usage config application for commands that register the
 // shared flags. This is the interim wiring that keeps golden config-* cases
 // green; the lead's final wiring calls config.ApplyConfig directly from each
 // RunE (see internal/config/apply.go for the documented call).
@@ -7,8 +7,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/config"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/config"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // WireCommandConfig installs a PreRunE hook on a command that registers the
@@ -27,7 +27,7 @@ func WireCommandConfig(cmd *cobra.Command, shared *core.SharedArgs) {
 			}
 		}
 		agent := ""
-		if parent := c.Parent(); parent != nil && parent.Name() != "ccusage" {
+		if parent := c.Parent(); parent != nil && parent.Name() != "token-usage" {
 			agent = parent.Name()
 		}
 		if err := config.ApplyToFlags(agent, c.Name(), c.Flags(), shared); err != nil {

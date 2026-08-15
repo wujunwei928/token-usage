@@ -1,7 +1,7 @@
 // Package statusline renders the Claude Code statusline hook output: a single
 // compact line carrying model, session/today cost, the active billing block
 // with burn rate, and context-window usage. It mirrors run_statusline in the
-// reference implementation, including the ${TMPDIR}/ccusage-semaphore cache
+// reference implementation, including the ${TMPDIR}/token-usage-semaphore cache
 // keyed on transcript mtime plus a refresh interval.
 package statusline
 
@@ -11,7 +11,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // VisualBurnRate controls the burn-rate status decoration.
@@ -46,18 +46,19 @@ type CostSource int
 // Cost sources.
 const (
 	CostSourceAuto CostSource = iota
-	CostSourceCcusage
+	CostSourceTokenUsage
 	CostSourceCc
 	CostSourceBoth
 )
 
-// ParseCostSource maps the CLI string onto a CostSource.
+// ParseCostSource maps the CLI string onto a CostSource. "ccusage" stays
+// accepted as the legacy spelling of "token-usage" (ADR 0008).
 func ParseCostSource(value string) (CostSource, bool) {
 	switch value {
 	case "auto":
 		return CostSourceAuto, true
-	case "ccusage":
-		return CostSourceCcusage, true
+	case "token-usage", "ccusage":
+		return CostSourceTokenUsage, true
 	case "cc":
 		return CostSourceCc, true
 	case "both":

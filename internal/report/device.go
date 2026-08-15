@@ -17,16 +17,32 @@ type DeviceFile struct {
 }
 
 // DefaultDevicePath resolves the device file location:
-// CCUSAGE_DEVICE_FILE wins, else <user config dir>/ccusage/device.json.
+// TOKEN_USAGE_DEVICE_FILE (legacy CCUSAGE_DEVICE_FILE) wins, else
+// <user config dir>/token-usage/device.json.
+// A legacy <user config dir>/ccusage/device.json is migrated in place so
+// existing device identities survive the namespace move (ADR 0007).
 func DefaultDevicePath() (string, error) {
-	if p := os.Getenv("CCUSAGE_DEVICE_FILE"); p != "" {
+	if p := firstNonEmptyEnv("TOKEN_USAGE_DEVICE_FILE", "CCUSAGE_DEVICE_FILE"); p != "" {
 		return p, nil
 	}
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "ccusage", "device.json"), nil
+	path := filepath.Join(dir, "token-usage", "device.json")
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
+	}
+	legacy := filepath.Join(dir, "ccusage", "device.json")
+	if _, err := os.Stat(legacy); err == nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err == nil {
+			if err := os.Rename(legacy, path); err == nil {
+				return path, nil
+			}
+		}
+		return legacy, nil
+	}
+	return path, nil
 }
 
 // hostnameLabel is the default device label.

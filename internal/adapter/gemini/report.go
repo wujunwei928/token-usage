@@ -1,7 +1,7 @@
 package gemini
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // ReportKind selects the report granularity for the Gemini adapter.

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // simpleAgentKind is the report granularity shared by the simple agent
@@ -101,9 +101,9 @@ func newSimpleAgentCommand(cfg simpleAgentConfig) *cobra.Command {
 // report name the agent does not offer.
 func unsupportedAgentReportError(use, display, report string) error {
 	if report == "blocks" || report == "statusline" {
-		return parseErr("The %q report is only available for Claude Code usage.\nUse \"ccusage %s daily\" for %s usage reports.", report, use, display)
+		return parseErr("The %q report is only available for Claude Code usage.\nUse \"token-usage %s daily\" for %s usage reports.", report, use, display)
 	}
-	return parseErr("The %q report is not available for %s usage.\nUse \"ccusage %s daily\" for %s usage reports.", report, display, use, display)
+	return parseErr("The %q report is not available for %s usage.\nUse \"token-usage %s daily\" for %s usage reports.", report, display, use, display)
 }
 
 // unknownAgentCommandError reproduces the reference's catch-all parse error.

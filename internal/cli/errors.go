@@ -59,7 +59,7 @@ func agentFilterOptionError(args []string) error {
 		}
 		if flag != "" {
 			return &ParseError{fmt.Sprintf(
-				"Agent filters like %s are not supported. Use \"ccusage <agent> <report>\", for example \"ccusage codex daily\".\nRun 'ccusage --help' for usage.", flag)}
+				"Agent filters like %s are not supported. Use \"token-usage <agent> <report>\", for example \"token-usage codex daily\".\nRun 'token-usage --help' for usage.", flag)}
 		}
 	}
 	return nil
@@ -94,14 +94,14 @@ func reformatCobraFlagError(root *cobra.Command, raw []string, err error) error 
 			flag = rest[idx+4:]
 		}
 	} else if strings.HasPrefix(msg, "unknown command ") {
-		// unknown command "x" for "ccusage" / for "ccusage claude"
+		// unknown command "x" for "token-usage" / for "token-usage claude"
 		var token, parent string
 		if n, _ := fmt.Sscanf(msg, "unknown command %q for %q", &token, &parent); n == 2 {
-			if parent == "ccusage" {
-				return &ParseError{fmt.Sprintf("Unknown command '%s'\nRun 'ccusage --help' for usage.", token)}
+			if parent == "token-usage" {
+				return &ParseError{fmt.Sprintf("Unknown command '%s'\nRun 'token-usage --help' for usage.", token)}
 			}
-			agent := strings.TrimPrefix(parent, "ccusage ")
-			return &ParseError{fmt.Sprintf("The %q report is not available for %s usage.\nRun 'ccusage --help' for usage.", token, agentDisplayName(agent))}
+			agent := strings.TrimPrefix(parent, "token-usage ")
+			return &ParseError{fmt.Sprintf("The %q report is not available for %s usage.\nRun 'token-usage --help' for usage.", token, agentDisplayName(agent))}
 		}
 		return nil
 	} else {
@@ -109,9 +109,9 @@ func reformatCobraFlagError(root *cobra.Command, raw []string, err error) error 
 	}
 	cmd := commandContext(root, raw)
 	if cmd == nil || cmd == root {
-		return &ParseError{fmt.Sprintf("Unknown option '%s'\nRun 'ccusage --help' for usage.", flag)}
+		return &ParseError{fmt.Sprintf("Unknown option '%s'\nRun 'token-usage --help' for usage.", flag)}
 	}
-	return &ParseError{fmt.Sprintf("Unknown %s option '%s'\nRun 'ccusage --help' for usage.", cmd.Name(), flag)}
+	return &ParseError{fmt.Sprintf("Unknown %s option '%s'\nRun 'token-usage --help' for usage.", cmd.Name(), flag)}
 }
 
 // commandContext walks raw args through the command tree to find the deepest

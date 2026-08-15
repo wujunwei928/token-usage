@@ -5,8 +5,8 @@ import (
 	"os"
 	"sort"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
-	"github.com/wujunwei/ccusage-go/internal/terminal"
+	"github.com/wujunwei928/token-usage/internal/core"
+	"github.com/wujunwei928/token-usage/internal/terminal"
 )
 
 // AgentLabel renders an agent id for display.

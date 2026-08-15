@@ -1,8 +1,8 @@
 package all
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/adapter/openclaw"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/openclaw"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func init() {

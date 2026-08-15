@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // Pricing is the server-side Cost Estimate engine: the CLI domain's embedded

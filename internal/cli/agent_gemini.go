@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/gemini"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/gemini"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func init() {
@@ -269,7 +269,7 @@ type agentCommandSpec struct {
 // newAgentCommandTree builds the agent parent plus its daily/monthly/session
 // subcommands. Flag parsing is manual (DisableFlagParsing) so the reference
 // parser's messages and strictness carry over; the shared flag set is still
-// registered so discovered ccusage.json config applies.
+// registered so discovered token-usage config applies.
 func newAgentCommandTree(spec *agentCommandSpec) *cobra.Command {
 	options := agentOptionTable(spec.openClawArg)
 	parent := &cobra.Command{
@@ -324,7 +324,7 @@ func runAgentParent(spec *agentCommandSpec, options []agentOption, f *sharedFlag
 			kind = agentKindFor(token)
 			rest = args[1:]
 		default:
-			return parseErr("The \"%s\" report is not available for %s usage.\nUse \"ccusage %s daily\" for %s usage reports.",
+			return parseErr("The \"%s\" report is not available for %s usage.\nUse \"token-usage %s daily\" for %s usage reports.",
 				token, spec.display, spec.agent, spec.display)
 		}
 	}
@@ -349,7 +349,7 @@ func runAgentReport(spec *agentCommandSpec, options []agentOption, f *sharedFlag
 		return err
 	}
 	if st.version {
-		fmt.Fprintf(cmd.OutOrStdout(), "ccusage %s\n", Version)
+		fmt.Fprintf(cmd.OutOrStdout(), "token-usage %s\n", Version)
 		return nil
 	}
 	if st.help {

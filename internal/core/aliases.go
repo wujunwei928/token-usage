@@ -1,7 +1,8 @@
 package core
 
-// CCUSAGE_MODEL_ALIASES resolution ported from
-// rust/crates/ccusage-core/src/model_aliases.rs.
+// Model alias resolution ported from rust/crates/ccusage-core/src/model_aliases.rs.
+// TOKEN_USAGE_MODEL_ALIASES wins; CCUSAGE_MODEL_ALIASES is the legacy
+// fallback (ADR 0008).
 
 import (
 	"encoding/json"
@@ -10,7 +11,10 @@ import (
 	"sync"
 )
 
-const modelAliasesEnv = "CCUSAGE_MODEL_ALIASES"
+const (
+	modelAliasesEnv       = "TOKEN_USAGE_MODEL_ALIASES"
+	modelAliasesEnvLegacy = "CCUSAGE_MODEL_ALIASES"
+)
 
 var (
 	aliasesMu    sync.RWMutex
@@ -20,8 +24,9 @@ var (
 	testAliasesMu sync.Mutex
 )
 
-// ResolveModelName resolves a model name through CCUSAGE_MODEL_ALIASES,
-// including -fast variants.
+// ResolveModelName resolves a model name through the model-aliases env
+// (TOKEN_USAGE_MODEL_ALIASES, legacy CCUSAGE_MODEL_ALIASES), including -fast
+// variants.
 func ResolveModelName(model string) string {
 	aliases := modelAliases()
 	if alias, ok := aliases[model]; ok && alias != "" {
@@ -54,8 +59,11 @@ func modelAliases() map[string]string {
 }
 
 func loadModelAliasesFromEnv() map[string]string {
-	raw, ok := os.LookupEnv(modelAliasesEnv)
-	if !ok {
+	raw := strings.TrimSpace(os.Getenv(modelAliasesEnv))
+	if raw == "" {
+		raw = strings.TrimSpace(os.Getenv(modelAliasesEnvLegacy))
+	}
+	if raw == "" {
 		return map[string]string{}
 	}
 	return parseModelAliases(raw)

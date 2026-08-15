@@ -10,22 +10,34 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/config"
+	"github.com/wujunwei928/token-usage/internal/config"
 )
 
-// Endpoint config resolution order: flag > env (CCUSAGE_REPORT_SERVER /
-// CCUSAGE_REPORT_TOKEN) > ccusage.json keys reportServer / reportToken.
+// firstNonEmptyEnv returns the first non-empty value among the names:
+// TOKEN_USAGE_* wins over the legacy CCUSAGE_* names (ADR 0008).
+func firstNonEmptyEnv(names ...string) string {
+	for _, name := range names {
+		if v := strings.TrimSpace(os.Getenv(name)); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// Endpoint config resolution order: flag > env (TOKEN_USAGE_REPORT_SERVER /
+// TOKEN_USAGE_REPORT_TOKEN, falling back to CCUSAGE_REPORT_SERVER /
+// CCUSAGE_REPORT_TOKEN) > token-usage config keys reportServer / reportToken.
 
 // ResolveEndpoint applies the precedence chain. args are the raw CLI args so
 // config discovery sees --config like every other command.
 func ResolveEndpoint(args []string, flagServer, flagToken string) (server, token string, err error) {
 	server = strings.TrimRight(strings.TrimSpace(flagServer), "/")
 	if server == "" {
-		server = strings.TrimRight(strings.TrimSpace(os.Getenv("CCUSAGE_REPORT_SERVER")), "/")
+		server = strings.TrimRight(firstNonEmptyEnv("TOKEN_USAGE_REPORT_SERVER", "CCUSAGE_REPORT_SERVER"), "/")
 	}
 	token = strings.TrimSpace(flagToken)
 	if token == "" {
-		token = strings.TrimSpace(os.Getenv("CCUSAGE_REPORT_TOKEN"))
+		token = firstNonEmptyEnv("TOKEN_USAGE_REPORT_TOKEN", "CCUSAGE_REPORT_TOKEN")
 	}
 	if server == "" || token == "" {
 		root := config.LoadConfigValue(config.ScanConfigPath(args))

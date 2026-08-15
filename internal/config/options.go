@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // NamedPiStore is the shared shape of a pi.stores entry.
@@ -95,7 +95,7 @@ type CostSource int
 // Cost sources.
 const (
 	CostSourceAuto CostSource = iota
-	CostSourceCcusage
+	CostSourceTokenUsage
 	CostSourceCc
 	CostSourceBoth
 )
@@ -105,8 +105,8 @@ func ParseCostSource(value string) (CostSource, bool) {
 	switch value {
 	case "auto":
 		return CostSourceAuto, true
-	case "ccusage":
-		return CostSourceCcusage, true
+	case "token-usage", "ccusage":
+		return CostSourceTokenUsage, true
 	case "cc":
 		return CostSourceCc, true
 	case "both":
@@ -117,8 +117,8 @@ func ParseCostSource(value string) (CostSource, bool) {
 
 func (c CostSource) String() string {
 	switch c {
-	case CostSourceCcusage:
-		return "ccusage"
+	case CostSourceTokenUsage:
+		return "token-usage"
 	case CostSourceCc:
 		return "cc"
 	case CostSourceBoth:

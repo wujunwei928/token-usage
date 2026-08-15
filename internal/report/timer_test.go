@@ -6,7 +6,7 @@ import (
 )
 
 func TestInstallIntoIdempotent(t *testing.T) {
-	entry := reportEntry("/usr/local/bin/ccusage", "/tmp/ccusage-report.log")
+	entry := reportEntry("/usr/local/bin/ccusage", "/tmp/token-usage-report.log")
 	if !strings.Contains(entry, cronMarker) || !strings.Contains(entry, "0 * * * *") {
 		t.Fatalf("entry malformed: %q", entry)
 	}
@@ -31,7 +31,7 @@ func TestInstallIntoIdempotent(t *testing.T) {
 }
 
 func TestUninstallInto(t *testing.T) {
-	entry := reportEntry("/usr/bin/ccusage", "/tmp/ccusage-report.log")
+	entry := reportEntry("/usr/bin/ccusage", "/tmp/token-usage-report.log")
 	withEntry, _ := installInto("0 9 * * * backup\n", entry)
 
 	restored, removed := uninstallInto(withEntry)

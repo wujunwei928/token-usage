@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/openclaw"
+	"github.com/wujunwei928/token-usage/internal/adapter/openclaw"
 )
 
 func init() {

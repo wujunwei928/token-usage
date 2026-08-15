@@ -3,8 +3,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/codex"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/codex"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // The codex agent command: daily/monthly/session reports over ~/.codex
@@ -24,16 +24,16 @@ func newCodexCommand() *cobra.Command {
 	cmd.Flags().String("speed", "auto", codexSpeedFlagHelp)
 	cmd.Flags().Lookup("speed").NoOptDefVal = "auto"
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		// Bare `ccusage codex` (or `ccusage codex --flags`) is the daily
+		// Bare `token-usage codex` (or `token-usage codex --flags`) is the daily
 		// report; any positional token names a (possibly unsupported) report.
 		if len(args) > 0 {
 			if agentReportSupported("codex", args[0]) {
 				return parseErr("Expected option, got '%s'", args[0])
 			}
 			if args[0] == "blocks" || args[0] == "statusline" {
-				return parseErr("The \"%s\" report is only available for Claude Code usage.\nUse \"ccusage codex daily\" for Codex usage reports.", args[0])
+				return parseErr("The \"%s\" report is only available for Claude Code usage.\nUse \"token-usage codex daily\" for Codex usage reports.", args[0])
 			}
-			return parseErr("The \"%s\" report is not available for Codex usage.\nUse \"ccusage codex daily\" for Codex usage reports.", args[0])
+			return parseErr("The \"%s\" report is not available for Codex usage.\nUse \"token-usage codex daily\" for Codex usage reports.", args[0])
 		}
 		return runCodexReport(codex.KindDaily, f, cmd)
 	}

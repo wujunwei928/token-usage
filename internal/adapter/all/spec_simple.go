@@ -1,11 +1,11 @@
 package all
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
-	"github.com/wujunwei/ccusage-go/internal/adapter/goose"
-	"github.com/wujunwei/ccusage-go/internal/adapter/kilo"
-	"github.com/wujunwei/ccusage-go/internal/adapter/pi"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/adapter/goose"
+	"github.com/wujunwei928/token-usage/internal/adapter/kilo"
+	"github.com/wujunwei928/token-usage/internal/adapter/pi"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // pi participates in the unified report at roster index 7 (includeProjectPath

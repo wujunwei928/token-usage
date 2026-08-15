@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
 )
 
 // CopilotOtelFileExporterPathEnv names an explicit OTel export file to read.

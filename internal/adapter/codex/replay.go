@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // parentReplay links a forked session to the session it replayed; path is nil

@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func isInfNaN(v float64) bool {

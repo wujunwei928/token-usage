@@ -1,2 +1,2 @@
-Report flags like --daily are not supported. Use "ccusage daily" instead.
-Run 'ccusage --help' for usage.
+Report flags like --daily are not supported. Use "token-usage daily" instead.
+Run 'token-usage --help' for usage.

@@ -1,8 +1,8 @@
 package all
 
 import (
-	"github.com/wujunwei/ccusage-go/internal/adapter/codebuff"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/codebuff"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // Codebuff participates in the unified report at roster index 5.

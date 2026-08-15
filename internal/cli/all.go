@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/all"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/all"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // allFlags holds the unified-report flag set (root and top-level reports).

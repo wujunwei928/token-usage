@@ -1,13 +1,13 @@
 package cli
 
-// The `ccusage opencode` command tree: daily/weekly/monthly/session reports
+// The `token-usage opencode` command tree: daily/weekly/monthly/session reports
 // over the OpenCode adapter.
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/opencode"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/opencode"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func init() {

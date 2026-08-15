@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
-	"github.com/wujunwei/ccusage-go/internal/terminal"
+	"github.com/wujunwei928/token-usage/internal/core"
+	"github.com/wujunwei928/token-usage/internal/terminal"
 )
 
 // WarningThreshold is the share of the token limit past which a block warns.

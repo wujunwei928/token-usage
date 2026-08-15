@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // StatuslineCache is the semaphore file payload stored per session under
-// ${TMPDIR}/ccusage-semaphore/<session>.lock.
+// ${TMPDIR}/token-usage-semaphore/<session>.lock.
 type StatuslineCache struct {
 	Date            string  `json:"date"`
 	LastOutput      string  `json:"lastOutput"`
@@ -78,7 +78,7 @@ func processIsAlive(pid uint32) bool {
 }
 
 func statuslineCachePath(sessionID string) string {
-	return filepath.Join(os.TempDir(), "ccusage-semaphore", sessionID+".lock")
+	return filepath.Join(os.TempDir(), "token-usage-semaphore", sessionID+".lock")
 }
 
 func readStatuslineCache(path string) *StatuslineCache {

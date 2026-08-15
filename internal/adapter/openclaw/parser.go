@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // openClawLine is a lenient view of one OpenClaw session line. The type and

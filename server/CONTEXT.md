@@ -1,6 +1,6 @@
 # Token 排行榜
 
-客户端读取本地 AI 编程 agent 日志,按日上报小时级聚合用量;服务端汇总成社区排行榜与个人仪表盘。本上下文与 ccusage-go CLI 共享"Usage Entry / Token Usage"等摄入术语(见根 `CONTEXT.md`),以下为排行榜域自有术语。
+客户端读取本地 AI 编程 agent 日志,按日上报小时级聚合用量;服务端汇总成社区排行榜与个人仪表盘。本上下文与 token-usage CLI 共享"Usage Entry / Token Usage"等摄入术语(见根 `CONTEXT.md`),以下为排行榜域自有术语。
 
 ## Language
 

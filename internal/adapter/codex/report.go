@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
-	"github.com/wujunwei/ccusage-go/internal/terminal"
+	"github.com/wujunwei928/token-usage/internal/core"
+	"github.com/wujunwei928/token-usage/internal/terminal"
 )
 
 // jsonFloat mirrors the reference json_float: whole finite floats render as

@@ -8,23 +8,23 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/all"
+	"github.com/wujunwei928/token-usage/internal/adapter/all"
 )
 
 // Version is the baseline reference version this port tracks; overridable at
 // link time for release builds.
-var Version = "20.0.19"
+var Version = "0.1.0"
 
 // NewRootCommand builds the full command tree.
 func NewRootCommand() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "ccusage",
-		Short:         "ccusage - Analyze Claude Code and AI agent usage from local JSONL logs",
+		Use:           "token-usage",
+		Short:         "token-usage - Analyze Claude Code and AI agent usage from local JSONL logs",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
-	// Register the unified-report flags so bare `ccusage` behaves like
-	// `ccusage daily`.
+	// Register the unified-report flags so bare `token-usage` behaves like
+	// `token-usage daily`.
 	rootFlags := registerAllFlags(root)
 	root.RunE = func(cmd *cobra.Command, args []string) error {
 		return runAllReport(all.KindDaily, rootFlags)
@@ -39,7 +39,7 @@ func NewRootCommand() *cobra.Command {
 		v1, _ := cmd.Flags().GetBool("version")
 		v2, _ := cmd.Flags().GetBool("version-cap")
 		if v1 || v2 {
-			fmt.Fprintf(cmd.OutOrStdout(), "ccusage %s\n", Version)
+			fmt.Fprintf(cmd.OutOrStdout(), "token-usage %s\n", Version)
 			// Neutralize the command so only the version line is printed.
 			cmd.RunE = func(*cobra.Command, []string) error { return nil }
 		}

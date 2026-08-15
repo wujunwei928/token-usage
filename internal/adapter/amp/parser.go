@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // readThreadFile parses one Amp thread file (a single JSON object). The file is

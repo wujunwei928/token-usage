@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/common"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // LoadEntries discovers and parses every Copilot OTel export, returning

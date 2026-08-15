@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // KiloMessage is one parsed Kilo message row payload; fields ccusage does not

@@ -25,7 +25,7 @@ var optionalValueFlags = map[string]bool{
 // normalizeArgs rewrites space-separated values of optional-value flags into
 // the `=` form and normalizes legacy `agent:report` colon commands.
 func normalizeArgs(args []string) []string {
-	// Legacy alias: `ccusage codex:daily` -> `ccusage codex daily`, but only
+	// Legacy alias: `token-usage codex:daily` -> `token-usage codex daily`, but only
 	// when the agent actually supports that report.
 	if len(args) > 0 && strings.Contains(args[0], ":") {
 		parts := strings.SplitN(args[0], ":", 2)
@@ -51,7 +51,7 @@ func normalizeArgs(args []string) []string {
 }
 
 // agentReportSupported is the agent x report matrix the reference parser uses
-// for the legacy colon form and the `ccusage <agent> <report>` subcommands.
+// for the legacy colon form and the `token-usage <agent> <report>` subcommands.
 func agentReportSupported(agent, report string) bool {
 	switch agent {
 	case "claude":
@@ -70,7 +70,7 @@ func agentReportSupported(agent, report string) bool {
 			return true
 		}
 	case "amp", "droid", "codebuff", "hermes", "pi", "goose", "kilo",
-		"copilot", "gemini", "kimi", "qwen", "openclaw", "grok":
+		"copilot", "gemini", "kimi", "qwen", "openclaw", "grok", "zcode":
 		switch report {
 		case "daily", "monthly", "session":
 			return true
@@ -89,7 +89,7 @@ func reportFlagAliasError(args []string) error {
 		if reportFlags[arg] {
 			name := strings.TrimPrefix(arg, "--")
 			return &ParseError{fmt.Sprintf(
-				"Report flags like %s are not supported. Use \"ccusage %s\" instead.\nRun 'ccusage --help' for usage.", arg, name)}
+				"Report flags like %s are not supported. Use \"token-usage %s\" instead.\nRun 'token-usage --help' for usage.", arg, name)}
 		}
 	}
 	return nil
@@ -98,6 +98,7 @@ func reportFlagAliasError(args []string) error {
 var agentNames = []string{
 	"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
 	"pi", "goose", "kilo", "copilot", "gemini", "kimi", "qwen", "openclaw", "grok",
+	"zcode",
 }
 
 func isAgentName(name string) bool {

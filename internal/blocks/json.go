@@ -3,7 +3,7 @@ package blocks
 import (
 	"math"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // BlockJSON renders one block for --json output. Burn rate and projection

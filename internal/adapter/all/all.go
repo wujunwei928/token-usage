@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/claude"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/claude"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // ReportKind selects the report granularity (also the --sections vocabulary).
@@ -94,10 +94,13 @@ func notImplemented(kind ReportKind) (AgentRows, error) {
 	return AgentRows{}, nil
 }
 
-// builtInAgentNames is the roster order the reference uses for specs.
+// builtInAgentNames is the roster order the reference uses for specs; zcode
+// is appended beyond the reference roster (ADR 0006: adapters beyond
+// upstream ccusage join the unified report by default).
 var builtInAgentNames = []string{
 	"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
 	"pi", "goose", "openclaw", "kilo", "copilot", "gemini", "kimi", "qwen", "grok",
+	"zcode",
 }
 
 // BuiltInSpecs returns the adapter roster in reference order; adapters that

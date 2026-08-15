@@ -28,14 +28,14 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	repoRoot = filepath.Dir(filepath.Dir(dir))
-	tmp, err := os.MkdirTemp("", "ccusage-e2e")
+	tmp, err := os.MkdirTemp("", "token-usage-e2e")
 	if err != nil {
 		panic(err)
 	}
 	defer os.RemoveAll(tmp)
-	ccusageBin = filepath.Join(tmp, "ccusage")
+	ccusageBin = filepath.Join(tmp, "token-usage")
 	serverBin = filepath.Join(tmp, "server")
-	for _, target := range []struct{ bin, pkg string }{{ccusageBin, "./cmd/ccusage"}, {serverBin, "./cmd/server"}} {
+	for _, target := range []struct{ bin, pkg string }{{ccusageBin, "./cmd/token-usage"}, {serverBin, "./cmd/server"}} {
 		build := exec.Command("go", "build", "-o", target.bin, target.pkg)
 		build.Dir = repoRoot
 		build.Stderr = os.Stderr

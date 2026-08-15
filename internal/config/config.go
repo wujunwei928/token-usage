@@ -193,24 +193,32 @@ func parseConfigObject(content string) (map[string]any, bool) {
 	return object, ok
 }
 
-// DiscoverConfigPaths lists candidate config paths in reference order:
-// ./.ccusage/ccusage.json relative to the working directory, then each Claude
-// config directory's ccusage.json.
+// TokenUsageConfigDirEnv names the comma-separated override for the
+// token-usage config directories.
+const TokenUsageConfigDirEnv = "TOKEN_USAGE_CONFIG_DIR"
+
+// DiscoverConfigPaths lists candidate config paths in discovery order:
+// ./.token-usage/config.json relative to the working directory, then each
+// token-usage config directory's config.json. ccusage-go keeps its own
+// namespace so its config never shares files with the upstream ccusage,
+// which discovers ccusage.json from the Claude config directories instead
+// (ADR 0007).
 func DiscoverConfigPaths() []string {
 	var paths []string
 	if cwd, err := os.Getwd(); err == nil {
-		paths = append(paths, filepath.Join(cwd, ".ccusage", "ccusage.json"))
+		paths = append(paths, filepath.Join(cwd, ".token-usage", "config.json"))
 	}
-	for _, dir := range ClaudeConfigDirs() {
-		paths = append(paths, filepath.Join(dir, "ccusage.json"))
+	for _, dir := range TokenUsageConfigDirs() {
+		paths = append(paths, filepath.Join(dir, "config.json"))
 	}
 	return paths
 }
 
-// ClaudeConfigDirs resolves the Claude config directories: CLAUDE_CONFIG_DIR
-// (comma-separated) when set, otherwise ~/.config/claude and ~/.claude.
-func ClaudeConfigDirs() []string {
-	if envPaths, ok := os.LookupEnv("CLAUDE_CONFIG_DIR"); ok {
+// TokenUsageConfigDirs resolves the token-usage config directories:
+// TOKEN_USAGE_CONFIG_DIR (comma-separated) when set, otherwise
+// ~/.config/token-usage and ~/.token-usage.
+func TokenUsageConfigDirs() []string {
+	if envPaths, ok := os.LookupEnv(TokenUsageConfigDirEnv); ok {
 		var dirs []string
 		for _, raw := range strings.Split(envPaths, ",") {
 			raw = strings.TrimSpace(raw)
@@ -224,7 +232,7 @@ func ClaudeConfigDirs() []string {
 	if err != nil || home == "" {
 		return nil
 	}
-	return []string{filepath.Join(home, ".config", "claude"), filepath.Join(home, ".claude")}
+	return []string{filepath.Join(home, ".config", "token-usage"), filepath.Join(home, ".token-usage")}
 }
 
 // ScanConfigPath extracts an explicit --config path from raw CLI arguments,
@@ -380,7 +388,7 @@ func CommandUsesNamedPIStores(agent, report string) bool {
 const NamedPIStoreNamePattern = "^[a-z][a-z0-9_-]{0,31}$"
 
 func configError(format string, args ...any) error {
-	return fmt.Errorf("Invalid ccusage config: "+format, args...)
+	return fmt.Errorf("Invalid token-usage config: "+format, args...)
 }
 
 // ParseNamedPIStores validates the pi.stores section, returning the stores or

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // ---- fixtures (ported from the Rust UsageEntryFixture helper) ----

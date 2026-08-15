@@ -8,23 +8,24 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/amp"
-	"github.com/wujunwei/ccusage-go/internal/adapter/claude"
-	"github.com/wujunwei/ccusage-go/internal/adapter/codebuff"
-	"github.com/wujunwei/ccusage-go/internal/adapter/codex"
-	"github.com/wujunwei/ccusage-go/internal/adapter/copilot"
-	"github.com/wujunwei/ccusage-go/internal/adapter/droid"
-	"github.com/wujunwei/ccusage-go/internal/adapter/gemini"
-	"github.com/wujunwei/ccusage-go/internal/adapter/goose"
-	"github.com/wujunwei/ccusage-go/internal/adapter/grok"
-	"github.com/wujunwei/ccusage-go/internal/adapter/hermes"
-	"github.com/wujunwei/ccusage-go/internal/adapter/kilo"
-	"github.com/wujunwei/ccusage-go/internal/adapter/kimi"
-	"github.com/wujunwei/ccusage-go/internal/adapter/openclaw"
-	"github.com/wujunwei/ccusage-go/internal/adapter/opencode"
-	"github.com/wujunwei/ccusage-go/internal/adapter/pi"
-	"github.com/wujunwei/ccusage-go/internal/adapter/qwen"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/amp"
+	"github.com/wujunwei928/token-usage/internal/adapter/claude"
+	"github.com/wujunwei928/token-usage/internal/adapter/codebuff"
+	"github.com/wujunwei928/token-usage/internal/adapter/codex"
+	"github.com/wujunwei928/token-usage/internal/adapter/copilot"
+	"github.com/wujunwei928/token-usage/internal/adapter/droid"
+	"github.com/wujunwei928/token-usage/internal/adapter/gemini"
+	"github.com/wujunwei928/token-usage/internal/adapter/goose"
+	"github.com/wujunwei928/token-usage/internal/adapter/grok"
+	"github.com/wujunwei928/token-usage/internal/adapter/hermes"
+	"github.com/wujunwei928/token-usage/internal/adapter/kilo"
+	"github.com/wujunwei928/token-usage/internal/adapter/kimi"
+	"github.com/wujunwei928/token-usage/internal/adapter/openclaw"
+	"github.com/wujunwei928/token-usage/internal/adapter/opencode"
+	"github.com/wujunwei928/token-usage/internal/adapter/pi"
+	"github.com/wujunwei928/token-usage/internal/adapter/qwen"
+	"github.com/wujunwei928/token-usage/internal/adapter/zcode"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // HourCell is one (hour, tool, model) aggregate in the snapshot.
@@ -154,6 +155,7 @@ func loadAllAgents(shared *core.SharedArgs, since, today string) []loadedAdapter
 	load("kimi", func() ([]core.LoadedEntry, error) { return kimi.LoadEntries(shared, pricing) })
 	load("qwen", func() ([]core.LoadedEntry, error) { return qwen.LoadEntries(shared) })
 	load("grok", func() ([]core.LoadedEntry, error) { return grok.LoadEntries(shared) })
+	load("zcode", func() ([]core.LoadedEntry, error) { return zcode.LoadEntries(shared) })
 
 	wg.Wait()
 	return out

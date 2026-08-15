@@ -3,8 +3,8 @@ package all
 import (
 	"sort"
 
-	"github.com/wujunwei/ccusage-go/internal/adapter/codex"
-	"github.com/wujunwei/ccusage-go/internal/core"
+	"github.com/wujunwei928/token-usage/internal/adapter/codex"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // The codex adapter plugs into the unified report at roster index 1.
