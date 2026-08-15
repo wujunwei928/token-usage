@@ -1,0 +1,28 @@
+{{define "head.html"}}<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · Token 排行榜</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">⚡ Token 排行榜</a>
+  <nav>
+    <a href="/" {{if eq .Title "Token 排行榜"}}class="active"{{end}}>排行榜</a>
+    <a href="/pricing" {{if eq .Title "模型价格表"}}class="active"{{end}}>价格表</a>
+    <a href="/about" {{if eq .Title "数据说明"}}class="active"{{end}}>数据说明</a>
+    {{if .User}}
+      <a href="/me" {{if eq .Title "我的 Token"}}class="active"{{end}}>我的 Token</a>
+      <span class="who">{{.User.Name}}</span>
+      <form class="inline" method="post" action="/logout"><button class="linklike">退出</button></form>
+    {{else}}
+      <a href="/login">登录</a>
+      <a href="/register" class="btn-primary small">注册</a>
+    {{end}}
+  </nav>
+</header>
+<main class="container">
+{{if .Flash}}<div class="flash">{{.Flash}}</div>{{end}}
+{{end}}

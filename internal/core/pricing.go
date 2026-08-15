@@ -494,6 +494,20 @@ func (m *PricingMap) FindExact(model string) *Pricing {
 	return nil
 }
 
+// Models returns the sorted model keys of the primary pricing table (the
+// leaderboard server's pricing page renders this roster).
+func (m *PricingMap) Models() []string {
+	if m == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(m.entries))
+	for key := range m.entries {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // findEntry is the primary-table lookup without any models.dev fallback;
 // exposed for tests mirroring the Rust find_entry test helper.
 func (m *PricingMap) findEntry(model string) *Pricing {

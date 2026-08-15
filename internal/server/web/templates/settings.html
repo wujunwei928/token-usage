@@ -1,0 +1,58 @@
+{{define "settings.html"}}
+{{template "head.html" .}}
+{{$v := .Content}}
+<div class="pagehead"><h1>设置</h1><p class="muted">User Token 用于客户端上报;已绑定 {{$v.DeviceCount}}/3 台设备</p></div>
+
+{{if $v.NewToken}}
+<div class="flash ok">
+  新 token(仅本次显示,请立即复制到客户端配置):<br>
+  <code class="token">{{$v.NewToken}}</code>
+</div>
+{{end}}
+
+<section class="settings">
+  <div class="panel">
+    <h3>生成 report token</h3>
+    <form method="post" action="/settings/tokens" class="rowform">
+      <input name="label" placeholder="标签(如 work-laptop)" maxlength="32">
+      <button class="btn-primary" type="submit">生成</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>我的 token</h3>
+    {{if not $v.Tokens}}<p class="muted">还没有 token。</p>{{end}}
+    <table class="pricetable">
+      <thead><tr><th>标签</th><th>创建时间</th><th>最近使用</th><th></th></tr></thead>
+      <tbody>
+      {{range $v.Tokens}}
+        <tr>
+          <td>{{.Label}}</td>
+          <td class="muted">{{ts .CreatedAt}}</td>
+          <td class="muted">{{if .LastUsedAt}}{{ts .LastUsedAt}}{{else}}未使用{{end}}</td>
+          <td><form class="inline" method="post" action="/settings/tokens/revoke"><input type="hidden" name="id" value="{{.ID}}"><button class="linklike danger">吊销</button></form></td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>资料</h3>
+    <form method="post" action="/settings/profile" class="rowform">
+      <input name="city" placeholder="城市(用于城市榜)" value="{{$v.ProfileCity}}" maxlength="32">
+      <button class="btn-primary" type="submit">保存</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>客户端配置示例</h3>
+    <pre class="code">ccusage report --server https://你的服务地址 --token &lt;上面的token&gt;
+# 或写入 ccusage.json:
+{ "reportServer": "https://你的服务地址", "reportToken": "&lt;token&gt;" }
+# 一键安装每小时自动上报:
+ccusage report --install-timer</pre>
+  </div>
+</section>
+{{template "foot.html" .}}
+{{end}}

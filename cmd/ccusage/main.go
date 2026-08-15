@@ -18,6 +18,11 @@ func main() {
 			fmt.Fprintln(os.Stderr, parseErr.Message)
 			os.Exit(2)
 		}
+		var reportErr *cli.ReportError
+		if errors.As(err, &reportErr) {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", reportErr.Err)
+			os.Exit(reportErr.ExitCode)
+		}
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}

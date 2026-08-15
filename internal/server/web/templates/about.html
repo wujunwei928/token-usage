@@ -1,0 +1,31 @@
+{{define "about.html"}}
+{{template "head.html" .}}
+<div class="pagehead"><h1>数据说明</h1></div>
+<div class="prose">
+  <h3>数据是怎么来的</h3>
+  <ul>
+    <li>客户端(<code>ccusage report</code>)只读取本机的 AI 编程 agent 日志(JSONL),在本地聚合成「小时 × 工具 × 模型」的 token 计数后上报;<b>不统计、不上传任何代码或对话内容</b>。</li>
+    <li>同一设备以最近一次上报为准(Latest-wins):重新执行 <code>ccusage report</code> 即修正当日数据。</li>
+    <li>每人最多绑定 3 台设备,多设备用量自动累加;按客户端本地时区的自然日汇总。</li>
+  </ul>
+  <h3>成本估算</h3>
+  <ul>
+    <li>成本为服务端按公开价格表折算的估算值,不是账单;价格表见<a href="/pricing">这里</a>。</li>
+    <li>未知模型按模型家族兜底估算,并在价格表中标注 estimated。</li>
+  </ul>
+  <h3>上榜规则</h3>
+  <ul>
+    <li>按 token 数量排名,按天汇总;支持按工具 / 模型 / 城市 / 时间范围 / 缓存口径筛选。</li>
+    <li>缓存口径「含缓存」计入全部四类 token,「仅新增」只计输入 + 输出。</li>
+    <li>单设备单日用量超过阈值会被标记(Anomaly Flag),当日不进入排行榜,数据保留且本人可见。</li>
+    <li>禁止伪造上报刷榜;异常设备将被移出榜单。</li>
+  </ul>
+  <h3>如何参与</h3>
+  <ol>
+    <li><a href="/register">注册</a>并在设置页生成 report token。</li>
+    <li>配置 <code>ccusage report --server &lt;地址&gt; --token &lt;token&gt;</code>,或写入 ccusage.json(<code>reportServer</code> / <code>reportToken</code>)。</li>
+    <li>手动执行或 <code>ccusage report --install-timer</code> 安装每小时自动上报。</li>
+  </ol>
+</div>
+{{template "foot.html" .}}
+{{end}}

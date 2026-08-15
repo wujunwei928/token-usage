@@ -57,6 +57,7 @@ func NewRootCommand() *cobra.Command {
 		newAllReportCommand(all.KindSession),
 		newClaudeBlocksCommand(),
 		newClaudeStatuslineCommand(),
+		newReportCommand(),
 	)
 	return root
 }

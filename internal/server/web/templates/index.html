@@ -1,0 +1,60 @@
+{{define "index.html"}}
+{{template "head.html" .}}
+{{$v := .Content}}
+<div class="pagehead">
+  <h1>Token 排行榜</h1>
+  <p class="muted">按工具 / 模型 / 城市 / 时间 / 缓存口径筛选社区用量</p>
+</div>
+
+<form method="get" action="/" class="filterbar">
+  <div class="chips">
+    {{range $v.Ranges}}<a href="?range={{.Key}}&tool={{$v.Tool}}&model={{$v.Model}}&city={{$v.City}}&cache={{if $v.IncludeCache}}1{{else}}0{{end}}" class="chip {{if .Active}}active{{end}}">{{.Label}}</a>{{end}}
+  </div>
+  <div class="selects">
+    <label>工具 <select name="tool" onchange="this.form.submit()">
+      <option value="">全部</option>
+      {{range $v.Tools}}<option value="{{.}}" {{if eq . $v.Tool}}selected{{end}}>{{.}}</option>{{end}}
+    </select></label>
+    <label>模型 <select name="model" onchange="this.form.submit()">
+      <option value="">全部</option>
+      {{range $v.Models}}<option value="{{.}}" {{if eq . $v.Model}}selected{{end}}>{{.}}</option>{{end}}
+    </select></label>
+    <label>城市 <select name="city" onchange="this.form.submit()">
+      <option value="">全部</option>
+      {{range $v.Cities}}<option value="{{.}}" {{if eq . $v.City}}selected{{end}}>{{.}}</option>{{end}}
+    </select></label>
+    <label>缓存口径 <select name="cache" onchange="this.form.submit()">
+      <option value="1" {{if $v.IncludeCache}}selected{{end}}>含缓存</option>
+      <option value="0" {{if not $v.IncludeCache}}selected{{end}}>仅新增</option>
+    </select></label>
+    <input type="hidden" name="range" value="{{$v.Range}}">
+  </div>
+</form>
+
+<section class="totals">
+  <div class="tcard"><div class="tlabel">{{$v.RangeLabel}}全员累计消耗</div><div class="tvalue">{{fmtTokens $v.Totals.Tokens}}</div><div class="tsub">tokens({{if $v.IncludeCache}}含缓存{{else}}仅新增{{end}})</div></div>
+  <div class="tcard"><div class="tlabel">参与人数</div><div class="tvalue">{{$v.Totals.Users}}</div><div class="tsub">{{$v.Totals.Devices}} 台设备在上报</div></div>
+  <div class="tcard"><div class="tlabel">社区成本估算</div><div class="tvalue">{{fmtCost $v.Totals.Cost}}</div><div class="tsub">按公开价格表折算</div></div>
+</section>
+
+<section class="board">
+  {{if not $v.Rows}}
+  <div class="empty">该筛选下还没有上榜数据 —— 跑一次 <code>ccusage report</code> 你就是第一名。</div>
+  {{end}}
+  {{range $v.Rows}}
+  <div class="rankcard {{if .Flagged}}flagged{{end}}">
+    <div class="rank rank-{{.Rank}}">{{.Rank}}</div>
+    <div class="avatar">{{initial .Name}}{{if .City}}<span class="city">{{.City}}</span>{{end}}</div>
+    <div class="who">
+      <div class="name">{{.Name}} {{if .Flagged}}<span class="badgetag warn">已标记</span>{{end}}</div>
+      <div class="models">{{range .Models}}<span class="badge">{{.Model}} {{fmtTokens .Tokens}}</span>{{end}}</div>
+    </div>
+    <div class="nums">
+      <div class="tokens">{{fmtTokens .Tokens}}</div>
+      <div class="cost">{{fmtCost .Cost}} · {{.Devices}} 台设备</div>
+    </div>
+  </div>
+  {{end}}
+</section>
+{{template "foot.html" .}}
+{{end}}

@@ -1,0 +1,13 @@
+{{define "login.html"}}
+{{template "head.html" .}}
+<div class="authbox">
+  <h1>登录</h1>
+  <form method="post" action="/login">
+    <label>昵称<input name="name" required autofocus></label>
+    <label>密码<input name="password" type="password" required></label>
+    <button class="btn-primary" type="submit">登录</button>
+    <p class="muted">还没有账号?<a href="/register">注册</a></p>
+  </form>
+</div>
+{{template "foot.html" .}}
+{{end}}

@@ -1,0 +1,42 @@
+{{define "me.html"}}
+{{template "head.html" .}}
+{{$d := .Content}}
+<div class="pagehead">
+  <h1>我的 Token</h1>
+  <p class="muted">{{.User.Name}}{{if .User.City}} · {{.User.City}}{{end}} · {{$d.Today}} · {{$d.Devices | len}} 台设备</p>
+</div>
+
+<section class="statgrid">
+  <div class="scard"><div class="slabel">当日消耗</div><div class="svalue">{{fmtTokens $d.TodayTokens}}</div></div>
+  <div class="scard"><div class="slabel">当日成本估算</div><div class="svalue">{{fmtCost $d.TodayCost}}</div></div>
+  <div class="scard"><div class="slabel">缓存命中率</div><div class="svalue">{{printf "%.1f" (mul100 $d.CacheHitRate)}}%</div></div>
+  <div class="scard"><div class="slabel">连续活跃</div><div class="svalue">{{$d.Streak}} 天</div></div>
+  <div class="scard"><div class="slabel">活跃天数</div><div class="svalue">{{$d.ActiveDays}} 天</div></div>
+  <div class="scard"><div class="slabel">累计消耗</div><div class="svalue">{{fmtTokens $d.TotalTokens}}</div></div>
+  <div class="scard"><div class="slabel">使用工具</div><div class="svalue">{{$d.ByTool | len}}</div></div>
+  <div class="scard"><div class="slabel">使用模型</div><div class="svalue">{{$d.ByModel | len}}</div></div>
+</section>
+{{if $d.FlaggedToday}}<div class="flash warn">⚠ 当日用量超过异常阈值,已从排行榜隐藏,数据保留可在本页查看。</div>{{end}}
+
+<section class="charts">
+  <div class="chartbox wide"><h3>当日用量时间线(按小时 × 工具)</h3><div id="chart-hourly" class="chart"></div></div>
+  <div class="chartbox wide"><h3>近 30 天用量与成本</h3><div id="chart-daily" class="chart"></div></div>
+  <div class="chartbox"><h3>按工具</h3><div id="chart-tool" class="chart"></div></div>
+  <div class="chartbox"><h3>按模型</h3><div id="chart-model" class="chart"></div></div>
+  <div class="chartbox"><h3>Token 构成</h3><div id="chart-compose" class="chart"></div></div>
+  <div class="chartbox"><h3>设备</h3>
+    <table class="devices">
+      {{range $d.Devices}}<tr><td class="mono">{{.ID}}</td><td>{{.Label}}</td><td class="muted">{{.LastSync}}</td></tr>{{end}}
+    </table>
+  </div>
+</section>
+
+<script id="dash-data" type="application/json">{
+  "hourly": {{json $d.HourlyToday}},
+  "daily": {{json $d.Daily30}},
+  "byTool": {{json $d.ByTool}},
+  "byModel": {{json $d.ByModel}},
+  "compose": {{json $d.Composition}}
+}</script>
+{{template "foot.html" .}}
+{{end}}

@@ -1,0 +1,6 @@
+ccusage
+server
+leaderboard.db
+*.db
+*.db-shm
+*.db-wal

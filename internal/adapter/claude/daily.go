@@ -20,29 +20,9 @@ import (
 // LoadDailySummaries scans Claude data and aggregates per-day (or per day and
 // project) usage summaries in one pass, like load_daily_summaries_inner.
 func LoadDailySummaries(shared *core.SharedArgs, projectFilter *string, groupByProject bool) ([]core.UsageSummary, error) {
-	paths, err := ClaudePaths()
+	deduped, err := loadDailyDeduped(shared, projectFilter)
 	if err != nil {
 		return nil, err
-	}
-	files := UsageFiles(paths, projectFilter)
-	if len(files) == 0 {
-		return []core.UsageSummary{}, nil
-	}
-	pricing := loadDailyPricing(shared)
-	tz := core.ParseTZ(shared.Timezone)
-	mode := shared.Mode
-	loadedFiles := common.ReadFilesParallel(files, shared.SingleThread, func(file string) dailyLoadedFile {
-		return readDailyUsageFile(file, tz, mode, pricing)
-	})
-
-	dedup := newDailyDeduper()
-	for _, lf := range loadedFiles {
-		for _, entry := range lf.entries {
-			if projectFilter != nil && entry.project != *projectFilter {
-				continue
-			}
-			dedup.Push(entry)
-		}
 	}
 
 	type groupKey struct {
@@ -51,8 +31,8 @@ func LoadDailySummaries(shared *core.SharedArgs, projectFilter *string, groupByP
 	}
 	groups := map[groupKey]*dailyAccumulator{}
 	var keys []groupKey
-	for i := range dedup.entries {
-		key := groupKey{date: dedup.entries[i].date, project: dedup.entries[i].project}
+	for i := range deduped {
+		key := groupKey{date: deduped[i].date, project: deduped[i].project}
 		if !groupByProject {
 			key.project = ""
 		}
@@ -62,7 +42,7 @@ func LoadDailySummaries(shared *core.SharedArgs, projectFilter *string, groupByP
 			groups[key] = acc
 			keys = append(keys, key)
 		}
-		acc.addEntry(&dedup.entries[i])
+		acc.addEntry(&deduped[i])
 	}
 	// BTreeMap iteration order: date first, then project.
 	sort.Slice(keys, func(i, j int) bool {
@@ -85,6 +65,68 @@ func LoadDailySummaries(shared *core.SharedArgs, projectFilter *string, groupByP
 	return rows, nil
 }
 
+// loadDailyDeduped runs the daily pipeline's scan and dedup once, returning
+// the winning entries in push order.
+func loadDailyDeduped(shared *core.SharedArgs, projectFilter *string) ([]dailyLoadedEntry, error) {
+	paths, err := ClaudePaths()
+	if err != nil {
+		return nil, err
+	}
+	files := UsageFiles(paths, projectFilter)
+	if len(files) == 0 {
+		return []dailyLoadedEntry{}, nil
+	}
+	pricing := loadDailyPricing(shared)
+	tz := core.ParseTZ(shared.Timezone)
+	mode := shared.Mode
+	loadedFiles := common.ReadFilesParallel(files, shared.SingleThread, func(file string) dailyLoadedFile {
+		return readDailyUsageFile(file, tz, mode, pricing)
+	})
+
+	dedup := newDailyDeduper()
+	for _, lf := range loadedFiles {
+		for _, entry := range lf.entries {
+			if projectFilter != nil && entry.project != *projectFilter {
+				continue
+			}
+			dedup.Push(entry)
+		}
+	}
+	return dedup.entries, nil
+}
+
+// DailyDetailEntry is one deduped daily-pipeline entry with its timestamp.
+type DailyDetailEntry struct {
+	Timestamp int64
+	Date      string
+	Model     *string
+	Usage     core.TokenUsageRaw
+}
+
+// LoadDailyDetailEntries runs the daily pipeline (the ccusage daily and
+// all-report code path) and returns its deduped entries with timestamps, so
+// hour-level aggregation reconciles exactly with daily-report totals. The
+// generic LoadEntries loader intentionally differs (no agent-progress lines,
+// different dedup tiebreaks) and must not be used for parity-sensitive
+// aggregation.
+func LoadDailyDetailEntries(shared *core.SharedArgs) ([]DailyDetailEntry, error) {
+	deduped, err := loadDailyDeduped(shared, nil)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]DailyDetailEntry, 0, len(deduped))
+	for i := range deduped {
+		e := &deduped[i]
+		out = append(out, DailyDetailEntry{
+			Timestamp: e.timestamp,
+			Date:      e.date,
+			Model:     e.model,
+			Usage:     e.usage,
+		})
+	}
+	return out, nil
+}
+
 type dailyLoadedFile struct {
 	entries []dailyLoadedEntry
 }
@@ -105,6 +147,7 @@ func loadDailyPricing(shared *core.SharedArgs) *core.PricingMap {
 
 // dailyLoadedEntry is the slim per-line record the daily pipeline aggregates.
 type dailyLoadedEntry struct {
+	timestamp           int64
 	date                string
 	project             string
 	usage               core.TokenUsageRaw
@@ -248,6 +291,7 @@ func readDailyUsageFile(path string, tz *time.Location, mode core.CostMode, pric
 		}
 		date := core.FormatDateTZ(timestamp, tz)
 		lf.entries = append(lf.entries, dailyLoadedEntry{
+			timestamp:           timestamp,
 			date:                date,
 			project:             project,
 			usage:               usage,
@@ -266,6 +310,7 @@ func readDailyUsageFile(path string, tz *time.Location, mode core.CostMode, pric
 				advisorMessageID = &suffixed
 			}
 			lf.entries = append(lf.entries, dailyLoadedEntry{
+				timestamp:           timestamp,
 				date:                date,
 				project:             project,
 				usage:               advisor.Usage,

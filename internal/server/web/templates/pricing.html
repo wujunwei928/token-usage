@@ -1,0 +1,24 @@
+{{define "pricing.html"}}
+{{template "head.html" .}}
+<div class="pagehead">
+  <h1>模型价格表</h1>
+  <p class="muted">Cost Estimate 按此表折算(USD / 1M tokens);来源分为 official(快照单价)与 estimated(家族兜底估算)。1h 缓存写入按 2× 输入价计。</p>
+</div>
+<table class="pricetable">
+  <thead><tr><th>模型</th><th>输入</th><th>输出</th><th>缓存读</th><th>缓存写 5m</th><th>缓存写 1h</th><th>来源</th></tr></thead>
+  <tbody>
+  {{range .Content}}
+    <tr>
+      <td class="mono">{{.Model}}</td>
+      <td>${{printf "%.2f" .Input}}</td>
+      <td>${{printf "%.2f" .Output}}</td>
+      <td>${{printf "%.2f" .CacheRead}}</td>
+      <td>${{printf "%.2f" .CacheWrite5m}}</td>
+      <td>${{printf "%.2f" .CacheWrite1h}}</td>
+      <td><span class="badgetag {{if eq .Note "estimated"}}warn{{end}}">{{.Note}}</span></td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{template "foot.html" .}}
+{{end}}
