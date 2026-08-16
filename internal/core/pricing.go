@@ -125,13 +125,18 @@ type PricingOverride struct {
 
 // LoadWithOverrides mirrors PricingMap::load_with_overrides: refresh pricing
 // from LiteLLM when online, re-apply the built-in long-context overlay, then
-// user overrides. The log flag only gates the TTY progress spinner, which the
-// Go port does not render (non-TTY behavior is identical to the reference).
+// user overrides. The log flag gates the progress spinner around the refresh
+// (stderr-only, so JSON output stays clean).
 func LoadWithOverrides(offline, log bool, overrides map[string]PricingOverride) *PricingMap {
-	_ = log
 	m := LoadEmbedded()
 	if !offline {
-		body, err := fetchJSONURL(litellmPricingURL)
+		var (
+			body string
+			err  error
+		)
+		TrackStatus(log, "Refreshing model pricing from LiteLLM...", func() {
+			body, err = fetchJSONURL(litellmPricingURL)
+		})
 		if err != nil {
 			if shouldLogPricingRefreshDetails() {
 				fmt.Fprintf(os.Stderr, "WARN  Failed to fetch LiteLLM pricing (%v); using embedded pricing.\n", err)

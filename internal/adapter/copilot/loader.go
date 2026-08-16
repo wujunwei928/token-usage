@@ -12,6 +12,12 @@ import (
 // entries sorted by timestamp (stable; same-timestamp entries keep file
 // order, and files are processed in sorted path order).
 func LoadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("GitHub Copilot CLI", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	tz := core.ParseTZ(shared.Timezone)
 	files := Paths()
 	// Entries keep their original file order before the stable sort, so the

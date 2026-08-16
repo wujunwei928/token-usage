@@ -11,6 +11,12 @@ import (
 // LoadEntries discovers Gemini log files, parses them (in parallel unless
 // disabled), sorts events by timestamp, and prices each entry.
 func LoadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Gemini CLI", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	tz := core.ParseTZ(shared.Timezone)
 	files := DiscoverLogFiles()
 	// Read each log file in parallel; events keep their original file order

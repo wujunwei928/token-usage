@@ -13,6 +13,12 @@ import (
 // LoadEntries discovers and parses every Amp thread file, returning entries
 // sorted by timestamp (stable, so same-timestamp entries keep file order).
 func LoadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Amp", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	var entries []core.LoadedEntry
 	tz := core.ParseTZ(shared.Timezone)
 	paths, err := Paths()

@@ -25,6 +25,12 @@ const sqliteDriver = "sqlite"
 // LoadEntries loads and dedups OpenCode usage entries across every data
 // directory, sorted by timestamp.
 func LoadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("OpenCode", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	paths, err := Paths()
 	if err != nil {
 		return nil, err

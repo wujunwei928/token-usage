@@ -13,6 +13,12 @@ import (
 // time-ordered entries. The dedupe key is the embedded message id, so the
 // first copy of a message wins across data directories.
 func LoadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Kilo", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	tz := core.ParseTZ(shared.Timezone)
 	var dbPaths []string
 	for _, dir := range DataDirs() {

@@ -11,6 +11,12 @@ import (
 // LoadEntries discovers and parses Codebuff chat transcripts, deduplicating
 // repeated messages by their dedup key (last file wins).
 func LoadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Codebuff", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	pricing := loadPricing(shared)
 	tz := core.ParseTZ(shared.Timezone)
 	files, err := DiscoverChatFiles()

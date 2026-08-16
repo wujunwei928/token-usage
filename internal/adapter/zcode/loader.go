@@ -27,6 +27,12 @@ type sessionRow struct {
 // tokens, so one session is never counted from both sources. Pricing is only
 // loaded outside display mode.
 func LoadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("zcode", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	var pricing *core.PricingMap
 	if shared.Mode != core.ModeDisplay {
 		refreshLog := true

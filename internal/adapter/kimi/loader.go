@@ -11,6 +11,12 @@ import (
 // disabled), applies the first-wins dedup in discovery order, and sorts the
 // surviving entries by timestamp.
 func LoadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Kimi", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	tz := core.ParseTZ(shared.Timezone)
 	files := DiscoverWireFiles()
 	// Read wire files in parallel, then apply the first-wins dedup

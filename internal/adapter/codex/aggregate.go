@@ -251,6 +251,8 @@ type timestampAbort struct{ err error }
 // LoadGroups aggregates usage into period groups from every configured Codex
 // home.
 func LoadGroups(shared *core.SharedArgs, kind Kind) (groups *Groups, err error) {
+	finishLoad := core.BeginUsageLoad("Codex", shared)
+	defer func() { finishLoad(err != nil) }()
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			if abort, ok := recovered.(timestampAbort); ok {

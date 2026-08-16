@@ -34,6 +34,12 @@ WHERE model_config_json IS NOT NULL
 // LoadEntries reads every discovered Goose database and returns deduplicated,
 // time-ordered entries.
 func LoadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Goose", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	tz := core.ParseTZ(shared.Timezone)
 	dbPaths := DBPaths()
 	// Load each database in parallel (a fresh read-only connection per DB),

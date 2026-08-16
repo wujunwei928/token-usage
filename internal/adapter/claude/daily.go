@@ -20,6 +20,12 @@ import (
 // LoadDailySummaries scans Claude data and aggregates per-day (or per day and
 // project) usage summaries in one pass, like load_daily_summaries_inner.
 func LoadDailySummaries(shared *core.SharedArgs, projectFilter *string, groupByProject bool) ([]core.UsageSummary, error) {
+	return core.TrackUsageLoad("Claude", shared, func() ([]core.UsageSummary, error) {
+		return loadDailySummaries(shared, projectFilter, groupByProject)
+	})
+}
+
+func loadDailySummaries(shared *core.SharedArgs, projectFilter *string, groupByProject bool) ([]core.UsageSummary, error) {
 	deduped, err := loadDailyDeduped(shared, projectFilter)
 	if err != nil {
 		return nil, err

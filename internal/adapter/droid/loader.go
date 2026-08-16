@@ -11,6 +11,12 @@ import (
 // LoadEntries discovers and parses Droid settings snapshots, keeping the
 // latest snapshot per session.
 func LoadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Droid", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	pricing := loadPricing(shared)
 	tz := core.ParseTZ(shared.Timezone)
 	files, err := DiscoverSettingsFiles()

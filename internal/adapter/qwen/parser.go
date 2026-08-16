@@ -63,6 +63,12 @@ func (l qwenLine) typeName() (string, bool) {
 // disabled), applies the first-wins dedup in discovery order, and sorts the
 // surviving entries by timestamp. Pricing is only loaded outside display mode.
 func LoadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Qwen", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	var pricing *core.PricingMap
 	if shared.Mode != core.ModeDisplay {
 		refreshLog := true

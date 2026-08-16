@@ -11,6 +11,12 @@ import (
 // (in parallel unless disabled), applies the first-wins dedup across roots in
 // path order, and sorts the surviving entries by timestamp.
 func LoadEntries(shared *core.SharedArgs, customPath *string, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("OpenClaw", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared, customPath, pricing)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs, customPath *string, pricing *core.PricingMap) ([]core.LoadedEntry, error) {
 	tz := core.ParseTZ(shared.Timezone)
 	var entries []core.LoadedEntry
 	seen := map[string]bool{}

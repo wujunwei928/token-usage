@@ -11,6 +11,12 @@ import (
 // LoadEntries reads every Hermes state database, keeping the first record
 // per session id across databases.
 func LoadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Hermes", shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(shared)
+	})
+}
+
+func loadEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	pricing := loadPricing(shared)
 	tz := core.ParseTZ(shared.Timezone)
 	dbPaths, err := StateDBPaths()

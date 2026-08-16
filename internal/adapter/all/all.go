@@ -114,12 +114,20 @@ func LoadBaseRows(loadKind ReportKind, shared *core.SharedArgs, specs []Spec) (*
 		err   error
 	}
 	outcomes := make([]outcome, len(specs))
+	// Register the whole roster before the first goroutine launches: without
+	// this, a fast adapter can begin and finish alone, ending the progress
+	// session and resetting the counts mid-launch.
+	finishes := make([]func(bool), len(specs))
+	for i := range specs {
+		finishes[i] = core.BeginUsageLoad(AgentLabel(specs[i].Agent), shared)
+	}
 	var wg sync.WaitGroup
 	for i := range specs {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 			rows, err := specs[i].Load(loadKind)
+			finishes[i](err != nil)
 			outcomes[i] = outcome{i, specs[i].Agent, rows, err}
 		}(i)
 	}

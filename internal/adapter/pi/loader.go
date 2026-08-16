@@ -19,6 +19,12 @@ type LoadOptions struct {
 
 // LoadEntries discovers, parses, dedupes, and time-orders pi session entries.
 func LoadEntries(opts LoadOptions) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("pi-agent", opts.Shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(opts)
+	})
+}
+
+func loadEntries(opts LoadOptions) ([]core.LoadedEntry, error) {
 	shared := opts.Shared
 	paths, err := Paths(opts.CustomPath)
 	if err != nil {

@@ -35,6 +35,12 @@ func loadPricing(shared *core.SharedArgs) *core.PricingMap {
 
 // LoadEntries discovers, parses, and dedups Claude usage entries.
 func LoadEntries(opts LoadOptions) ([]core.LoadedEntry, error) {
+	return core.TrackUsageLoad("Claude", opts.Shared, func() ([]core.LoadedEntry, error) {
+		return loadEntries(opts)
+	})
+}
+
+func loadEntries(opts LoadOptions) ([]core.LoadedEntry, error) {
 	shared := opts.Shared
 	paths, err := ClaudePaths()
 	if err != nil {
