@@ -12,29 +12,17 @@ import (
 )
 
 // Kind selects the report granularity.
-type Kind int
+// Kind is the shared report vocabulary (ADR 0009); the local enum is an
+// alias, so the codex pipeline speaks the same type as every consumer.
+type Kind = core.ReportKind
 
 // Report kinds.
 const (
-	KindDaily Kind = iota
-	KindWeekly
-	KindMonthly
-	KindSession
+	KindDaily   = core.KindDaily
+	KindWeekly  = core.KindWeekly
+	KindMonthly = core.KindMonthly
+	KindSession = core.KindSession
 )
-
-// Report kinds as their rows_key names.
-func (k Kind) String() string {
-	switch k {
-	case KindDaily:
-		return "daily"
-	case KindWeekly:
-		return "weekly"
-	case KindMonthly:
-		return "monthly"
-	default:
-		return "session"
-	}
-}
 
 // UsageBucket is the per-tier usage split used for cost calculation.
 type UsageBucket struct {

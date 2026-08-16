@@ -26,9 +26,9 @@ type sqliteValue struct {
 }
 
 type sqliteDB struct {
-	data      []byte
-	pageSize  int
-	usable    int
+	data     []byte
+	pageSize int
+	usable   int
 	walPages map[int][]byte
 }
 
@@ -49,10 +49,10 @@ func openSQLiteDatabase(path string) (*sqliteDB, error) {
 	}
 	reserved := int(data[20])
 	db := &sqliteDB{
-		data:      data,
-		pageSize:  pageSize,
-		usable:    pageSize - reserved,
-		walPages:  map[int][]byte{},
+		data:     data,
+		pageSize: pageSize,
+		usable:   pageSize - reserved,
+		walPages: map[int][]byte{},
 	}
 	db.loadWAL(path + "-wal")
 	return db, nil

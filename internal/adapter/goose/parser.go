@@ -12,16 +12,16 @@ import (
 // gooseRow is one row of the Goose sessions query. Column order matches
 // GOOSE_SESSION_QUERY in loader.go.
 type gooseRow struct {
-	ID            string
-	ModelConfig   string
-	ProviderName  *string
-	CreatedAt     string
-	TotalTokens   tokenValue
-	InputTokens   tokenValue
-	OutputTokens  tokenValue
-	AccumTotal    tokenValue
-	AccumInput    tokenValue
-	AccumOutput   tokenValue
+	ID           string
+	ModelConfig  string
+	ProviderName *string
+	CreatedAt    string
+	TotalTokens  tokenValue
+	InputTokens  tokenValue
+	OutputTokens tokenValue
+	AccumTotal   tokenValue
+	AccumInput   tokenValue
+	AccumOutput  tokenValue
 }
 
 // tokenValue is an optional i64 column (NULL or non-integer storage reads as

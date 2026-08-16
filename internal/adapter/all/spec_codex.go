@@ -7,15 +7,19 @@ import (
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
-// The codex adapter plugs into the unified report at roster index 1.
+// The codex adapter plugs into the unified report by name with a
+// hand-written spec — the permanent exception of ADR 0009: codex reports run
+// on its Groups pipeline (ServiceTier bucketed pricing, per-event LongContext
+// tiers, reasoning tokens), none of which survive a LoadedEntry round-trip.
+// Forcing it through the shared entries pipeline would be lossy; the event
+// bridge the leaderboard snapshot uses stays a separate, documented loss.
 func init() {
-	RegisterSpec(1, func(shared *core.SharedArgs) Spec {
+	RegisterSpec("codex", func(shared *core.SharedArgs) Spec {
 		loaderShared := *shared
 		loaderShared.JSON = true
 		pricing := core.LoadWithOverrides(shared.Offline, logLevelNotQuiet(), shared.PricingOverrides)
 		speed := codex.ResolveSpeed(codex.SpeedAuto)
 		return Spec{
-			Index: 1,
 			Agent: "codex",
 			Load: func(kind ReportKind) (AgentRows, error) {
 				return loadCodexRows(kind, &loaderShared, pricing, speed)

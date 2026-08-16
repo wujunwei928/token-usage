@@ -8,23 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wujunwei928/token-usage/internal/adapter/amp"
 	"github.com/wujunwei928/token-usage/internal/adapter/claude"
-	"github.com/wujunwei928/token-usage/internal/adapter/codebuff"
 	"github.com/wujunwei928/token-usage/internal/adapter/codex"
-	"github.com/wujunwei928/token-usage/internal/adapter/copilot"
-	"github.com/wujunwei928/token-usage/internal/adapter/droid"
-	"github.com/wujunwei928/token-usage/internal/adapter/gemini"
-	"github.com/wujunwei928/token-usage/internal/adapter/goose"
-	"github.com/wujunwei928/token-usage/internal/adapter/grok"
-	"github.com/wujunwei928/token-usage/internal/adapter/hermes"
-	"github.com/wujunwei928/token-usage/internal/adapter/kilo"
-	"github.com/wujunwei928/token-usage/internal/adapter/kimi"
-	"github.com/wujunwei928/token-usage/internal/adapter/openclaw"
-	"github.com/wujunwei928/token-usage/internal/adapter/opencode"
-	"github.com/wujunwei928/token-usage/internal/adapter/pi"
-	"github.com/wujunwei928/token-usage/internal/adapter/qwen"
-	"github.com/wujunwei928/token-usage/internal/adapter/zcode"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
+	_ "github.com/wujunwei928/token-usage/internal/adapter/register"
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
@@ -106,7 +93,6 @@ type loadedAdapter struct {
 // intentionally differs (no agent-progress lines, different dedup tiebreaks),
 // and snapshot totals must reconcile with daily-report totals.
 func loadAllAgents(shared *core.SharedArgs, since, today string) []loadedAdapter {
-	pricing := core.LoadEmbedded()
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var out []loadedAdapter
@@ -135,27 +121,27 @@ func loadAllAgents(shared *core.SharedArgs, since, today string) []loadedAdapter
 		}()
 	}
 
+	// Claude reconciles against the daily pipeline and codex keeps its lossy
+	// event bridge — both documented exceptions (ADR 0009). Every other
+	// agent loads through the adapter registry, so new adapters join the
+	// snapshot without touching this file.
 	load("claude", func() ([]core.LoadedEntry, error) { return claudeDailyEntries(shared) })
 	load("codex", func() ([]core.LoadedEntry, error) {
 		return codexEntries(shared)
 	})
-	load("opencode", func() ([]core.LoadedEntry, error) { return opencode.LoadEntries(shared) })
-	load("amp", func() ([]core.LoadedEntry, error) { return amp.LoadEntries(shared, pricing) })
-	load("droid", func() ([]core.LoadedEntry, error) { return droid.LoadEntries(shared) })
-	load("codebuff", func() ([]core.LoadedEntry, error) { return codebuff.LoadEntries(shared) })
-	load("hermes", func() ([]core.LoadedEntry, error) { return hermes.LoadEntries(shared) })
-	load("pi", func() ([]core.LoadedEntry, error) {
-		return pi.LoadEntries(pi.LoadOptions{Shared: shared, Pricing: pricing})
-	})
-	load("goose", func() ([]core.LoadedEntry, error) { return goose.LoadEntries(shared, pricing) })
-	load("openclaw", func() ([]core.LoadedEntry, error) { return openclaw.LoadEntries(shared, nil, pricing) })
-	load("kilo", func() ([]core.LoadedEntry, error) { return kilo.LoadEntries(shared, pricing) })
-	load("copilot", func() ([]core.LoadedEntry, error) { return copilot.LoadEntries(shared, pricing) })
-	load("gemini", func() ([]core.LoadedEntry, error) { return gemini.LoadEntries(shared, pricing) })
-	load("kimi", func() ([]core.LoadedEntry, error) { return kimi.LoadEntries(shared, pricing) })
-	load("qwen", func() ([]core.LoadedEntry, error) { return qwen.LoadEntries(shared) })
-	load("grok", func() ([]core.LoadedEntry, error) { return grok.LoadEntries(shared) })
-	load("zcode", func() ([]core.LoadedEntry, error) { return zcode.LoadEntries(shared) })
+	for _, name := range common.Roster() {
+		if name == "claude" || name == "codex" {
+			continue
+		}
+		adapter, ok := common.BuildAdapter(name, shared)
+		if !ok {
+			continue
+		}
+		load(name, func() ([]core.LoadedEntry, error) {
+			result, err := adapter.LoadEntries(common.LoadRequest{Shared: shared})
+			return result.Entries, err
+		})
+	}
 
 	wg.Wait()
 	return out

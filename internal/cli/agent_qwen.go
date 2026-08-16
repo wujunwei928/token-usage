@@ -4,48 +4,27 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/wujunwei928/token-usage/internal/adapter/qwen"
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 func init() {
 	registerAgentCommand(newQwenCommand)
 }
 
+// Qwen sessions carry the activity metadata and filter by last activity after
+// summarizing; empty reports render a null totals object (the profile and
+// render flags express the reference's session semantics).
 func newQwenCommand() *cobra.Command {
-	spec := &agentCommandSpec{
-		agent:   "qwen",
-		display: "Qwen",
-		short:   "Show Qwen usage commands",
-		run:     runQwenReport,
-	}
-	return newAgentCommandTree(spec)
-}
-
-// runQwenReport follows the reference qwen run(): session rows summarize the
-// unfiltered entries and then filter by last activity; the other reports
-// filter entries by date first. Empty reports render a null totals object.
-func runQwenReport(f *sharedFlags, kind agentKind, st *agentFlagState) error {
-	shared := f.shared
-	entries, err := qwen.LoadEntries(shared)
-	if err != nil {
-		return err
-	}
-	if kind == agentKindSession {
-		rows := qwen.SummarizeEntries(entries, qwen.KindSession)
-		rows = filterAgentSessionSummaries(rows, shared)
-		return printAgentReport(f, rows, kind, "Qwen Token Usage Report", true, true)
-	}
-	entries = filterAgentEntriesByDate(entries, shared)
-	rows := qwen.SummarizeEntries(entries, mapQwenReportKind(kind))
-	return printAgentReport(f, rows, kind, "Qwen Token Usage Report", false, true)
-}
-
-func mapQwenReportKind(kind agentKind) qwen.ReportKind {
-	switch kind {
-	case agentKindMonthly:
-		return qwen.KindMonthly
-	case agentKindWeekly:
-		return qwen.KindWeekly
-	default:
-		return qwen.KindDaily
-	}
+	return newAgentCommandTree(&agentCommandSpec{
+		agent:           "qwen",
+		display:         "Qwen",
+		short:           "Show Qwen usage commands",
+		title:           "Qwen Token Usage Report",
+		profile:         qwen.Profile,
+		sessionMeta:     true,
+		totalsNullEmpty: true,
+		load: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) ([]core.LoadedEntry, error) {
+			return qwen.LoadEntries(f.shared)
+		},
+	})
 }

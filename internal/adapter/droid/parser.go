@@ -15,13 +15,13 @@ import (
 
 // droidEntry mirrors the Rust DroidEntry: one parsed settings snapshot.
 type droidEntry struct {
-	Timestamp      int64
-	TimestampText  string
-	SessionID      string
-	Model          string
-	Provider       string
-	Usage          core.TokenUsageRaw
-	ReasoningToks  uint64
+	Timestamp     int64
+	TimestampText string
+	SessionID     string
+	Model         string
+	Provider      string
+	Usage         core.TokenUsageRaw
+	ReasoningToks uint64
 }
 
 // droidTokenUsage carries the Droid-specific token buckets.

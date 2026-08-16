@@ -116,9 +116,9 @@ func parseOpenClawMessage(raw json.RawMessage) *openClawMessage {
 		return nil
 	}
 	message := openClawMessage{
-		modelID:  optionalNonEmptyString(messageFields, "modelId"),
-		model:    optionalNonEmptyString(messageFields, "model"),
-		provider: optionalNonEmptyString(messageFields, "provider"),
+		modelID:   optionalNonEmptyString(messageFields, "modelId"),
+		model:     optionalNonEmptyString(messageFields, "model"),
+		provider:  optionalNonEmptyString(messageFields, "provider"),
 		timestamp: rawField(messageFields, "timestamp"),
 	}
 	if raw := rawField(messageFields, "role"); raw != nil {

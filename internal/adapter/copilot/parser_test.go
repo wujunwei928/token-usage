@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
@@ -97,8 +98,8 @@ func TestIncludesReasoningTokensInTotalTokens(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rows := SummarizeEntries(loaded, KindDaily)
-	report := core.SerializeJ(ReportJSON(rows, KindDaily))
+	rows := common.SummarizeReport(loaded, core.KindDaily, Profile)
+	report := core.SerializeJ(common.AgentReportJSON(rows, core.KindDaily, false, false))
 
 	want := `{
   "daily": [

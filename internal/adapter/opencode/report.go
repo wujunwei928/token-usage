@@ -5,110 +5,39 @@ package opencode
 // report.
 
 import (
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
-// ReportKind selects the report granularity. It mirrors all.ReportKind for
-// adapter-local use.
-type ReportKind int
+// ReportKind is the shared report vocabulary (ADR 0009): an alias of
+// core.ReportKind kept for this file's local signatures.
+type ReportKind = core.ReportKind
 
-// Report kinds.
-const (
-	KindDaily ReportKind = iota
-	KindWeekly
-	KindMonthly
-	KindSession
-)
-
-// SummarizeEntries aggregates loaded entries into report rows for one kind:
-// daily rows by entry date (weekly/monthly roll those up, weekly buckets
-// starting Monday), or one row per session.
-func SummarizeEntries(entries []core.LoadedEntry, kind ReportKind) []core.UsageSummary {
-	switch kind {
-	case KindDaily:
-		return core.SummarizeByKey(entries,
-			func(e *core.LoadedEntry) string { return e.Date },
-			func(date string) (string, *string) { return date, nil })
-	case KindWeekly:
-		daily := core.SummarizeByKey(entries,
-			func(e *core.LoadedEntry) string { return e.Date },
-			func(date string) (string, *string) { return date, nil })
-		return core.SummarizeSummariesByBucket(daily, core.BucketWeekly, core.Monday)
-	case KindMonthly:
-		daily := core.SummarizeByKey(entries,
-			func(e *core.LoadedEntry) string { return e.Date },
-			func(date string) (string, *string) { return date, nil })
-		return core.SummarizeSummariesByBucket(daily, core.BucketMonthly, core.Sunday)
-	case KindSession:
-		var grouped []*core.SessionAccumulator
-		indexes := map[string]int{}
-		for i := range entries {
-			key := entries[i].SessionID
-			index, ok := indexes[key]
-			if !ok {
-				index = len(grouped)
-				indexes[key] = index
-				grouped = append(grouped, &core.SessionAccumulator{})
-			}
-			grouped[index].AddEntry(&entries[i])
-		}
-		rows := make([]core.UsageSummary, 0, len(grouped))
-		for _, group := range grouped {
-			rows = append(rows, group.IntoSummary())
-		}
-		return rows
-	}
-	return nil
-}
-
-// summaryPeriod picks the row's period label: date, week, month, or session id.
-func summaryPeriod(row *core.UsageSummary) string {
-	switch {
-	case row.Date != nil:
-		return *row.Date
-	case row.Week != nil:
-		return *row.Week
-	case row.Month != nil:
-		return *row.Month
-	case row.SessionID != nil:
-		return *row.SessionID
-	default:
-		return ""
-	}
+// SummarizeEntries aggregates loaded entries via the shared pipeline under
+// OpenCode's profile (Monday weeks, activity-bounded sessions).
+func summarizeEntries(entries []core.LoadedEntry, kind ReportKind) []core.UsageSummary {
+	return common.SummarizeReport(entries, kind, Profile)
 }
 
 // ReportJSON builds the JSON report for one kind: sorted rows plus totals.
 func ReportJSON(entries []core.LoadedEntry, kind ReportKind, order core.SortOrder) core.J {
-	rows := SummarizeEntries(entries, kind)
-	rows = core.SortSummaries(rows, order, summaryPeriod)
+	rows := summarizeEntries(entries, kind)
+	rows = core.SortSummaries(rows, order, common.SummaryPeriod)
 	items := make([]core.J, len(rows))
 	for i := range rows {
 		items[i] = AgentSummaryJSON(&rows[i], kind)
 	}
 	return core.JObjV(
-		rowsKey(kind), core.JArrV(items...),
+		kind.RowsKey(), core.JArrV(items...),
 		"totals", core.TotalsJSON(rows),
 	)
-}
-
-func rowsKey(kind ReportKind) string {
-	switch kind {
-	case KindDaily:
-		return "daily"
-	case KindWeekly:
-		return "weekly"
-	case KindMonthly:
-		return "monthly"
-	default:
-		return "sessions"
-	}
 }
 
 // AgentSummaryJSON renders one row for the agent JSON report. Keys render
 // alphabetically, matching the reference's serde_json::Value output.
 func AgentSummaryJSON(row *core.UsageSummary, kind ReportKind) core.J {
 	pairs := []any{
-		periodKey(kind), core.JStrV(summaryPeriod(row)),
+		kind.PeriodKey(), core.JStrV(common.SummaryPeriod(row)),
 		"inputTokens", core.JUintV(row.InputTokens),
 		"outputTokens", core.JUintV(row.OutputTokens),
 		"cacheCreationTokens", core.JUintV(row.CacheCreationTokens),
@@ -125,19 +54,6 @@ func AgentSummaryJSON(row *core.UsageSummary, kind ReportKind) core.J {
 		pairs = append(pairs, "messageCount", core.JUintV(*row.MessageCount))
 	}
 	return core.JObjV(pairs...)
-}
-
-func periodKey(kind ReportKind) string {
-	switch kind {
-	case KindDaily:
-		return "date"
-	case KindWeekly:
-		return "week"
-	case KindMonthly:
-		return "month"
-	default:
-		return "sessionId"
-	}
 }
 
 func modelsUsedJ(models []string) core.J {

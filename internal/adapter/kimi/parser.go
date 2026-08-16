@@ -246,8 +246,8 @@ func wireLineToEntryNew(line kimiWireLine, filePath string, fallbackTimestamp in
 		return kimiUsageEntry{}, false
 	}
 	usage := core.TokenUsageRaw{
-		InputTokens:          usageCounts.inputOther,
-		OutputTokens:         usageCounts.output,
+		InputTokens:              usageCounts.inputOther,
+		OutputTokens:             usageCounts.output,
 		CacheCreationInputTokens: usageCounts.inputCacheCreation,
 		CacheReadInputTokens:     usageCounts.inputCacheRead,
 	}

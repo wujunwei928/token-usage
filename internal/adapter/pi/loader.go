@@ -9,7 +9,7 @@ import (
 
 // LoadOptions carries what the pi loader needs from the CLI layer.
 type LoadOptions struct {
-	Shared     *core.SharedArgs
+	Shared *core.SharedArgs
 	// CustomPath is the --pi-path value (comma-separated session roots).
 	CustomPath *string
 	// Pricing supplies token pricing; nil skips pricing entirely (display

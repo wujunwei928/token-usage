@@ -28,15 +28,15 @@ type assistantUsage struct {
 
 // codebuffEntry mirrors the Rust CodebuffEntry.
 type codebuffEntry struct {
-	Timestamp      int64
-	TimestampText  string
-	SessionID      string
-	Model          string
-	Provider       string
-	Credits        float64
-	Usage          core.TokenUsageRaw
+	Timestamp        int64
+	TimestampText    string
+	SessionID        string
+	Model            string
+	Provider         string
+	Credits          float64
+	Usage            core.TokenUsageRaw
 	ExtraTotalTokens uint64
-	DedupKey       string
+	DedupKey         string
 }
 
 type codebuffContext struct {
@@ -87,12 +87,12 @@ func LoadChatFile(path string) ([]codebuffEntry, error) {
 		}
 		dedupKey := dedupKey(record, context.sessionID, timestamp, model, &usage, ordinal)
 		entries = append(entries, codebuffEntry{
-			Timestamp:        timestamp,
-			TimestampText:    core.FormatRFC3339Millis(timestamp),
-			SessionID:        context.sessionID,
-			Provider:         inferProvider(model),
-			Model:            model,
-			Credits:          usage.Credits,
+			Timestamp:     timestamp,
+			TimestampText: core.FormatRFC3339Millis(timestamp),
+			SessionID:     context.sessionID,
+			Provider:      inferProvider(model),
+			Model:         model,
+			Credits:       usage.Credits,
 			Usage: core.TokenUsageRaw{
 				InputTokens:              usage.InputTokens,
 				OutputTokens:             usage.OutputTokens,

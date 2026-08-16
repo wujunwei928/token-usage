@@ -4,37 +4,24 @@ package all
 
 import (
 	"sort"
-	"strings"
 	"sync"
 
-	"github.com/wujunwei928/token-usage/internal/adapter/claude"
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
-// ReportKind selects the report granularity (also the --sections vocabulary).
-type ReportKind int
+// ReportKind is the shared report vocabulary (also the --sections
+// vocabulary); the unified report's kind is the same type every adapter and
+// the CLI use (ADR 0009).
+type ReportKind = core.ReportKind
 
 // Report kinds.
 const (
-	KindDaily ReportKind = iota
-	KindWeekly
-	KindMonthly
-	KindSession
+	KindDaily   = core.KindDaily
+	KindWeekly  = core.KindWeekly
+	KindMonthly = core.KindMonthly
+	KindSession = core.KindSession
 )
-
-// String returns the JSON key and CLI name of the kind.
-func (k ReportKind) String() string {
-	switch k {
-	case KindDaily:
-		return "daily"
-	case KindWeekly:
-		return "weekly"
-	case KindMonthly:
-		return "monthly"
-	default:
-		return "session"
-	}
-}
 
 // ParseReportKind maps a --sections token; ok=false for unknown names.
 func ParseReportKind(value string) (ReportKind, bool) {
@@ -76,56 +63,44 @@ type AgentRows struct {
 
 // Spec describes one adapter's participation in the unified load.
 type Spec struct {
-	Index int
 	Agent string
 	Load  func(kind ReportKind) (AgentRows, error)
 }
 
 // registeredSpecs collects adapters that plugged themselves in via
 // RegisterSpec; each adapter owns its own spec_<agent>.go file.
-var registeredSpecs = map[int]func(shared *core.SharedArgs) Spec{}
+var registeredSpecs = map[string]func(shared *core.SharedArgs) Spec{}
 
-// RegisterSpec installs an adapter's unified loader factory at its roster index.
-func RegisterSpec(index int, factory func(shared *core.SharedArgs) Spec) {
-	registeredSpecs[index] = factory
+// RegisterSpec installs an adapter's unified loader factory under its roster
+// name. The display order comes from the roster itself, never from
+// registration.
+func RegisterSpec(agent string, factory func(shared *core.SharedArgs) Spec) {
+	registeredSpecs[agent] = factory
 }
 
 func notImplemented(kind ReportKind) (AgentRows, error) {
 	return AgentRows{}, nil
 }
 
-// builtInAgentNames is the roster order the reference uses for specs; zcode
-// is appended beyond the reference roster (ADR 0006: adapters beyond
-// upstream ccusage join the unified report by default).
-var builtInAgentNames = []string{
-	"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
-	"pi", "goose", "openclaw", "kilo", "copilot", "gemini", "kimi", "qwen", "grok",
-	"zcode",
-}
-
-// BuiltInSpecs returns the adapter roster in reference order; adapters that
-// have not landed yet contribute empty loads.
+// BuiltInSpecs returns the adapter roster in unified-report order (the common
+// roster, a single source); adapters that have not landed yet contribute
+// empty loads.
 func BuiltInSpecs(shared *core.SharedArgs) []Spec {
-	specs := make([]Spec, len(builtInAgentNames))
-	for index, agent := range builtInAgentNames {
-		if factory, ok := registeredSpecs[index]; ok {
+	names := common.Roster()
+	specs := make([]Spec, len(names))
+	for index, agent := range names {
+		if factory, ok := registeredSpecs[agent]; ok {
 			specs[index] = factory(shared)
 			continue
 		}
-		if agent == "claude" {
-			specs[index] = Spec{index, agent, func(kind ReportKind) (AgentRows, error) {
-				return loadClaudeRows(kind, shared)
-			}}
-		} else {
-			specs[index] = Spec{index, agent, notImplemented}
-		}
+		specs[index] = Spec{agent, notImplemented}
 	}
 	return specs
 }
 
 // LoadResult carries merged base rows and the detected agent labels.
 type LoadResult struct {
-	Rows          []Row
+	Rows           []Row
 	DetectedAgents []string
 }
 
@@ -145,7 +120,7 @@ func LoadBaseRows(loadKind ReportKind, shared *core.SharedArgs, specs []Spec) (*
 		go func(i int) {
 			defer wg.Done()
 			rows, err := specs[i].Load(loadKind)
-			outcomes[i] = outcome{specs[i].Index, specs[i].Agent, rows, err}
+			outcomes[i] = outcome{i, specs[i].Agent, rows, err}
 		}(i)
 	}
 	wg.Wait()
@@ -224,89 +199,6 @@ func AggregateRows(rows []Row, kind ReportKind) []Row {
 	out := make([]Row, 0, len(periods))
 	for _, period := range periods {
 		out = append(out, groups[period].intoRow(period))
-	}
-	return out
-}
-
-func loadClaudeRows(kind ReportKind, shared *core.SharedArgs) (AgentRows, error) {
-	if kind == KindSession {
-		entries, err := claude.LoadEntries(claude.LoadOptions{Shared: shared})
-		if err != nil {
-			return AgentRows{}, err
-		}
-		detected := len(entries) > 0
-		summaries := summarizeEntrySessions(entries)
-		summaries = filterSessionSummaries(summaries, shared)
-		return AgentRows{Rows: SummaryRows("claude", summaries, false), Detected: detected}, nil
-	}
-	summaries, err := claude.LoadDailySummaries(shared, nil, false)
-	if err != nil {
-		return AgentRows{}, err
-	}
-	detected := len(summaries) > 0
-	summaries = filterDailySummariesByDate(summaries, shared)
-	return AgentRows{Rows: SummaryRows("claude", summaries, false), Detected: detected}, nil
-}
-
-func summarizeEntrySessions(entries []core.LoadedEntry) []core.UsageSummary {
-	type key struct{ projectPath, sessionID string }
-	groups := map[key]*core.SessionAccumulator{}
-	var order []key
-	for i := range entries {
-		k := key{entries[i].ProjectPath, entries[i].SessionID}
-		if _, ok := groups[k]; !ok {
-			groups[k] = &core.SessionAccumulator{}
-			order = append(order, k)
-		}
-		groups[k].AddEntry(&entries[i])
-	}
-	keys := make([]key, 0, len(groups))
-	for k := range groups {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		if keys[i].projectPath != keys[j].projectPath {
-			return keys[i].projectPath < keys[j].projectPath
-		}
-		return keys[i].sessionID < keys[j].sessionID
-	})
-	out := make([]core.UsageSummary, 0, len(keys))
-	for _, k := range keys {
-		out = append(out, groups[k].IntoSummary())
-	}
-	return out
-}
-
-func filterSessionSummaries(rows []core.UsageSummary, shared *core.SharedArgs) []core.UsageSummary {
-	if shared.Since == nil && shared.Until == nil {
-		return rows
-	}
-	out := make([]core.UsageSummary, 0, len(rows))
-	for i := range rows {
-		date := ""
-		if rows[i].LastActivity != nil {
-			date = strings.ReplaceAll(*rows[i].LastActivity, "-", "")
-		}
-		if core.DateWithinRange(date, shared.Since, shared.Until) {
-			out = append(out, rows[i])
-		}
-	}
-	return out
-}
-
-func filterDailySummariesByDate(rows []core.UsageSummary, shared *core.SharedArgs) []core.UsageSummary {
-	if shared.Since == nil && shared.Until == nil {
-		return rows
-	}
-	out := make([]core.UsageSummary, 0, len(rows))
-	for i := range rows {
-		date := ""
-		if rows[i].Date != nil {
-			date = strings.ReplaceAll(*rows[i].Date, "-", "")
-		}
-		if core.DateWithinRange(date, shared.Since, shared.Until) {
-			out = append(out, rows[i])
-		}
 	}
 	return out
 }

@@ -129,10 +129,6 @@ func (f *sharedFlags) resolveLastSince(unit core.PeriodUnit, startOfWeek core.We
 	}
 }
 
-type flagError struct{ message string }
-
-func (e *flagError) Error() string { return e.message }
-
 func newClaudeCommand() *cobra.Command {
 	claudeCmd := &cobra.Command{
 		Use:   "claude",
@@ -405,21 +401,6 @@ func runClaudeSessionID(id string, shared *core.SharedArgs, entries []core.Loade
 	fmt.Printf("Total Tokens: %s\n", core.FormatNumber(totalTokens))
 	fmt.Printf("Total Entries: %d\n", len(sessionEntries))
 	return nil
-}
-
-func newStubCommand(use, short string) *cobra.Command {
-	cmd := &cobra.Command{Use: use, Short: short}
-	f := registerSharedFlags(cmd)
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if err := f.resolve(); err != nil {
-			return err
-		}
-		if err := f.validateLast(false); err != nil {
-			return err
-		}
-		return &flagError{"not implemented yet: " + cmd.Name()}
-	}
-	return cmd
 }
 
 type reportKind int

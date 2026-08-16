@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wujunwei928/token-usage/internal/adapter/common"
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
@@ -89,9 +90,9 @@ func loadFixture(t *testing.T, mode core.CostMode) []core.LoadedEntry {
 
 // Expected fixture totals: attempts u1..u4 plus fallback m1.
 const (
-	wantInput    = 1000 + 500 + 100 + 300 + 700
-	wantOutput   = (100 + 50) + 50 + 10 + 0 + (70 + 30)
-	wantCacheRead = 2000 + 1000 + 400
+	wantInput      = 1000 + 500 + 100 + 300 + 700
+	wantOutput     = (100 + 50) + 50 + 10 + 0 + (70 + 30)
+	wantCacheRead  = 2000 + 1000 + 400
 	wantCacheWrite = 10
 )
 
@@ -128,7 +129,7 @@ func TestLoadEntriesAttemptAccounting(t *testing.T) {
 
 func TestLoadEntriesSubagentMergesIntoParent(t *testing.T) {
 	entries := loadFixture(t, core.ModeDisplay)
-	rows := SummarizeEntries(entries, KindSession)
+	rows := common.SummarizeReport(entries, core.KindSession, Profile)
 	if len(rows) != 2 {
 		t.Fatalf("session rows = %d, want 2 (top-1, old-1)", len(rows))
 	}
@@ -163,7 +164,7 @@ func TestLoadEntriesSessionAttribution(t *testing.T) {
 
 func TestLoadEntriesDailySummary(t *testing.T) {
 	entries := loadFixture(t, core.ModeDisplay)
-	rows := SummarizeEntries(entries, KindDaily)
+	rows := common.SummarizeReport(entries, core.KindDaily, Profile)
 	if len(rows) != 1 || rows[0].Date == nil || *rows[0].Date != "2026-08-15" {
 		t.Fatalf("daily rows = %+v, want one 2026-08-15 row", rows)
 	}

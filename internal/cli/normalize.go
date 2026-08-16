@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/wujunwei928/token-usage/internal/core"
 )
 
 // optionalValueFlags accept a value that may be omitted (`[value]` in help).
@@ -50,29 +52,36 @@ func normalizeArgs(args []string) []string {
 	return out
 }
 
-// agentReportSupported is the agent x report matrix the reference parser uses
-// for the legacy colon form and the `token-usage <agent> <report>` subcommands.
-func agentReportSupported(agent, report string) bool {
+// agentReportKinds is the agent × report support matrix — the single source
+// both the command tree (agenttree.go) and the legacy colon-form parser read
+// (ADR 0010). claude and opencode carry weekly; every other agent offers
+// daily/monthly/session.
+func agentReportKinds(agent string) []core.ReportKind {
 	switch agent {
-	case "claude":
-		switch report {
-		case "daily", "weekly", "monthly", "session", "blocks", "statusline":
+	case "claude", "opencode":
+		return []core.ReportKind{core.KindDaily, core.KindWeekly, core.KindMonthly, core.KindSession}
+	default:
+		return []core.ReportKind{core.KindDaily, core.KindMonthly, core.KindSession}
+	}
+}
+
+func agentKindSupported(agent string, kind core.ReportKind) bool {
+	for _, supported := range agentReportKinds(agent) {
+		if supported == kind {
 			return true
 		}
-	case "codex":
-		switch report {
-		case "daily", "monthly", "session":
-			return true
-		}
-	case "opencode":
-		switch report {
-		case "daily", "weekly", "monthly", "session":
-			return true
-		}
-	case "amp", "droid", "codebuff", "hermes", "pi", "goose", "kilo",
-		"copilot", "gemini", "kimi", "qwen", "openclaw", "grok", "zcode":
-		switch report {
-		case "daily", "monthly", "session":
+	}
+	return false
+}
+
+// agentReportSupported answers the same matrix by report name, plus the
+// claude-only blocks/statusline reports.
+func agentReportSupported(agent, report string) bool {
+	if agent == "claude" && (report == "blocks" || report == "statusline") {
+		return true
+	}
+	for _, kind := range agentReportKinds(agent) {
+		if kind.String() == report {
 			return true
 		}
 	}
@@ -97,7 +106,7 @@ func reportFlagAliasError(args []string) error {
 
 var agentNames = []string{
 	"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
-	"pi", "goose", "kilo", "copilot", "gemini", "kimi", "qwen", "openclaw", "grok",
+	"pi", "goose", "kilo", "copilot", "gemini", "kimi", "qwen", "openclaw",
 	"zcode",
 }
 
