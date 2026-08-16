@@ -57,11 +57,17 @@ type agentOption struct {
 }
 
 // agentExtraOption declares a per-agent option appended after the shared
-// table; store holds the parsed value via st.set.
+// table; store holds the parsed value via st.set. help, when non-empty,
+// also registers the option with cobra so --help renders it exactly as the
+// pre-framework tree did — on every command with helpSubs (codex --speed),
+// on the parent only without it (pi --pi-path). Parsing stays manual either
+// way, and help-less options (openclaw's --open-claw-path) never rendered.
 type agentExtraOption struct {
 	long        string
 	short       string
 	bareDefault string
+	help        string
+	helpSubs    bool
 	store       func(st *agentFlagState, value string)
 }
 
@@ -243,6 +249,11 @@ type agentCommandSpec struct {
 	// --pi-path, --speed).
 	extraOptions []agentExtraOption
 
+	// subShort overrides the subcommand Short line; nil uses the generic
+	// "Show <display> usage grouped by <period>" wording. codex and opencode
+	// keep their pre-framework "token usage grouped by day/…" phrasing.
+	subShort func(kind core.ReportKind) string
+
 	// Standard path: load the agent's entries; the framework runs the shared
 	// pipeline and printAgentReport.
 	load    func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) ([]core.LoadedEntry, error)
@@ -270,6 +281,7 @@ func newAgentCommandTree(spec *agentCommandSpec) *cobra.Command {
 		DisableFlagParsing: true,
 	}
 	parentFlags := registerSharedFlags(parent)
+	registerExtraOptionFlags(parent, spec.extraOptions, false)
 	parent.RunE = func(cmd *cobra.Command, args []string) error {
 		return runAgentParent(spec, options, parentFlags, cmd, args)
 	}
@@ -280,16 +292,52 @@ func newAgentCommandTree(spec *agentCommandSpec) *cobra.Command {
 }
 
 func newAgentReportSubcommand(spec *agentCommandSpec, options []agentOption, kind core.ReportKind) *cobra.Command {
+	short := fmt.Sprintf("Show %s usage grouped by %s", spec.display, periodLabel(kind))
+	if spec.subShort != nil {
+		short = spec.subShort(kind)
+	}
 	cmd := &cobra.Command{
 		Use:                kind.String(),
-		Short:              fmt.Sprintf("Show %s usage grouped by %s", spec.display, periodLabel(kind)),
+		Short:              short,
 		DisableFlagParsing: true,
 	}
 	f := registerSharedFlags(cmd)
+	registerExtraOptionFlags(cmd, spec.extraOptions, true)
 	cmd.RunE = func(c *cobra.Command, args []string) error {
 		return runAgentReport(spec, options, f, c, kind, args)
 	}
 	return cmd
+}
+
+// registerExtraOptionFlags registers help-carrying extras on cmd's flag set
+// for --help rendering only — parsing stays with the manual option table.
+// Subcommands render only the helpSubs options (pi's --pi-path was a
+// parent-only line in the pre-framework tree).
+func registerExtraOptionFlags(cmd *cobra.Command, extras []agentExtraOption, subcommand bool) {
+	for _, x := range extras {
+		if x.help == "" {
+			continue
+		}
+		if subcommand && !x.helpSubs {
+			continue
+		}
+		name := strings.TrimPrefix(x.long, "--")
+		cmd.Flags().String(name, x.bareDefault, x.help)
+		cmd.Flags().Lookup(name).NoOptDefVal = x.bareDefault
+	}
+}
+
+// shortTokenUsageGrouped is the pre-framework Short wording for codex and
+// opencode ("Show Codex token usage grouped by day"); the generic wording
+// says "usage grouped by date".
+func shortTokenUsageGrouped(display string, kind core.ReportKind) string {
+	period := map[core.ReportKind]string{
+		core.KindDaily:   "day",
+		core.KindWeekly:  "week",
+		core.KindMonthly: "month",
+		core.KindSession: "session",
+	}[kind]
+	return fmt.Sprintf("Show %s token usage grouped by %s", display, period)
 }
 
 func periodLabel(kind core.ReportKind) string {

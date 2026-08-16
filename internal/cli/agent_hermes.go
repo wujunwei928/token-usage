@@ -15,7 +15,7 @@ func newHermesCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
 		agent:   "hermes",
 		display: "Hermes",
-		short:   "Show Hermes usage commands",
+		short:   "Usage reports for hermes.",
 		title:   "Hermes Token Usage Report",
 		profile: hermes.Profile,
 		load: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) ([]core.LoadedEntry, error) {

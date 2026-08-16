@@ -18,7 +18,7 @@ func newCodebuffCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
 		agent:   "codebuff",
 		display: "Codebuff",
-		short:   "Show Codebuff usage commands",
+		short:   "Usage reports for codebuff.",
 		profile: codebuff.Profile,
 		run: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) error {
 			entries, err := codebuff.LoadEntries(f.shared)

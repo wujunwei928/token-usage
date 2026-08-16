@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+
 	"github.com/wujunwei928/token-usage/internal/core"
 )
 
@@ -156,5 +158,128 @@ func TestUnsupportedAgentReportErrorMessage(t *testing.T) {
 	err = unsupportedAgentReportError("droid", "Droid", "blocks")
 	if err == nil || !strings.Contains(err.Error(), `The "blocks" report is only available for Claude Code usage`) {
 		t.Fatalf("claude-only err = %v", err)
+	}
+}
+
+// builtAgentCommand returns the named agent's fresh command tree.
+func builtAgentCommand(t *testing.T, agent string) *cobra.Command {
+	t.Helper()
+	for _, factory := range agentCommandFactories {
+		cmd := factory()
+		if cmd.Name() == agent {
+			return cmd
+		}
+	}
+	t.Fatalf("agent %q has no registered command", agent)
+	return nil
+}
+
+// TestAgentSubcommandShortWording pins the pre-framework Short lines: codex
+// and opencode say "token usage grouped by day/…", every other agent keeps
+// the generic "usage grouped by date" wording.
+func TestAgentSubcommandShortWording(t *testing.T) {
+	want := map[string]map[string]string{
+		"codex": {
+			"daily":   "Show Codex token usage grouped by day",
+			"monthly": "Show Codex token usage grouped by month",
+			"session": "Show Codex token usage grouped by session",
+		},
+		"opencode": {
+			"daily":   "Show OpenCode token usage grouped by day",
+			"weekly":  "Show OpenCode token usage grouped by week",
+			"monthly": "Show OpenCode token usage grouped by month",
+			"session": "Show OpenCode token usage grouped by session",
+		},
+		"amp": {
+			"daily":   "Show Amp token usage grouped by day",
+			"monthly": "Show Amp token usage grouped by month",
+			"session": "Show Amp token usage grouped by session",
+		},
+	}
+	for agent, subs := range want {
+		cmd := builtAgentCommand(t, agent)
+		for name, short := range subs {
+			sub, _, err := cmd.Find([]string{name})
+			if err != nil {
+				t.Fatalf("%s %s: %v", agent, name, err)
+			}
+			if sub.Short != short {
+				t.Errorf("%s %s Short = %q, want %q", agent, name, sub.Short, short)
+			}
+		}
+	}
+	zcode := builtAgentCommand(t, "zcode")
+	sub, _, err := zcode.Find([]string{"daily"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sub.Short != "Show ZCode usage grouped by date" {
+		t.Errorf("zcode daily Short = %q, want the generic wording", sub.Short)
+	}
+}
+
+// TestAgentParentShortWording pins each agent parent's Short line to the
+// pre-framework values.
+func TestAgentParentShortWording(t *testing.T) {
+	want := map[string]string{
+		"codex":    "Usage reports for codex.",
+		"opencode": "Usage reports for opencode.",
+		"amp":      "Show Amp token usage commands",
+		"codebuff": "Usage reports for codebuff.",
+		"droid":    "Usage reports for droid.",
+		"goose":    "Usage reports for goose.",
+		"hermes":   "Usage reports for hermes.",
+		"kilo":     "Usage reports for kilo.",
+		"pi":       "Usage reports for pi.",
+		"zcode":    "Show ZCode usage commands",
+		"copilot":  "Show GitHub Copilot CLI usage commands",
+		"gemini":   "Show Gemini CLI usage commands",
+		"openclaw": "Show OpenClaw usage commands",
+		"qwen":     "Show Qwen usage commands",
+		"kimi":     "Show Kimi usage commands",
+	}
+	for agent, short := range want {
+		if got := builtAgentCommand(t, agent).Short; got != short {
+			t.Errorf("%s Short = %q, want %q", agent, got, short)
+		}
+	}
+}
+
+// TestCodexSpeedFlagRegisteredForHelp pins --speed's cobra registration
+// (parsing stays manual): HEAD rendered it on the parent and every
+// subcommand with NoOptDefVal=auto, while --pi-path rendered on the pi
+// parent only and --open-claw-path never rendered.
+func TestCodexSpeedFlagRegisteredForHelp(t *testing.T) {
+	check := func(c *cobra.Command, where string) {
+		flag := c.Flags().Lookup("speed")
+		if flag == nil {
+			t.Errorf("%s: --speed not registered for --help", where)
+			return
+		}
+		if flag.NoOptDefVal != "auto" {
+			t.Errorf("%s: --speed NoOptDefVal = %q, want auto", where, flag.NoOptDefVal)
+		}
+		if !strings.Contains(flag.Usage, "Cost speed tier") {
+			t.Errorf("%s: --speed usage = %q, want the Cost speed tier text", where, flag.Usage)
+		}
+	}
+	codex := builtAgentCommand(t, "codex")
+	check(codex, "codex")
+	for _, sub := range codex.Commands() {
+		check(sub, "codex "+sub.Name())
+	}
+	pi := builtAgentCommand(t, "pi")
+	if flag := pi.Flags().Lookup("pi-path"); flag == nil || !strings.Contains(flag.Usage, "Path to pi agent sessions directory") {
+		t.Error("pi parent should render --pi-path for --help")
+	} else if flag.NoOptDefVal != "" {
+		t.Errorf("pi --pi-path NoOptDefVal = %q, want empty", flag.NoOptDefVal)
+	}
+	for _, sub := range pi.Commands() {
+		if flag := sub.Flags().Lookup("pi-path"); flag != nil {
+			t.Errorf("pi %s should not render --pi-path (HEAD never did)", sub.Name())
+		}
+	}
+	if flag := builtAgentCommand(t, "openclaw").Flags().Lookup("open-claw-path"); flag != nil {
+		t.Error("openclaw --open-claw-path should stay unregistered (HEAD never rendered it)")
 	}
 }

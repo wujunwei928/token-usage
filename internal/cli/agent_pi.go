@@ -17,12 +17,16 @@ func newPiCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
 		agent:           "pi",
 		display:         "pi-agent",
-		short:           "Show pi-agent usage commands",
+		short:           "Usage reports for pi.",
 		title:           "pi-agent Token Usage Report",
 		profile:         pi.Profile,
 		totalsNullEmpty: true,
 		extraOptions: []agentExtraOption{
-			{long: "--pi-path", store: func(st *agentFlagState, value string) { st.set("--pi-path", value) }},
+			{
+				long:  "--pi-path",
+				help:  "Path to pi agent sessions directory (default: auto-discovery)",
+				store: func(st *agentFlagState, value string) { st.set("--pi-path", value) },
+			},
 		},
 		load: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) ([]core.LoadedEntry, error) {
 			var customPath *string

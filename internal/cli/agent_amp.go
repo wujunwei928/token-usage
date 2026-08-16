@@ -16,10 +16,11 @@ func init() {
 // shared agent shape.
 func newAmpCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
-		agent:   "amp",
-		display: "Amp",
-		short:   "Show Amp token usage commands",
-		profile: amp.Profile,
+		agent:    "amp",
+		display:  "Amp",
+		short:    "Show Amp token usage commands",
+		subShort: func(kind core.ReportKind) string { return shortTokenUsageGrouped("Amp", kind) },
+		profile:  amp.Profile,
 		run: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) error {
 			entries, err := amp.LoadEntries(f.shared, agentPricing(f.shared))
 			if err != nil {

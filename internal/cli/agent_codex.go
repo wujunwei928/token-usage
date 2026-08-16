@@ -14,15 +14,20 @@ func init() {
 // codex keeps its Groups pipeline (ADR 0009's permanent exception): the run
 // closure loads Groups, not entries; --speed (bare = auto, the reference's
 // NoOptDefVal) reaches it as an extra option.
+const codexSpeedFlagHelp = "Cost speed tier: auto uses recorded settings, then Codex config.toml; use standard or fast to override (default: auto, choices: auto | standard | fast)"
+
 func newCodexCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
-		agent:   "codex",
-		display: "Codex",
-		short:   "Usage reports for codex.",
+		agent:    "codex",
+		display:  "Codex",
+		short:    "Usage reports for codex.",
+		subShort: func(kind core.ReportKind) string { return shortTokenUsageGrouped("Codex", kind) },
 		extraOptions: []agentExtraOption{
 			{
 				long:        "--speed",
 				bareDefault: "auto",
+				help:        codexSpeedFlagHelp,
+				helpSubs:    true,
 				store:       func(st *agentFlagState, value string) { st.set("--speed", value) },
 			},
 		},

@@ -19,10 +19,11 @@ func init() {
 // own order handling); the table render is the standard shape.
 func newOpenCodeCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
-		agent:   "opencode",
-		display: "OpenCode",
-		short:   "Usage reports for opencode.",
-		profile: opencode.Profile,
+		agent:    "opencode",
+		display:  "OpenCode",
+		short:    "Usage reports for opencode.",
+		subShort: func(kind core.ReportKind) string { return shortTokenUsageGrouped("OpenCode", kind) },
+		profile:  opencode.Profile,
 		run: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) error {
 			entries, err := opencode.LoadEntries(f.shared)
 			if err != nil {

@@ -15,7 +15,7 @@ func newDroidCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
 		agent:   "droid",
 		display: "Droid",
-		short:   "Show Droid usage commands",
+		short:   "Usage reports for droid.",
 		title:   "Droid Token Usage Report",
 		profile: droid.Profile,
 		load: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) ([]core.LoadedEntry, error) {

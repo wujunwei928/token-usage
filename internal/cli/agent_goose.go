@@ -18,7 +18,7 @@ func newGooseCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
 		agent:   "goose",
 		display: "Goose",
-		short:   "Show Goose usage commands",
+		short:   "Usage reports for goose.",
 		profile: goose.Profile,
 		run: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) error {
 			entries, err := goose.LoadEntries(f.shared, agentPricing(f.shared))

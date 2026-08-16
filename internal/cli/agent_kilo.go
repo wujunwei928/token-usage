@@ -15,7 +15,7 @@ func newKiloCommand() *cobra.Command {
 	return newAgentCommandTree(&agentCommandSpec{
 		agent:   "kilo",
 		display: "Kilo",
-		short:   "Show Kilo usage commands",
+		short:   "Usage reports for kilo.",
 		title:   "Kilo Token Usage Report",
 		profile: kilo.Profile,
 		load: func(f *sharedFlags, kind core.ReportKind, st *agentFlagState) ([]core.LoadedEntry, error) {

@@ -47,6 +47,16 @@ Status: done
 
 验收:`go build` / `go vet` / 全部包测试绿;142 golden 字节不变(527.7s,注意 `go test` 默认 600s 超时不够,需 `-timeout` 显式放宽)。第二轮 review 的判断题发现(S3 名单五处散布、S4 渲染旗标 Data Clump、S5 `lastPeriodUnit`)未修复,已记入 `.scratch/duplication-consolidation/spec.md` 待 Q1/Q2 一并定案。
 
+## 运行验证补充轮(2026-08-16,编译运行验证后)
+
+以 `git worktree` 构建 47ab8a5 二进制与新构建逐字对比全部 agent 父/子命令帮助面,发现并修复三类漂移(golden 不覆盖帮助文本,故此前全绿仍漏过):
+
+1. **`--speed` 未渲染**:框架手工解析 extraOptions、未注册进 cobra flag set,`codex` 父/子命令帮助丢失 `--speed` 行。修复:`agentExtraOption` 增 `help`/`helpSubs`,`registerExtraOptionFlags` 仅作帮助渲染(解析仍走手工表);`--pi-path` 按 HEAD 仅父命令渲染(`helpSubs=false`),`--open-claw-path` 保持不注册(HEAD 亦不渲染)。
+2. **子命令 Short 措辞**:codex/opencode/**amp**(Gen1 三家)原为 "Show X token usage grouped by day/…",框架统一成了通用 "usage grouped by date"。修复:spec 增 `subShort` 覆盖钩子,`shortTokenUsageGrouped` 助手还原原文。
+3. **父命令 Short 措辞**:codebuff/droid/goose/hermes/kilo/pi 原为 "Usage reports for X.",框架写成 "Show X usage commands"。已逐个还原。
+
+修后 16 个 agent(除 opencode)父+子命令帮助与 HEAD 逐字节一致,新增 `TestAgentSubcommandShortWording`/`TestAgentParentShortWording`/`TestCodexSpeedFlagRegisteredForHelp` 钉住。**唯一保留差异**:`opencode` 父命令帮助现在携带完整 flag 表与 `[flags]` 用法行(HEAD 仅 `-h`)——这是 ADR 0010 Q6"裸 `<agent>` 一律默认 daily"定案的可见结果(HEAD 裸 opencode 报 "Unknown opencode option",不运行报表),父命令变为可运行命令,携带 flag 表是新行为的一致性要求,不属回归。
+
 ## Out of Scope
 
 - `internal/config/config.go:266` 的 grok(上游 `BUILT_IN_AGENT_NAMES` 镜像,ADR 0010 Q5 明确不动)
