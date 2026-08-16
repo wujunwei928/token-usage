@@ -59,11 +59,15 @@ Block 内的消耗速率:token/分钟、非缓存 token/分钟、成本/小时,�
 ### 命令与输出
 
 **Report**:
-按时间维度聚合的报表命令:daily、weekly、monthly、session。
+按时间维度聚合的报表命令:daily、weekly、monthly、session。各 Agent Adapter 支持的 Report 集合以支持矩阵为权威(weekly 仅 claude 与 opencode,其余为 daily/monthly/session)。
 _Avoid_: view, listing
 
 **All-Report**:
 跨全部 agent 的统一报表(裸 `token-usage` 即 all-daily),支持 `--sections` 一次加载输出多报表、`--by-agent` 按 agent 拆分。
+
+**Detected**:
+All-Report 标题行 `Detected:` 列出的"本机存在数据"的 agent 集合;多数 agent 以加载出非空 Usage Entry 为准,qwen/zcode/opencode 以数据源存在(HasData)即算。
+_Avoid_: found, discovered
 
 **Statusline**:
 供 Claude Code 状态栏 hook 调用的单行输出模式:从 stdin 读 hook JSON,输出模型/会话成本/当日成本/block 余额/上下文占用一行表情符号摘要。
