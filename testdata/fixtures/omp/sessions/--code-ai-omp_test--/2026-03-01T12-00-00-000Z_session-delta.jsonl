@@ -1,0 +1,3 @@
+{"type":"session","version":3,"id":"session-delta","timestamp":"2026-03-01T12:00:00.000Z","cwd":"/code/ai/omp_test"}
+{"type":"message","id":"d1","parentId":null,"timestamp":"2026-03-01T12:01:00.000Z","message":{"role":"assistant","content":"delta one","provider":"zai","model":"glm-5.2","usage":{"input":500,"output":250,"cacheRead":0,"cacheWrite":0,"totalTokens":750,"cost":{"total":0.02}},"stopReason":"stop"}}
+{"type":"message","id":"d2","parentId":"d1","timestamp":"2026-03-02T08:00:00.000Z","message":{"role":"assistant","content":"delta two next day","provider":"zai","model":"glm-5.2","usage":{"input":200,"output":90,"cacheRead":30,"cacheWrite":0,"totalTokens":320,"cost":{"total":0.004}},"stopReason":"stop"}}

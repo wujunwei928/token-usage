@@ -1,0 +1,1 @@
+WARN  Missing embedded pricing for [omp] glm-5.2; cost excludes this model. Run without --offline or update token-usage after pricing is added.

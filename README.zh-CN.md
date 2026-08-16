@@ -33,6 +33,7 @@ token-usage claude blocks      # 5 小时计费窗口
 token-usage claude statusline  # Claude Code 状态栏 hook(读 stdin)
 token-usage codex daily        # Codex 报表
 token-usage zcode daily        # ZCode 报表(读取 ~/.zcode/cli 的用量分析库)
+token-usage omp daily          # oh-my-pi 报表(读取 ~/.omp/agent/sessions)
 token-usage daily --sections daily,weekly,monthly,session --json
 ```
 
@@ -41,6 +42,10 @@ token-usage daily --sections daily,weekly,monthly,session --json
 ### ZCode
 
 `zcode` 适配器是超出上游 ccusage 的扩展([ADR 0005](docs/adr/0005-zcode-adapter-sqlite-source.md)、[ADR 0006](docs/adr/0006-adapters-beyond-upstream.md))。它不扫描 JSONL,而是只读 ZCode 的本地用量分析库(`~/.zcode/cli/db/db.sqlite`;可用 `ZCODE_DATA_DIR` 覆盖),按「每次模型调用尝试」计数——重试、失败调用、辅助调用(如会话标题)都计入——子代理会话归并到父会话。早于 `model_usage` 表的历史会话用同库的逐消息 token 回退补齐。GLM 系模型通常不在定价表中:补价之前成本显示 `$0.00` 并给出 missing pricing 警告,可在 token-usage 配置的 `pricingOverrides` 中补录。
+
+### oh-my-pi
+
+`omp` 适配器同样是超出上游的扩展([ADR 0006](docs/adr/0006-adapters-beyond-upstream.md))。它读取 oh-my-pi 的会话 JSONL(`~/.omp/agent/sessions`;可用 `OMP_AGENT_DIR` 或 `--omp-path` 覆盖)。oh-my-pi 是 pi 的分支,会话格式与 `~/.pi` 完全同源,因此解析语义与 pi 适配器一致——模型显示带 `[omp]` 前缀。oh-my-pi 嵌在 `<启动时间>_<会话id>` sidecar 目录里的子会话文件(扩展/设计子代理)归并到父会话,与 Claude 适配器的 sidechain 口径一致。
 
 ### 配置
 

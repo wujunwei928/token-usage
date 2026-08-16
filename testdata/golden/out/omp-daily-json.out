@@ -1,0 +1,118 @@
+{
+  "daily": [
+    {
+      "cacheCreationTokens": 30,
+      "cacheReadTokens": 330,
+      "date": "2026-01-02",
+      "inputTokens": 2100,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 10,
+          "cacheReadTokens": 250,
+          "cost": 0.0123,
+          "inputTokens": 1700,
+          "modelName": "[omp] glm-5.2",
+          "outputTokens": 733
+        },
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 80,
+          "cost": 0.0061,
+          "inputTokens": 400,
+          "modelName": "[omp] MiniMax-M3",
+          "outputTokens": 150
+        }
+      ],
+      "modelsUsed": [
+        "[omp] glm-5.2",
+        "[omp] MiniMax-M3"
+      ],
+      "outputTokens": 883,
+      "totalCost": 0.0184,
+      "totalTokens": 3343
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "date": "2026-01-03",
+      "inputTokens": 510,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.003,
+          "inputTokens": 500,
+          "modelName": "[omp] claude-sonnet-4-20250514",
+          "outputTokens": 100
+        },
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.0,
+          "inputTokens": 10,
+          "modelName": "[omp] glm-5.2",
+          "outputTokens": 5
+        }
+      ],
+      "modelsUsed": [
+        "[omp] claude-sonnet-4-20250514",
+        "[omp] glm-5.2"
+      ],
+      "outputTokens": 105,
+      "totalCost": 0.003,
+      "totalTokens": 615
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 0,
+      "date": "2026-03-01",
+      "inputTokens": 500,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 0,
+          "cost": 0.02,
+          "inputTokens": 500,
+          "modelName": "[omp] glm-5.2",
+          "outputTokens": 250
+        }
+      ],
+      "modelsUsed": [
+        "[omp] glm-5.2"
+      ],
+      "outputTokens": 250,
+      "totalCost": 0.02,
+      "totalTokens": 750
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 30,
+      "date": "2026-03-02",
+      "inputTokens": 200,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 30,
+          "cost": 0.004,
+          "inputTokens": 200,
+          "modelName": "[omp] glm-5.2",
+          "outputTokens": 90
+        }
+      ],
+      "modelsUsed": [
+        "[omp] glm-5.2"
+      ],
+      "outputTokens": 90,
+      "totalCost": 0.004,
+      "totalTokens": 320
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 30,
+    "cacheReadTokens": 360,
+    "inputTokens": 3310,
+    "outputTokens": 1328,
+    "totalCost": 0.045399999999999996,
+    "totalTokens": 5028
+  }
+}

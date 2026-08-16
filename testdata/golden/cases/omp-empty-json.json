@@ -1,0 +1,1 @@
+{"args": ["omp", "daily", "--offline", "--json"], "env": {"OMP_AGENT_DIR": "$FIXTURE/omp/missing"}}

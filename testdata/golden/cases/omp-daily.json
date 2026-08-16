@@ -1,0 +1,1 @@
+{"args": ["omp", "daily", "--offline"], "env": {"OMP_AGENT_DIR": "$FIXTURE/omp/sessions"}}

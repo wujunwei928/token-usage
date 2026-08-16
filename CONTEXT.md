@@ -7,7 +7,7 @@
 ### 数据摄入
 
 **Agent Adapter**:
-一个 agent(如 claude、codex、opencode、zcode)的数据源适配器,负责发现该 agent 的本地用量记录(JSONL 会话文件或分析数据库)、解析其私有格式、产出统一的 Usage Entry。
+一个 agent(如 claude、codex、opencode、zcode、omp)的数据源适配器,负责发现该 agent 的本地用量记录(JSONL 会话文件或分析数据库)、解析其私有格式、产出统一的 Usage Entry。
 _Avoid_: source, provider, connector
 
 **Usage Entry**:
@@ -66,7 +66,7 @@ _Avoid_: view, listing
 跨全部 agent 的统一报表(裸 `token-usage` 即 all-daily),支持 `--sections` 一次加载输出多报表、`--by-agent` 按 agent 拆分。
 
 **Detected**:
-All-Report 标题行 `Detected:` 列出的"本机存在数据"的 agent 集合;多数 agent 以加载出非空 Usage Entry 为准,qwen/zcode/opencode 以数据源存在(HasData)即算。
+All-Report 标题行 `Detected:` 列出的"本机存在数据"的 agent 集合;多数 agent 以加载出非空 Usage Entry 为准,qwen/zcode/opencode/omp 以数据源存在(HasData)即算。
 _Avoid_: found, discovered
 
 **Statusline**:

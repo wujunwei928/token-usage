@@ -16,7 +16,7 @@ func AgentLabel(agent string) string {
 		"amp": "Amp", "droid": "Droid", "codebuff": "Codebuff", "hermes": "Hermes",
 		"pi": "pi-agent", "goose": "Goose", "openclaw": "OpenClaw", "kilo": "Kilo",
 		"copilot": "GitHub Copilot CLI", "gemini": "Gemini CLI", "kimi": "Kimi",
-		"qwen": "Qwen",
+		"qwen": "Qwen", "omp": "oh-my-pi",
 	}
 	if label, ok := labels[agent]; ok {
 		return label

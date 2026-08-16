@@ -16,6 +16,7 @@ import (
 	_ "github.com/wujunwei928/token-usage/internal/adapter/hermes"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/kilo"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/kimi"
+	_ "github.com/wujunwei928/token-usage/internal/adapter/omp"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/openclaw"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/opencode"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/pi"

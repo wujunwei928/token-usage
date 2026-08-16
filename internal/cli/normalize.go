@@ -107,7 +107,7 @@ func reportFlagAliasError(args []string) error {
 var agentNames = []string{
 	"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
 	"pi", "goose", "kilo", "copilot", "gemini", "kimi", "qwen", "openclaw",
-	"zcode",
+	"zcode", "omp",
 }
 
 func isAgentName(name string) bool {

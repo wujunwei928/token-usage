@@ -33,6 +33,7 @@ token-usage claude blocks      # 5-hour billing blocks
 token-usage claude statusline  # Claude Code status bar hook (reads stdin)
 token-usage codex daily        # Codex report
 token-usage zcode daily        # ZCode report (reads the ~/.zcode/cli analytics db)
+token-usage omp daily          # oh-my-pi report (reads ~/.omp/agent/sessions)
 token-usage daily --sections daily,weekly,monthly,session --json
 ```
 
@@ -41,6 +42,10 @@ Run `token-usage --help` or any subcommand with `--help` for the full flag set.
 ### ZCode
 
 The `zcode` adapter goes beyond upstream ccusage ([ADR 0005](docs/adr/0005-zcode-adapter-sqlite-source.md), [ADR 0006](docs/adr/0006-adapters-beyond-upstream.md)). Instead of scanning JSONL it reads ZCode's local analytics database (`~/.zcode/cli/db/db.sqlite`, opened read-only; `ZCODE_DATA_DIR` overrides the location) and counts every model API call attempt — retries, failed calls, and auxiliary calls such as session titles included — with subagent sessions attributed to their parent session. Sessions predating the CLI's `model_usage` table fall back to per-message tokens from the same database. GLM models are usually absent from the pricing tables: costs show `$0.00` with a missing-pricing warning until you add prices via `pricingOverrides` in the token-usage config.
+
+### oh-my-pi
+
+The `omp` adapter (beyond upstream, [ADR 0006](docs/adr/0006-adapters-beyond-upstream.md)) reads oh-my-pi's session JSONL files under `~/.omp/agent/sessions` (`OMP_AGENT_DIR` or `--omp-path` overrides the location). oh-my-pi is a pi fork and writes the same session format as `~/.pi`, so the adapter shares the pi parsing semantics — models display with an `[omp]` prefix. Sub-session files that oh-my-pi nests inside a `<started-at>_<session-id>` sidecar directory (extension/design subagents) attribute to their parent session, like the Claude adapter's sidechains.
 
 ### Configuration
 

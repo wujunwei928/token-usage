@@ -18,7 +18,7 @@ var registeredAgents = map[string]Factory{}
 var rosterOrder = []string{
 	"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
 	"pi", "goose", "openclaw", "kilo", "copilot", "gemini", "kimi", "qwen",
-	"zcode",
+	"zcode", "omp",
 }
 
 // RegisterAgent installs an adapter factory under its roster name. Duplicate
