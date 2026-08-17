@@ -56,13 +56,13 @@ token-usage daily --sections daily,weekly,monthly,session --json
 构建在同一套 agent 适配器之上的端到端用量排行榜:客户端把每天用量聚合成「小时 × 工具 × 模型」的 token 计数并上报 Report Snapshot;服务端存入 SQLite 并渲染网页。原始日志条目永不离开本机(见 `docs/adr/0001-aggregate-only-reporting.md`)。
 
 ```sh
-# 一键演示:构建两个二进制、灌入 5 用户 × 30 天数据、在 :8787 起服务
+# 一键演示:构建二进制、灌入 5 用户 × 30 天数据、在 :8787 起服务
 scripts/demo.sh [端口]
 
-# 服务端(单二进制 + SQLite,网页资源全部内嵌)
-go build -o token-usage-server ./cmd/server
-./token-usage-server add-user -db leaderboard.db --name alice --city 北京
-./token-usage-server serve -db leaderboard.db --addr 0.0.0.0:8787
+# 服务端:与 CLI 同一个二进制,收在 `server` 命令组下(ADR 0011)
+go build -o token-usage ./cmd/token-usage
+token-usage server add-user --db leaderboard.db --name alice --city 北京
+token-usage server serve --db leaderboard.db --addr 0.0.0.0:8787   # 默认只听 127.0.0.1:8787
 
 # 客户端:上报今天(重跑即覆盖当日,latest-wins)
 token-usage report --server http://<host>:8787 --token <token>
@@ -85,6 +85,6 @@ token-usage report --dry-run            # 只打印快照不上报
 
 ## 开发
 
-- 目录结构对应参考实现的 Rust crate:`internal/core`(类型/成本/价格/聚合)、`internal/terminal`(表格渲染)、`internal/adapter/<agent>`(每个 agent 一个包)、`internal/cli`(cobra 命令树)。排行榜新增 `internal/report`(快照构建与上报客户端)和 `cmd/server` + `internal/server`(接收、存储、价格、SSR 网页)。见 `docs/rewrite-plan.md` 与 `docs/adr/`。
-- `internal/e2e` 运行全链路测试:真实服务端二进制 + 真实 `token-usage report` 命令跑 fixture 日志。
+- 目录结构对应参考实现的 Rust crate:`internal/core`(类型/成本/价格/聚合)、`internal/terminal`(表格渲染)、`internal/adapter/<agent>`(每个 agent 一个包)、`internal/cli`(cobra 命令树)。排行榜新增 `internal/report`(快照构建与上报客户端)和 `internal/server`(接收、存储、价格、SSR 网页),以 `token-usage server` 命令组的形式随同一二进制分发([ADR 0011](docs/adr/0011-single-binary-cli-and-server.md))。见 `docs/rewrite-plan.md` 与 `docs/adr/`。
+- `internal/e2e` 运行全链路测试:真实 `token-usage` 二进制同时扮演服务端(`server serve`/`server add-user`)与客户端(`report`)跑 fixture 日志。
 - 价格快照通过 `go:embed` 内嵌;用 `scripts/update-pricing.sh` 刷新。

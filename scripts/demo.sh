@@ -12,7 +12,6 @@ mkdir -p "$DEMO"
 rm -f "$DB" "$DEMO"/device.json
 
 go build -o "$DEMO/token-usage" ./cmd/token-usage
-go build -o "$DEMO/server" ./cmd/server
 
 # 演示用户(名字 城市)
 USERS=(
@@ -26,7 +25,7 @@ USERS=(
 declare -A TOKENS
 for entry in "${USERS[@]}"; do
   name="${entry%% *}"; city="${entry##* }"
-  out=$("$DEMO/server" add-user -db "$DB" -name "$name" -city "$city" -password "demo123")
+  out=$("$DEMO/token-usage" server add-user --db "$DB" --name "$name" --city "$city" --password "demo123")
   token=$(echo "$out" | sed -n 's/^report token (shown once): //p')
   TOKENS[$name]="$token"
 done
@@ -46,7 +45,7 @@ EOF
 }
 
 start_server() {
-  "$DEMO/server" serve -db "$DB" -addr "127.0.0.1:$PORT" &
+  "$DEMO/token-usage" server serve --db "$DB" --addr "127.0.0.1:$PORT" &
   SERVER_PID=$!
   for _ in $(seq 1 50); do
     curl -sf "http://127.0.0.1:$PORT/about" >/dev/null && return 0

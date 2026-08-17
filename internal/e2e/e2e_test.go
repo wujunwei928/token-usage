@@ -1,6 +1,7 @@
-// Package e2e runs the single full-stack seam: real server binary + real
-// ccusage report command over fixture agent logs, asserting observable
-// behavior end to end (the ingest API, Latest-wins, and the rendered pages).
+// Package e2e runs the single full-stack seam: the real token-usage binary
+// playing both ends (server serve/add-user + report client) over fixture
+// agent logs, asserting observable behavior end to end (the ingest API,
+// Latest-wins, and the rendered pages).
 package e2e
 
 import (
@@ -17,9 +18,8 @@ import (
 )
 
 var (
-	ccusageBin string
-	serverBin  string
-	repoRoot   string
+	bin      string
+	repoRoot string
 )
 
 func TestMain(m *testing.M) {
@@ -33,15 +33,12 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	defer os.RemoveAll(tmp)
-	ccusageBin = filepath.Join(tmp, "token-usage")
-	serverBin = filepath.Join(tmp, "server")
-	for _, target := range []struct{ bin, pkg string }{{ccusageBin, "./cmd/token-usage"}, {serverBin, "./cmd/server"}} {
-		build := exec.Command("go", "build", "-o", target.bin, target.pkg)
-		build.Dir = repoRoot
-		build.Stderr = os.Stderr
-		if err := build.Run(); err != nil {
-			panic(err)
-		}
+	bin = filepath.Join(tmp, "token-usage")
+	build := exec.Command("go", "build", "-o", bin, "./cmd/token-usage")
+	build.Dir = repoRoot
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		panic(err)
 	}
 	os.Exit(m.Run())
 }
@@ -69,7 +66,7 @@ func startServer(t *testing.T, dbDir string) *serverProc {
 	t.Helper()
 	addr := freePort(t)
 	db := filepath.Join(dbDir, "lb.db")
-	cmd := exec.Command(serverBin, "serve", "-addr", addr, "-db", db)
+	cmd := exec.Command(bin, "server", "serve", "--addr", addr, "--db", db)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
@@ -92,7 +89,7 @@ func startServer(t *testing.T, dbDir string) *serverProc {
 // addUser seeds a user through the server CLI and returns the report token.
 func (p *serverProc) addUser(t *testing.T, name string) string {
 	t.Helper()
-	out, err := exec.Command(serverBin, "add-user", "-db", p.db, "-name", name).Output()
+	out, err := exec.Command(bin, "server", "add-user", "--db", p.db, "--name", name).Output()
 	if err != nil {
 		t.Fatalf("add-user: %v (%s)", err, out)
 	}
@@ -148,7 +145,7 @@ func claudeFixture(t *testing.T, lines ...string) string {
 func runReport(t *testing.T, configDir, deviceFile string, extraArgs ...string) (string, string, int) {
 	t.Helper()
 	args := append([]string{"report", "--device-file", deviceFile}, extraArgs...)
-	cmd := exec.Command(ccusageBin, args...)
+	cmd := exec.Command(bin, args...)
 	cmd.Env = append(os.Environ(), "CLAUDE_CONFIG_DIR="+configDir, "HOME="+t.TempDir(), "TZ=Asia/Shanghai")
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
@@ -298,7 +295,7 @@ func TestMultiAgentEndToEnd(t *testing.T) {
 
 	device := filepath.Join(work, "device.json")
 	args := []string{"report", "--device-file", device, "--server", proc.base, "--token", token}
-	cmd := exec.Command(ccusageBin, args...)
+	cmd := exec.Command(bin, args...)
 	cmd.Env = append(os.Environ(),
 		"CLAUDE_CONFIG_DIR="+claudeDir, "CODEX_HOME="+codexDir,
 		"HOME="+t.TempDir(), "TZ=Asia/Shanghai")

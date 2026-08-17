@@ -56,13 +56,13 @@ The `ccusage.json`-style config lives in token-usage's own `token-usage` namespa
 An end-to-end usage leaderboard built on the same adapters: the client aggregates each day's usage into hourly `(hour × tool × model)` token cells and uploads a Report Snapshot; the server stores them in SQLite and renders the web pages. Raw log entries never leave the machine (see `docs/adr/0001-aggregate-only-reporting.md`).
 
 ```sh
-# One-command demo: builds both binaries, seeds 5 users × 30 days, serves on :8787
+# One-command demo: builds the binary, seeds 5 users × 30 days, serves on :8787
 scripts/demo.sh [port]
 
-# Server (single binary + SQLite, embedded web assets)
-go build -o token-usage-server ./cmd/server
-./token-usage-server add-user -db leaderboard.db --name alice --city 北京
-./token-usage-server serve -db leaderboard.db --addr 0.0.0.0:8787
+# Server: same binary as the CLI, behind the `server` command group (ADR 0011)
+go build -o token-usage ./cmd/token-usage
+token-usage server add-user --db leaderboard.db --name alice --city 北京
+token-usage server serve --db leaderboard.db --addr 0.0.0.0:8787   # default 127.0.0.1:8787
 
 # Client: report today (re-running replaces the day, latest-wins)
 token-usage report --server http://<host>:8787 --token <token>
@@ -85,6 +85,6 @@ Deployment, pricing overrides, and ops notes: [`server/README.md`](server/README
 
 ## Development
 
-- Structure mirrors the reference Rust crates: `internal/core` (types/cost/pricing/aggregation), `internal/terminal` (table renderer), `internal/adapter/<agent>` (one package per agent), `internal/cli` (cobra command tree). The leaderboard adds `internal/report` (snapshot builder/client) and `cmd/server` + `internal/server` (ingest, store, pricing, SSR web). See `docs/rewrite-plan.md` and `docs/adr/`.
-- `internal/e2e` runs the full-stack seam: real server binary + real `token-usage report` over fixture agent logs.
+- Structure mirrors the reference Rust crates: `internal/core` (types/cost/pricing/aggregation), `internal/terminal` (table renderer), `internal/adapter/<agent>` (one package per agent), `internal/cli` (cobra command tree). The leaderboard adds `internal/report` (snapshot builder/client) and `internal/server` (ingest, store, pricing, SSR web), exposed as the `token-usage server` command group from the same binary ([ADR 0011](docs/adr/0011-single-binary-cli-and-server.md)). See `docs/rewrite-plan.md` and `docs/adr/`.
+- `internal/e2e` runs the full-stack seam: the real `token-usage` binary as both server (`server serve`/`server add-user`) and client (`report`) over fixture agent logs.
 - Pricing snapshots are embedded via `go:embed`; refresh with `scripts/update-pricing.sh`.
