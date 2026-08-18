@@ -59,6 +59,7 @@ func NewRootCommand() *cobra.Command {
 		newClaudeStatuslineCommand(),
 		newReportCommand(),
 		newServerCommand(),
+		newWebCommand(),
 	)
 	return root
 }

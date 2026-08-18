@@ -34,6 +34,7 @@ token-usage claude statusline  # Claude Code 状态栏 hook(读 stdin)
 token-usage codex daily        # Codex 报表
 token-usage zcode daily        # ZCode 报表(读取 ~/.zcode/cli 的用量分析库)
 token-usage omp daily          # oh-my-pi 报表(读取 ~/.omp/agent/sessions)
+token-usage web                # 本机浏览器看板,仅回环监听(ADR 0012)
 token-usage daily --sections daily,weekly,monthly,session --json
 ```
 
@@ -56,6 +57,11 @@ token-usage daily --sections daily,weekly,monthly,session --json
 构建在同一套 agent 适配器之上的端到端用量排行榜:客户端把每天用量聚合成「小时 × 工具 × 模型」的 token 计数并上报 Report Snapshot;服务端存入 SQLite 并渲染网页。原始日志条目永不离开本机(见 `docs/adr/0001-aggregate-only-reporting.md`)。
 
 ```sh
+# 本机模式:一条命令,浏览器直达自己的 /me 仪表盘
+# (仅回环监听、免登录、免 token、不上传——ADR 0012)
+token-usage web                                     # 首次运行自动回溯近 30 天
+token-usage web --since 2026-07-01 --refresh 5m --port 9000
+
 # 一键演示:构建二进制、灌入 5 用户 × 30 天数据、在 :8787 起服务
 scripts/demo.sh [端口]
 

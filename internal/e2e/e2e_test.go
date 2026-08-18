@@ -104,7 +104,13 @@ func (p *serverProc) addUser(t *testing.T, name string) string {
 
 func (p *serverProc) getPage(t *testing.T, path string) string {
 	t.Helper()
-	resp, err := http.Get(p.base + path)
+	return fetchPage(t, p.base, path)
+}
+
+// fetchPage GETs one page from base and returns the body.
+func fetchPage(t *testing.T, base, path string) string {
+	t.Helper()
+	resp, err := http.Get(base + path)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -24,10 +24,18 @@ const maxRowsPerReport = 24 * 64
 // Backfill caps: one request may carry a run of days (the client's --since
 // backfill); half a year is ~180 days, we accept up to 550 with a generous
 // total-row budget while staying far below the 2MB body cap in practice.
+// The exported forms are the same limits the web command's in-process
+// backfill enforces without the HTTP validation.
 const (
 	maxDaysPerReport     = 550
 	maxTotalRowsBackfill = 200_000
 )
+
+// MaxBackfillDays caps the days in one backfill run.
+const MaxBackfillDays = maxDaysPerReport
+
+// MaxBackfillRows caps the total hour rows in one backfill run.
+const MaxBackfillRows = maxTotalRowsBackfill
 
 // reportWindow / reportWindowMax form the per-token rate limit: at most 60
 // reports per hour keeps an hourly timer comfortable while blocking floods.

@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,10 +21,37 @@ import (
 // Web serves the SSR pages: leaderboard, dashboard, pricing, about, and the
 // lightweight account flow (register/login/settings with User Token minting).
 type Web struct {
-	store    *Store
-	pricing  *PricingTable
-	sessions *sessionStore
-	tpl      *template.Template
+	store        *Store
+	pricing      *PricingTable
+	sessions     *sessionStore
+	tpl          *template.Template
+	loopbackUser int64
+	refresh      func() error
+	localRoot    bool
+}
+
+// WebOption configures a Web at construction time.
+type WebOption func(*Web)
+
+// WithLoopbackUser turns on the token-usage web implicit identity (ADR 0012):
+// requests whose origin address is loopback resolve to the given user without
+// a session. The option exists solely for the loopback-bound web command —
+// server serve never sets it, so its login requirements stay untouched.
+func WithLoopbackUser(userID int64) WebOption {
+	return func(w *Web) { w.loopbackUser = userID }
+}
+
+// WithRefresh mounts the web-local manual refresh entry (POST /refresh): the
+// callback re-ingests local usage for today. Only the web command sets it;
+// deployment servers never expose the route.
+func WithRefresh(fn func() error) WebOption {
+	return func(w *Web) { w.refresh = fn }
+}
+
+// WithLocalRoot makes / land on the personal dashboard instead of the
+// leaderboard — a single-user server has nobody to rank.
+func WithLocalRoot() WebOption {
+	return func(w *Web) { w.localRoot = true }
 }
 
 // sessionStore is the in-memory cookie-session table (restart logs everyone
@@ -61,7 +91,7 @@ func (s *sessionStore) drop(id string) {
 const sessionCookie = "ccsid"
 
 // NewWeb builds the page server.
-func NewWeb(store *Store, pricing *PricingTable) (*Web, error) {
+func NewWeb(store *Store, pricing *PricingTable, opts ...WebOption) (*Web, error) {
 	tpl, err := template.New("").Funcs(template.FuncMap{
 		"fmtTokens": FormatTokens,
 		"fmtCost":   FormatCost,
@@ -73,7 +103,11 @@ func NewWeb(store *Store, pricing *PricingTable) (*Web, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Web{store: store, pricing: pricing, sessions: newSessionStore(), tpl: tpl}, nil
+	w := &Web{store: store, pricing: pricing, sessions: newSessionStore(), tpl: tpl}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w, nil
 }
 
 // Register mounts the web routes.
@@ -82,24 +116,80 @@ func (w *Web) Register(mux *http.ServeMux) {
 	if err != nil {
 		panic(err)
 	}
+	// In web-local mode the loopback origin is the credential, so a page on
+	// any other website could still form-POST to 127.0.0.1 from the local
+	// browser. State-changing requests must then carry a same-origin Origin
+	// (absent Origin — curl, older clients — stays allowed).
+	post := func(pattern string, h http.HandlerFunc) {
+		mux.HandleFunc(pattern, w.guardLocal(h))
+	}
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticRoot))))
-	mux.HandleFunc("GET /{$}", w.handleLeaderboard)
+	if w.localRoot {
+		mux.HandleFunc("GET /{$}", func(resp http.ResponseWriter, r *http.Request) {
+			http.Redirect(resp, r, "/me", http.StatusSeeOther)
+		})
+	} else {
+		mux.HandleFunc("GET /{$}", w.handleLeaderboard)
+	}
 	mux.HandleFunc("GET /me", w.requireUser(w.handleDashboard))
 	mux.HandleFunc("GET /pricing", w.handlePricing)
 	mux.HandleFunc("GET /about", w.handleAbout)
 	mux.HandleFunc("GET /login", w.handleLoginForm)
-	mux.HandleFunc("POST /login", w.handleLogin)
+	post("POST /login", w.handleLogin)
 	mux.HandleFunc("GET /register", w.handleRegisterForm)
-	mux.HandleFunc("POST /register", w.handleRegister)
-	mux.HandleFunc("POST /logout", w.handleLogout)
+	post("POST /register", w.handleRegister)
+	post("POST /logout", w.handleLogout)
 	mux.HandleFunc("GET /settings", w.requireUser(w.handleSettings))
-	mux.HandleFunc("POST /settings/tokens", w.requireUser(w.handleTokenCreate))
-	mux.HandleFunc("POST /settings/tokens/revoke", w.requireUser(w.handleTokenRevoke))
-	mux.HandleFunc("POST /settings/profile", w.requireUser(w.handleProfile))
+	post("POST /settings/tokens", w.requireUser(w.handleTokenCreate))
+	post("POST /settings/tokens/revoke", w.requireUser(w.handleTokenRevoke))
+	post("POST /settings/profile", w.requireUser(w.handleProfile))
+	if w.refresh != nil {
+		post("POST /refresh", w.requireUser(w.handleRefresh))
+	}
 }
 
-// currentUser resolves the session cookie to a user, if any.
+// guardLocal rejects cross-origin state-changing requests in web-local mode.
+func (w *Web) guardLocal(h http.HandlerFunc) http.HandlerFunc {
+	return func(resp http.ResponseWriter, r *http.Request) {
+		if w.loopbackUser != 0 {
+			if origin := r.Header.Get("Origin"); origin != "" {
+				u, err := url.Parse(origin)
+				if err != nil || u.Host != r.Host {
+					http.Error(resp, "cross-origin request rejected", http.StatusForbidden)
+					return
+				}
+			}
+		}
+		h(resp, r)
+	}
+}
+
+// handleRefresh runs the local re-ingest and returns to the dashboard.
+func (w *Web) handleRefresh(resp http.ResponseWriter, r *http.Request, user *User) {
+	if err := w.refresh(); err != nil {
+		fmt.Fprintf(os.Stderr, "local refresh: %v\n", err)
+	}
+	http.Redirect(resp, r, "/me", http.StatusSeeOther)
+}
+
+// currentUser resolves the session cookie to a user, if any. In web-local
+// mode a loopback origin resolves to the implicit local user instead.
 func (w *Web) currentUser(r *http.Request) *User {
+	if user := w.sessionUser(r); user != nil {
+		return user
+	}
+	if w.loopbackUser != 0 && isLoopbackRequest(r) {
+		user, err := w.store.UserByID(r.Context(), w.loopbackUser)
+		if err != nil {
+			return nil
+		}
+		return user
+	}
+	return nil
+}
+
+// sessionUser resolves the session cookie, ignoring the loopback identity.
+func (w *Web) sessionUser(r *http.Request) *User {
 	cookie, err := r.Cookie(sessionCookie)
 	if err != nil {
 		return nil
@@ -113,6 +203,17 @@ func (w *Web) currentUser(r *http.Request) *User {
 		return nil
 	}
 	return user
+}
+
+// isLoopbackRequest reports whether the request originated from a loopback
+// address (the only origin the web-local implicit identity trusts).
+func isLoopbackRequest(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // requireUser wraps a handler that needs a logged-in user.
@@ -132,6 +233,9 @@ type pageData struct {
 	User    *User
 	Content any
 	Flash   string
+	// Local marks the web-local mode: the dashboard shows its manual
+	// refresh entry.
+	Local bool
 }
 
 func (w *Web) render(resp http.ResponseWriter, status int, name string, data pageData) {
@@ -244,7 +348,7 @@ func (w *Web) handleLeaderboard(resp http.ResponseWriter, r *http.Request) {
 
 func (w *Web) handleDashboard(resp http.ResponseWriter, r *http.Request, user *User) {
 	data := w.store.Dashboard(r.Context(), user, w.pricing)
-	w.render(resp, http.StatusOK, "me.html", pageData{Title: "我的 Token", User: user, Content: data})
+	w.render(resp, http.StatusOK, "me.html", pageData{Title: "我的 Token", User: user, Content: data, Local: w.refresh != nil})
 }
 
 func (w *Web) handlePricing(resp http.ResponseWriter, r *http.Request) {

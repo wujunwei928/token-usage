@@ -395,6 +395,42 @@ func (s *Store) ReplaceDay(ctx context.Context, userID int64, deviceID, deviceLa
 // day's data is flagged off the leaderboard.
 const AnomalyThresholdTokens = 1_000_000_000
 
+// HasUsageBefore reports whether a user owns any Hourly Usage row dated
+// strictly before date — the web command's first-run backfill trigger.
+func (s *Store) HasUsageBefore(ctx context.Context, userID int64, date string) (bool, error) {
+	var exists bool
+	err := s.db.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM hourly_usage h
+			JOIN devices d ON d.device_id = h.device_id
+			WHERE d.user_id = ? AND h.date < ?)`, userID, date).Scan(&exists)
+	return exists, err
+}
+
+// DumpHourly renders every Hourly Usage row as one canonical comparison line
+// (device|date|hour|tool|model|counters|flagged), ordered. It is the
+// observable used to verify that the web command's in-process ingest and the
+// HTTP ingest stay row-for-row identical.
+func (s *Store) DumpHourly(ctx context.Context) ([]string, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT device_id, date, hour, tool, model, input, output, cache_read, cache_5m, cache_1h, flagged
+		 FROM hourly_usage ORDER BY device_id, date, hour, tool, model`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var deviceID, date, tool, model string
+		var hour, input, output, cacheRead, cache5m, cache1h, flagged int64
+		if err := rows.Scan(&deviceID, &date, &hour, &tool, &model, &input, &output, &cacheRead, &cache5m, &cache1h, &flagged); err != nil {
+			return nil, err
+		}
+		out = append(out, fmt.Sprintf("%s|%s|%d|%s|%s|%d|%d|%d|%d|%d|%d",
+			deviceID, date, hour, tool, model, input, output, cacheRead, cache5m, cache1h, flagged))
+	}
+	return out, rows.Err()
+}
+
 // lastReportAt returns the most recent reported_at for a device (any date).
 func (s *Store) lastReportAt(ctx context.Context, deviceID string) int64 {
 	var ts int64

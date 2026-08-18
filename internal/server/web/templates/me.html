@@ -4,6 +4,7 @@
 <div class="pagehead">
   <h1>我的 Token</h1>
   <p class="muted">{{.User.Name}}{{if .User.City}} · {{.User.City}}{{end}} · {{$d.Today}} · {{$d.Devices | len}} 台设备</p>
+  {{if .Local}}<form method="post" action="/refresh"><button type="submit">↻ 刷新数据</button></form>{{end}}
 </div>
 
 <section class="statgrid">

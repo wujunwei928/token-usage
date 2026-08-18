@@ -34,6 +34,7 @@ token-usage claude statusline  # Claude Code status bar hook (reads stdin)
 token-usage codex daily        # Codex report
 token-usage zcode daily        # ZCode report (reads the ~/.zcode/cli analytics db)
 token-usage omp daily          # oh-my-pi report (reads ~/.omp/agent/sessions)
+token-usage web                # local browser dashboard, loopback-only (ADR 0012)
 token-usage daily --sections daily,weekly,monthly,session --json
 ```
 
@@ -56,6 +57,11 @@ The `ccusage.json`-style config lives in token-usage's own `token-usage` namespa
 An end-to-end usage leaderboard built on the same adapters: the client aggregates each day's usage into hourly `(hour × tool × model)` token cells and uploads a Report Snapshot; the server stores them in SQLite and renders the web pages. Raw log entries never leave the machine (see `docs/adr/0001-aggregate-only-reporting.md`).
 
 ```sh
+# Local-only mode: one command, browser opens straight into your /me dashboard
+# (loopback-bound, no login, no token, no upload — ADR 0012)
+token-usage web                                     # first run backfills 30 days
+token-usage web --since 2026-07-01 --refresh 5m --port 9000
+
 # One-command demo: builds the binary, seeds 5 users × 30 days, serves on :8787
 scripts/demo.sh [port]
 
