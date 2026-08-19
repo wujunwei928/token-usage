@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"syscall"
 
 	"github.com/wujunwei928/token-usage/internal/core"
 )
@@ -71,10 +70,6 @@ func cachedStatuslineOutput(cache *StatuslineCache, currentMtime, now, refreshIn
 	}
 	output := cache.LastOutput
 	return &output
-}
-
-func processIsAlive(pid uint32) bool {
-	return pid != 0 && syscall.Kill(int(pid), 0) == nil
 }
 
 func statuslineCachePath(sessionID string) string {
