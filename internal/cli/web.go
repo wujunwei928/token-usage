@@ -41,7 +41,7 @@ func newWebCommand() *cobra.Command {
 	flags.String("db", "", "SQLite database path (default <user config dir>/token-usage/web.db)")
 	flags.String("name", "", "local user name (default: OS user name)")
 	flags.String("pricing", "", "model-prices.json override path")
-	flags.String("since", "", "first-run backfill start date YYYY-MM-DD (default: 29 days back)")
+	flags.String("since", "", "backfill start date YYYY-MM-DD (default: 29 days back, first run only; an explicit value re-runs the backfill for that range)")
 	flags.Duration("refresh", 15*time.Minute, "re-aggregate today's local usage every interval")
 	return cmd
 }
@@ -94,11 +94,16 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	since, _ := flags.GetString("since")
-	days, err := backfillOnFirstRun(cmd.Context(), store, localUser.ID, shared, since, time.Now())
+	// 显式传空串等价于未传:只认非空 --since 为重放指令。
+	sinceSet := flags.Changed("since") && since != ""
+	days, err := backfillHistory(cmd.Context(), store, localUser.ID, shared, since, sinceSet, time.Now())
 	if err != nil {
 		return err
 	}
-	if days > 0 {
+	switch {
+	case days > 0 && sinceSet:
+		fmt.Fprintf(os.Stderr, "回填完成:已重建 %d 天历史数据\n", days)
+	case days > 0:
 		fmt.Fprintf(os.Stderr, "首次运行:已回溯 %d 天历史数据\n", days)
 	}
 
@@ -237,14 +242,19 @@ func ingestSnapshots(ctx context.Context, store *server.Store, userID int64, sna
 // previous 29 days.
 const defaultBackfillDays = 29
 
-// backfillOnFirstRun lands local history for a user the first time they have
-// none (any row dated before today suppresses it). Empty days never enter
-// the snapshot set, so re-running is a per-day Latest-wins no-op. Returns
-// the number of days ingested.
-func backfillOnFirstRun(ctx context.Context, store *server.Store, userID int64, shared *core.SharedArgs, since string, now time.Time) (int, error) {
+// backfillHistory lands local history on first run, or on demand when the
+// user passes --since explicitly. Implicit range (no --since): any row dated
+// before today suppresses the backfill — it is a first-run seed, not a
+// refresh. Explicit --since opts into a replay of that range regardless:
+// empty days never enter the snapshot set and each (device, date) is a
+// Latest-wins unit, so a replay only rebuilds days the local logs still
+// hold and never clears the rest. Returns the number of days ingested.
+func backfillHistory(ctx context.Context, store *server.Store, userID int64, shared *core.SharedArgs, since string, sinceSet bool, now time.Time) (int, error) {
 	today := now.Format("2006-01-02")
 	if since == "" {
 		since = now.AddDate(0, 0, -defaultBackfillDays).Format("2006-01-02")
+		// 空区间起点只能来自隐式默认窗口;显式空串等价于未传。
+		sinceSet = false
 	} else {
 		parsed, err := time.Parse("2006-01-02", since)
 		if err != nil {
@@ -255,12 +265,14 @@ func backfillOnFirstRun(ctx context.Context, store *server.Store, userID int64, 
 		}
 	}
 
-	has, err := store.HasUsageBefore(ctx, userID, today)
-	if err != nil {
-		return 0, err
-	}
-	if has {
-		return 0, nil
+	if !sinceSet {
+		has, err := store.HasUsageBefore(ctx, userID, today)
+		if err != nil {
+			return 0, err
+		}
+		if has {
+			return 0, nil
+		}
 	}
 
 	device, err := loadLocalDevice()

@@ -57,6 +57,16 @@ func rowsOf(t *testing.T, s *server.Store) []string {
 	return rows
 }
 
+// isolateHome points HOME and USERPROFILE (what os.UserHomeDir reads on
+// Windows) at the same sandbox dir, so every adapter resolves its log
+// sources inside the test environment instead of the developer's real
+// machine — setting HOME alone leaks the real ~/.codex et al. on Windows.
+func isolateHome(t *testing.T, dir string) {
+	t.Helper()
+	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
+}
+
 // The web command's in-process ingest must be row-for-row identical to the
 // HTTP ingest path over the same fixture — the two paths share one
 // Latest-wins store unit, and nothing may drift between them.
@@ -66,7 +76,7 @@ func TestInProcessIngestMatchesHTTPIngest(t *testing.T) {
 	today21 := time.Date(now.Year(), now.Month(), now.Day(), 21, 5, 0, 0, now.Location())
 	// Hermetic environment: every adapter source must resolve inside temp
 	// dirs or the fixture, never the developer's real logs.
-	t.Setenv("HOME", t.TempDir())
+	isolateHome(t, t.TempDir())
 	t.Setenv("CLAUDE_CONFIG_DIR", webFixture(t,
 		webUsageLine("w1", "claude-sonnet-4-5", "rw1", today9, 1000, 200, 5000, 300, 100),
 		webUsageLine("w2", "claude-opus-4-1", "rw2", today21, 400, 80, 0, 0, 0),

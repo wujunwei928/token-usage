@@ -61,6 +61,8 @@ An end-to-end usage leaderboard built on the same adapters: the client aggregate
 # (loopback-bound, no login, no token, no upload — ADR 0012)
 token-usage web                                     # first run backfills 30 days
 token-usage web --since 2026-07-01 --refresh 5m --port 9000
+# an explicit --since re-runs the backfill for that range (per-day latest-wins):
+# recover a day the dashboard missed without resetting web.db
 
 # One-command demo: builds the binary, seeds 5 users × 30 days, serves on :8787
 scripts/demo.sh [port]

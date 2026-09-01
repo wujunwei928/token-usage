@@ -61,6 +61,8 @@ token-usage daily --sections daily,weekly,monthly,session --json
 # (仅回环监听、免登录、免 token、不上传——ADR 0012)
 token-usage web                                     # 首次运行自动回溯近 30 天
 token-usage web --since 2026-07-01 --refresh 5m --port 9000
+# 显式 --since 会对该区间强制重跑回填(按天 latest-wins):
+# 仪表盘漏了某一天时,无需重置 web.db 即可补回
 
 # 一键演示:构建二进制、灌入 5 用户 × 30 天数据、在 :8787 起服务
 scripts/demo.sh [端口]
