@@ -26,8 +26,10 @@ var (
 
 // ResolveModelName resolves a model name through the model-aliases env
 // (TOKEN_USAGE_MODEL_ALIASES, legacy CCUSAGE_MODEL_ALIASES), including -fast
-// variants.
+// variants. 先归一再查别名:不同 agent 对同一模型的大小写和 agent 前缀
+// ([omp] / [pi] 等)各不相同,统计与定价必须在同一个规范名上合并。
 func ResolveModelName(model string) string {
+	model = normalizeModelName(model)
 	aliases := modelAliases()
 	if alias, ok := aliases[model]; ok && alias != "" {
 		return alias
@@ -35,6 +37,18 @@ func ResolveModelName(model string) string {
 	if base, hasSuffix := strings.CutSuffix(model, "-fast"); hasSuffix {
 		if alias, ok := aliases[base]; ok && alias != "" {
 			return alias + "-fast"
+		}
+	}
+	return model
+}
+
+// normalizeModelName canonicalizes an agent-reported model name: 去首尾空白、
+// 剥离开头的 "[tag] " agent 前缀、统一小写。
+func normalizeModelName(model string) string {
+	model = strings.ToLower(strings.TrimSpace(model))
+	if strings.HasPrefix(model, "[") {
+		if end := strings.Index(model, "]"); end >= 0 {
+			model = strings.TrimSpace(model[end+1:])
 		}
 	}
 	return model
