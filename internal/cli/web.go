@@ -77,7 +77,7 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer store.Close()
-	rotateAutoBackups(cmd.Context(), store, dbPath)
+	startupBackup(cmd.Context(), store, dbPath)
 
 	pricing, err := server.LoadPricing(pricingPath)
 	if err != nil {
@@ -161,25 +161,24 @@ func runWeb(cmd *cobra.Command, args []string) error {
 	}
 }
 
-// autoBackupCopies is how many startup snapshots to keep; auto-bak-0 is the
-// newest. 三份足够覆盖最近三次启动,再多只是磁盘噪音。
-const autoBackupCopies = 3
-
-func autoBackupPath(dbPath string, i int) string {
-	return fmt.Sprintf("%s.auto-bak-%d", dbPath, i)
+// dailyBackupTarget 返回今天的备份文件路径,统一归档到 db 同目录的
+// backups/<YYYY-MM-DD>/ 下,按日期一目了然;当天重复启动直接覆盖,
+// 目录里永远只有当天最新一份。
+func dailyBackupTarget(dbPath string, now time.Time) string {
+	dir := filepath.Join(filepath.Dir(dbPath), "backups", now.Format("2006-01-02"))
+	return filepath.Join(dir, filepath.Base(dbPath))
 }
 
-// rotateAutoBackups snapshots the database and keeps the newest
-// autoBackupCopies files. 备份是保险不是前置条件:失败只警告,绝不阻断启动。
-func rotateAutoBackups(ctx context.Context, store *server.Store, dbPath string) {
-	for i := autoBackupCopies - 1; i > 0; i-- {
-		os.Remove(autoBackupPath(dbPath, i)) // Windows rename 需要目标不存在
-		if err := os.Rename(autoBackupPath(dbPath, i-1), autoBackupPath(dbPath, i)); err != nil && !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "轮转备份失败(继续): %v\n", err)
-		}
+// startupBackup snapshots the database into today's backups directory.
+// 备份是保险不是前置条件:失败只警告,绝不阻断启动。
+func startupBackup(ctx context.Context, store *server.Store, dbPath string) {
+	target := dailyBackupTarget(dbPath, time.Now())
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		fmt.Fprintf(os.Stderr, "创建备份目录失败(继续启动): %v\n", err)
+		return
 	}
-	os.Remove(autoBackupPath(dbPath, 0))
-	if err := store.BackupTo(ctx, autoBackupPath(dbPath, 0)); err != nil {
+	os.Remove(target) // VACUUM INTO 要求目标不存在;Windows 覆盖也需先删
+	if err := store.BackupTo(ctx, target); err != nil {
 		fmt.Fprintf(os.Stderr, "启动备份失败(继续启动): %v\n", err)
 	}
 }

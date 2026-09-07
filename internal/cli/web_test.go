@@ -48,42 +48,43 @@ func TestWebRefreshFlagValidation(t *testing.T) {
 	}
 }
 
-// 启动备份是数据事故的最后防线:必须真的产出一致性快照、正确轮转,
-// 且库为空/路径不可写时绝不阻断启动(rotateAutoBackups 只警告不返回错误)。
-func TestRotateAutoBackups(t *testing.T) {
+// 启动备份是数据事故的最后防线:必须真的产出一致性快照、落到当天的
+// backups/<日期>/ 目录、重复启动覆盖不报错,且绝不阻断启动。
+func TestStartupBackup(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := dir + "/web.db"
 	store, err := server.OpenStore(dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer store.Close()
 	ctx := context.Background()
 
-	// 第一次启动:产出 auto-bak-0,内容可用。
-	rotateAutoBackups(ctx, store, dbPath)
-	assertBackupHasUser(t, dbPath, 0)
+	startupBackup(ctx, store, dbPath)
+	target := dailyBackupTarget(dbPath, time.Now())
+	assertValidBackup(t, target)
 
-	// 第二次启动:0 轮转为 1,新快照落在 0。
-	rotateAutoBackups(ctx, store, dbPath)
-	for _, i := range []int{0, 1} {
-		if _, err := os.Stat(autoBackupPath(dbPath, i)); err != nil {
-			t.Fatalf("auto-bak-%d missing after second start: %v", i, err)
-		}
+	// 当天重复启动:覆盖同一路径,不报错不留垃圾。
+	startupBackup(ctx, store, dbPath)
+	assertValidBackup(t, target)
+
+	entries, err := os.ReadDir(dir + "/backups")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, err := os.Stat(autoBackupPath(dbPath, 2)); !os.IsNotExist(err) {
-		t.Fatalf("auto-bak-2 should not exist after two starts")
+	if len(entries) != 1 {
+		t.Fatalf("backups dir has %d entries, want only today's", len(entries))
 	}
-	store.Close()
 }
 
-func assertBackupHasUser(t *testing.T, dbPath string, i int) {
-	if _, err := os.Stat(autoBackupPath(dbPath, i)); err != nil {
-		t.Fatalf("auto-bak-%d missing: %v", i, err)
+func assertValidBackup(t *testing.T, path string) {
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("backup %s missing: %v", path, err)
 	}
-	// 用独立的只读连接验证备份是合法 SQLite 且含 schema。
-	backup, err := server.OpenStore(autoBackupPath(dbPath, i))
+	// 用独立的连接验证备份是合法 SQLite 且含 schema。
+	backup, err := server.OpenStore(path)
 	if err != nil {
-		t.Fatalf("auto-bak-%d is not a valid database: %v", i, err)
+		t.Fatalf("backup %s is not a valid database: %v", path, err)
 	}
-	defer backup.Close()
+	backup.Close()
 }
