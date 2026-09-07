@@ -47,6 +47,14 @@ func OpenStore(path string) (*Store, error) {
 	return s, nil
 }
 
+// BackupTo writes a consistent full snapshot of the database to path via
+// VACUUM INTO — 服务运行中也能安全备份(WAL 模式下直接 cp 主文件会得到
+// 中间态)。目标文件必须不存在,由调用方负责 rotate。
+func (s *Store) BackupTo(ctx context.Context, path string) error {
+	_, err := s.db.ExecContext(ctx, `VACUUM INTO ?`, path)
+	return err
+}
+
 // Close releases the database handle.
 func (s *Store) Close() error { return s.db.Close() }
 

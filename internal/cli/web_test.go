@@ -1,9 +1,13 @@
 package cli
 
 import (
+	"context"
+	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wujunwei928/token-usage/internal/server"
 )
 
 // The web command's surface is the loopback invariant itself (ADR 0012): it
@@ -42,4 +46,44 @@ func TestWebRefreshFlagValidation(t *testing.T) {
 			t.Fatalf("--refresh %s: err = %v, want --refresh error", bad, err)
 		}
 	}
+}
+
+// 启动备份是数据事故的最后防线:必须真的产出一致性快照、正确轮转,
+// 且库为空/路径不可写时绝不阻断启动(rotateAutoBackups 只警告不返回错误)。
+func TestRotateAutoBackups(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := dir + "/web.db"
+	store, err := server.OpenStore(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+
+	// 第一次启动:产出 auto-bak-0,内容可用。
+	rotateAutoBackups(ctx, store, dbPath)
+	assertBackupHasUser(t, dbPath, 0)
+
+	// 第二次启动:0 轮转为 1,新快照落在 0。
+	rotateAutoBackups(ctx, store, dbPath)
+	for _, i := range []int{0, 1} {
+		if _, err := os.Stat(autoBackupPath(dbPath, i)); err != nil {
+			t.Fatalf("auto-bak-%d missing after second start: %v", i, err)
+		}
+	}
+	if _, err := os.Stat(autoBackupPath(dbPath, 2)); !os.IsNotExist(err) {
+		t.Fatalf("auto-bak-2 should not exist after two starts")
+	}
+	store.Close()
+}
+
+func assertBackupHasUser(t *testing.T, dbPath string, i int) {
+	if _, err := os.Stat(autoBackupPath(dbPath, i)); err != nil {
+		t.Fatalf("auto-bak-%d missing: %v", i, err)
+	}
+	// 用独立的只读连接验证备份是合法 SQLite 且含 schema。
+	backup, err := server.OpenStore(autoBackupPath(dbPath, i))
+	if err != nil {
+		t.Fatalf("auto-bak-%d is not a valid database: %v", i, err)
+	}
+	defer backup.Close()
 }

@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -75,6 +77,7 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer store.Close()
+	rotateAutoBackups(cmd.Context(), store, dbPath)
 
 	pricing, err := server.LoadPricing(pricingPath)
 	if err != nil {
@@ -140,7 +143,45 @@ func runWeb(cmd *cobra.Command, args []string) error {
 	fmt.Fprintf(os.Stderr, "token-usage web listening on http://%s (db: %s)\n", addr, filepath.Base(dbPath))
 	bestEffortOpen("http://" + addr)
 	srv := &http.Server{Addr: addr, Handler: mux}
-	return srv.ListenAndServe()
+	// Ctrl+C / 终止信号 → 优雅关停:store.Close() 会 checkpoint WAL,
+	// 强杀(SIGKILL)才会丢 WAL 里未落盘的写入。
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	serveErr := make(chan error, 1)
+	go func() { serveErr <- srv.ListenAndServe() }()
+	select {
+	case err := <-serveErr:
+		return err
+	case <-ctx.Done():
+		fmt.Fprintln(os.Stderr, "正在退出:等待数据库落盘…")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shutdownCtx)
+		return nil
+	}
+}
+
+// autoBackupCopies is how many startup snapshots to keep; auto-bak-0 is the
+// newest. 三份足够覆盖最近三次启动,再多只是磁盘噪音。
+const autoBackupCopies = 3
+
+func autoBackupPath(dbPath string, i int) string {
+	return fmt.Sprintf("%s.auto-bak-%d", dbPath, i)
+}
+
+// rotateAutoBackups snapshots the database and keeps the newest
+// autoBackupCopies files. 备份是保险不是前置条件:失败只警告,绝不阻断启动。
+func rotateAutoBackups(ctx context.Context, store *server.Store, dbPath string) {
+	for i := autoBackupCopies - 1; i > 0; i-- {
+		os.Remove(autoBackupPath(dbPath, i)) // Windows rename 需要目标不存在
+		if err := os.Rename(autoBackupPath(dbPath, i-1), autoBackupPath(dbPath, i)); err != nil && !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "轮转备份失败(继续): %v\n", err)
+		}
+	}
+	os.Remove(autoBackupPath(dbPath, 0))
+	if err := store.BackupTo(ctx, autoBackupPath(dbPath, 0)); err != nil {
+		fmt.Fprintf(os.Stderr, "启动备份失败(继续启动): %v\n", err)
+	}
 }
 
 // defaultWebDBPath resolves the web command's persistent database under the
