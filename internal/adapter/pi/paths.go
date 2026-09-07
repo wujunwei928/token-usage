@@ -11,8 +11,13 @@ import (
 // PiAgentDirEnv overrides the default pi sessions directory.
 const PiAgentDirEnv = "PI_AGENT_DIR"
 
+// PiSessionDirEnv is pi's official session-directory env var
+// (PI_CODING_AGENT_SESSION_DIR, equivalent to pi's --session-dir).
+const PiSessionDirEnv = "PI_CODING_AGENT_SESSION_DIR"
+
 // Paths resolves the pi session roots: an explicit --pi-path wins, then
-// PI_AGENT_DIR, then ~/.pi/agent/sessions. `--pi-path` and PI_AGENT_DIR keep
+// PI_AGENT_DIR, then pi's own PI_CODING_AGENT_SESSION_DIR, then
+// ~/.pi/agent/sessions. `--pi-path` and PI_AGENT_DIR keep
 // their pre-existing no-`~`-expansion semantics (named store paths in
 // ccusage.json expand `~`, but those are handled by the config layer).
 func Paths(customPath *string) ([]string, error) {
@@ -20,6 +25,9 @@ func Paths(customPath *string) ([]string, error) {
 		return existingPathList(*customPath), nil
 	}
 	if envPaths, ok := os.LookupEnv(PiAgentDirEnv); ok && strings.TrimSpace(envPaths) != "" {
+		return existingPathList(envPaths), nil
+	}
+	if envPaths, ok := os.LookupEnv(PiSessionDirEnv); ok && strings.TrimSpace(envPaths) != "" {
 		return existingPathList(envPaths), nil
 	}
 	home, err := os.UserHomeDir()
