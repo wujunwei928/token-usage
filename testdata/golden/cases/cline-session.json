@@ -1,0 +1,1 @@
+{"args": ["cline", "session", "--offline"], "env": {"CLINE_DATA_DIR": "$FIXTURE/cline/data"}}

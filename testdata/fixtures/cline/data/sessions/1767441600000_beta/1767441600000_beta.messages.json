@@ -1,0 +1,5 @@
+{"version":1,"sessionId":"beta","messages":[
+ {"id":"m3","role":"assistant","ts":1767441600000,"metrics":{"inputTokens":500,"outputTokens":100,"cacheReadTokens":0,"cacheWriteTokens":0,"cost":0.02}},
+ {"id":"m4","role":"assistant","ts":1767445200000,"metrics":{"inputTokens":0,"outputTokens":0,"cost":0.003}},
+ {"id":"m5","role":"assistant","ts":1767448800000,"metrics":{"inputTokens":200,"outputTokens":90,"cacheReadTokens":30,"cacheWriteTokens":0}}
+]}

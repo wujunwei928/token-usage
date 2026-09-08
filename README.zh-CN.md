@@ -34,6 +34,7 @@ token-usage claude statusline  # Claude Code 状态栏 hook(读 stdin)
 token-usage codex daily        # Codex 报表
 token-usage zcode daily        # ZCode 报表(读取 ~/.zcode/cli 的用量分析库)
 token-usage omp daily          # oh-my-pi 报表(读取 ~/.omp/agent/sessions)
+token-usage cline daily        # Cline CLI 报表(读取 ~/.cline/data/sessions)
 token-usage web                # 本机浏览器看板,仅回环监听(ADR 0012)
 token-usage daily --sections daily,weekly,monthly,session --json
 ```
@@ -47,6 +48,10 @@ token-usage daily --sections daily,weekly,monthly,session --json
 ### oh-my-pi
 
 `omp` 适配器同样是超出上游的扩展([ADR 0006](docs/adr/0006-adapters-beyond-upstream.md))。它读取 oh-my-pi 的会话 JSONL(`~/.omp/agent/sessions`;可用 `OMP_AGENT_DIR` 或 `--omp-path` 覆盖)。oh-my-pi 是 pi 的分支,会话格式与 `~/.pi` 完全同源,因此解析语义与 pi 适配器一致——模型显示带 `[omp]` 前缀。oh-my-pi 嵌在 `<启动时间>_<会话id>` sidecar 目录里的子会话文件(扩展/设计子代理)归并到父会话,与 Claude 适配器的 sidechain 口径一致。
+
+### Cline
+
+`cline` 适配器同样是超出上游的扩展([ADR 0006](docs/adr/0006-adapters-beyond-upstream.md))。它读取 Cline CLI 的会话日志(`~/.cline/data/sessions`;可用 `CLINE_DATA_DIR` 覆盖,逗号分隔支持多个根)。每个会话目录由 `<id>.messages.json` 会话日志(每条 assistant 消息对应一次 API 调用,携带 `metrics` 块)与 `<id>.json` manifest 配对——manifest 为不带 `modelInfo` 的消息提供会话 id、模型、provider 与工作区(`workspace_root` 优先于 `cwd`)。`metrics.inputTokens` 本身已含缓存桶,因此 input 口径为 `inputTokens − cacheRead − cacheWrite`(下限 0),缓存两类单独保留。Cline 上报的非负 `metrics.cost` 即 provider 报告的 costUSD——Cost Mode `auto` 优先采用,否则按 token 查定价表计价。
 
 ### 配置
 

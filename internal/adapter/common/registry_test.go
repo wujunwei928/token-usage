@@ -37,11 +37,11 @@ func TestRegistryRegistersByName(t *testing.T) {
 
 func TestRegistryRosterOrder(t *testing.T) {
 	// The reference roster with the beyond-upstream adapters appended
-	// (zcode and omp, ADR 0006); grok removed with its frozen port (ADR 0010).
+	// (zcode, omp and cline, ADR 0006); grok removed with its frozen port (ADR 0010).
 	want := []string{
 		"claude", "codex", "opencode", "amp", "droid", "codebuff", "hermes",
 		"pi", "goose", "openclaw", "kilo", "copilot", "gemini", "kimi", "qwen",
-		"zcode", "omp",
+		"zcode", "omp", "cline",
 	}
 	if got := Roster(); !reflect.DeepEqual(got, want) {
 		t.Errorf("Roster() = %v, want %v", got, want)

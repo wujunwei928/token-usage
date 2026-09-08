@@ -1,0 +1,5 @@
+{"version":1,"sessionId":"alpha","messages":[
+ {"id":"u1","role":"user","ts":1767348000000,"content":[{"type":"text","text":"hi"}]},
+ {"id":"m1","role":"assistant","ts":1767348000000,"modelInfo":{"id":"claude-sonnet-4-20250514","provider":"anthropic"},"metrics":{"inputTokens":1000,"outputTokens":400,"cacheReadTokens":250,"cacheWriteTokens":10}},
+ {"id":"m2","role":"assistant","ts":1767351600000,"modelInfo":{"id":"glm-5.2","provider":"zai"},"metrics":{"inputTokens":500,"outputTokens":150,"cacheReadTokens":80,"cacheWriteTokens":20,"cost":0.0061}}
+]}

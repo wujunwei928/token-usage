@@ -34,6 +34,7 @@ token-usage claude statusline  # Claude Code status bar hook (reads stdin)
 token-usage codex daily        # Codex report
 token-usage zcode daily        # ZCode report (reads the ~/.zcode/cli analytics db)
 token-usage omp daily          # oh-my-pi report (reads ~/.omp/agent/sessions)
+token-usage cline daily        # Cline CLI report (reads ~/.cline/data/sessions)
 token-usage web                # local browser dashboard, loopback-only (ADR 0012)
 token-usage daily --sections daily,weekly,monthly,session --json
 ```
@@ -47,6 +48,10 @@ The `zcode` adapter goes beyond upstream ccusage ([ADR 0005](docs/adr/0005-zcode
 ### oh-my-pi
 
 The `omp` adapter (beyond upstream, [ADR 0006](docs/adr/0006-adapters-beyond-upstream.md)) reads oh-my-pi's session JSONL files under `~/.omp/agent/sessions` (`OMP_AGENT_DIR` or `--omp-path` overrides the location). oh-my-pi is a pi fork and writes the same session format as `~/.pi`, so the adapter shares the pi parsing semantics — models display with an `[omp]` prefix. Sub-session files that oh-my-pi nests inside a `<started-at>_<session-id>` sidecar directory (extension/design subagents) attribute to their parent session, like the Claude adapter's sidechains.
+
+### Cline
+
+The `cline` adapter (beyond upstream, [ADR 0006](docs/adr/0006-adapters-beyond-upstream.md)) reads Cline CLI session logs under `~/.cline/data/sessions` (`CLINE_DATA_DIR` overrides the location; comma-separated for multiple roots). Each session directory pairs a `<id>.messages.json` conversation log — one assistant message per API call, carrying a `metrics` block — with a `<id>.json` manifest that seeds the session id, model, provider, and workspace (`workspace_root` wins over `cwd`) for messages without their own `modelInfo`. `metrics.inputTokens` already includes the cache buckets, so the input count excludes them (`inputTokens − cacheRead − cacheWrite`, clamped at zero) with the cache classes kept separate. A non-negative `metrics.cost`, when Cline reports one, is the provider-reported costUSD — Cost Mode `auto` prefers it, otherwise tokens price from the pricing tables.
 
 ### Configuration
 

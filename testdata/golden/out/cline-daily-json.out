@@ -1,0 +1,65 @@
+{
+  "daily": [
+    {
+      "cacheCreationTokens": 30,
+      "cacheReadTokens": 330,
+      "date": "2026-01-02",
+      "inputTokens": 1140,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 10,
+          "cacheReadTokens": 250,
+          "cost": 0.0083325,
+          "inputTokens": 740,
+          "modelName": "claude-sonnet-4-20250514",
+          "outputTokens": 400
+        },
+        {
+          "cacheCreationTokens": 20,
+          "cacheReadTokens": 80,
+          "cost": 0.0061,
+          "inputTokens": 400,
+          "modelName": "glm-5.2",
+          "outputTokens": 150
+        }
+      ],
+      "modelsUsed": [
+        "claude-sonnet-4-20250514",
+        "glm-5.2"
+      ],
+      "outputTokens": 550,
+      "totalCost": 0.014432500000000001,
+      "totalTokens": 2050
+    },
+    {
+      "cacheCreationTokens": 0,
+      "cacheReadTokens": 30,
+      "date": "2026-01-03",
+      "inputTokens": 670,
+      "modelBreakdowns": [
+        {
+          "cacheCreationTokens": 0,
+          "cacheReadTokens": 30,
+          "cost": 0.023,
+          "inputTokens": 670,
+          "modelName": "glm-5.2",
+          "outputTokens": 190
+        }
+      ],
+      "modelsUsed": [
+        "glm-5.2"
+      ],
+      "outputTokens": 190,
+      "totalCost": 0.023,
+      "totalTokens": 890
+    }
+  ],
+  "totals": {
+    "cacheCreationTokens": 30,
+    "cacheReadTokens": 360,
+    "inputTokens": 1810,
+    "outputTokens": 740,
+    "totalCost": 0.0374325,
+    "totalTokens": 2940
+  }
+}

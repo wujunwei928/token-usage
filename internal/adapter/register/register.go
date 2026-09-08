@@ -8,6 +8,7 @@ package register
 import (
 	_ "github.com/wujunwei928/token-usage/internal/adapter/amp"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/claude"
+	_ "github.com/wujunwei928/token-usage/internal/adapter/cline"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/codebuff"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/copilot"
 	_ "github.com/wujunwei928/token-usage/internal/adapter/droid"

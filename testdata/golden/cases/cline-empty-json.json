@@ -1,0 +1,1 @@
+{"args": ["cline", "daily", "--offline", "--json"], "env": {"CLINE_DATA_DIR": "$FIXTURE/cline/missing"}}
