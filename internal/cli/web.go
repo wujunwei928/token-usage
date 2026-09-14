@@ -228,8 +228,27 @@ func defaultLocalUserName() string {
 }
 
 // ensureLocalUser finds (or seeds on first run) the web command's user. No
-// password: the loopback origin is the credential (ADR 0012).
+// password: the loopback origin is the credential (ADR 0012). Identity
+// anchors on this machine's Device, not the name: Windows usernames embed
+// the machine name, so a rename forks the OS name while device.json stays
+// put — the Device owner keeps its history and is adopted under the
+// current name.
 func ensureLocalUser(ctx context.Context, store *server.Store, name string) (*server.User, error) {
+	if device, derr := loadLocalDevice(); derr == nil {
+		if ownerID, oerr := store.DeviceOwner(ctx, device.DeviceID); oerr == nil {
+			owner, uerr := store.UserByID(ctx, ownerID)
+			if uerr == nil {
+				if owner.Name != name {
+					if rerr := store.RenameUser(ctx, owner.ID, name); rerr == nil {
+						owner.Name = name
+					} else {
+						fmt.Fprintf(os.Stderr, "本地用户沿用旧名 %q(新名 %q 已被占用)\n", owner.Name, name)
+					}
+				}
+				return owner, nil
+			}
+		}
+	}
 	existing, err := store.UserByName(ctx, name)
 	if err == nil {
 		return existing, nil

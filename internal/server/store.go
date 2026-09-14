@@ -148,6 +148,12 @@ func (s *Store) UpdateUserPassword(ctx context.Context, userID int64, passwordHa
 	return err
 }
 
+// RenameUser sets a new unique name for a user id; fails if name is taken.
+func (s *Store) RenameUser(ctx context.Context, userID int64, name string) error {
+	_, err := s.db.ExecContext(ctx, `UPDATE users SET name = ? WHERE id = ?`, name, userID)
+	return err
+}
+
 // UpdateUserProfile sets the city and avatar for a user id.
 func (s *Store) UpdateUserProfile(ctx context.Context, userID int64, city, avatar string) error {
 	_, err := s.db.ExecContext(ctx, `UPDATE users SET city = ?, avatar = ? WHERE id = ?`, city, avatar, userID)
