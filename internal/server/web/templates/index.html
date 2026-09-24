@@ -39,7 +39,7 @@
 
 <section class="board">
   {{if not $v.Rows}}
-  <div class="empty">该筛选下还没有上榜数据 —— 跑一次 <code>ccusage report</code> 你就是第一名。</div>
+  <div class="empty">该筛选下还没有上榜数据 —— 跑一次 <code>token-usage report</code> 你就是第一名。</div>
   {{end}}
   {{range $v.Rows}}
   <div class="rankcard {{if .Flagged}}flagged{{end}}">

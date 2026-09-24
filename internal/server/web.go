@@ -239,6 +239,11 @@ type pageData struct {
 }
 
 func (w *Web) render(resp http.ResponseWriter, status int, name string, data pageData) {
+	// Local mode colours every page's chrome (brand, nav, footer), not just
+	// the dashboard, so the flag defaults from the construction option.
+	if w.localRoot {
+		data.Local = true
+	}
 	resp.Header().Set("Content-Type", "text/html; charset=utf-8")
 	resp.WriteHeader(status)
 	if err := w.tpl.ExecuteTemplate(resp, name, data); err != nil {

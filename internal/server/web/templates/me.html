@@ -3,7 +3,11 @@
 {{$d := .Content}}
 <div class="pagehead">
   <h1>我的 Token</h1>
+  {{if .Local}}
+  <p class="muted">本机聚合 · {{$d.Today}} · {{$d.Devices | len}} 台设备</p>
+  {{else}}
   <p class="muted">{{.User.Name}}{{if .User.City}} · {{.User.City}}{{end}} · {{$d.Today}} · {{$d.Devices | len}} 台设备</p>
+  {{end}}
   {{if .Local}}<form method="post" action="/refresh"><button type="submit">↻ 刷新数据</button></form>{{end}}
 </div>
 

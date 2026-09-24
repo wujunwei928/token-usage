@@ -47,11 +47,11 @@
 
   <div class="panel">
     <h3>客户端配置示例</h3>
-    <pre class="code">ccusage report --server https://你的服务地址 --token &lt;上面的token&gt;
-# 或写入 ccusage.json:
+    <pre class="code">token-usage report --server https://你的服务地址 --token &lt;上面的token&gt;
+# 或写入 ~/.config/token-usage/config.json:
 { "reportServer": "https://你的服务地址", "reportToken": "&lt;token&gt;" }
 # 一键安装每小时自动上报:
-ccusage report --install-timer</pre>
+token-usage report --install-timer</pre>
   </div>
 </section>
 {{template "foot.html" .}}

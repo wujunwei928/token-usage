@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.Title}} · Token 排行榜</title>
+<title>{{.Title}} · {{if .Local}}Token 用量{{else}}Token 排行榜{{end}}</title>
 <script>
 // Anti-FOUC: resolve the stored preference (light/dark/auto) to a concrete
 // data-theme before the stylesheet paints. auto defers to the OS.
@@ -21,18 +21,27 @@
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" href="/">⚡ Token 排行榜</a>
+  {{if .Local}}
+  <div class="brandgroup">
+    <a class="brand" href="/me">◎ Token 用量</a>
+    <span class="localpill">本机数据 · 不出网</span>
+  </div>
+  {{else}}
+  <div class="brandgroup"><a class="brand" href="/">⚡ Token 排行榜</a></div>
+  {{end}}
   <nav>
-    <a href="/" {{if eq .Title "Token 排行榜"}}class="active"{{end}}>排行榜</a>
+    {{if not .Local}}<a href="/" {{if eq .Title "Token 排行榜"}}class="active"{{end}}>排行榜</a>{{end}}
     <a href="/pricing" {{if eq .Title "模型价格表"}}class="active"{{end}}>价格表</a>
     <a href="/about" {{if eq .Title "数据说明"}}class="active"{{end}}>数据说明</a>
     {{if .User}}
       <a href="/me" {{if eq .Title "我的 Token"}}class="active"{{end}}>我的 Token</a>
       <span class="who">{{.User.Name}}</span>
-      <form class="inline" method="post" action="/logout"><button class="linklike">退出</button></form>
+      {{if not .Local}}<form class="inline" method="post" action="/logout"><button class="linklike">退出</button></form>{{end}}
     {{else}}
+      {{if not .Local}}
       <a href="/login">登录</a>
       <a href="/register" class="btn-primary small">注册</a>
+      {{end}}
     {{end}}
     <button class="themebtn" id="theme-toggle" type="button" title="主题:跟随系统" aria-label="切换主题">
       <svg class="i-auto" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 17v3.5"/></svg>

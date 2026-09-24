@@ -4,8 +4,8 @@
 <div class="prose">
   <h3>数据是怎么来的</h3>
   <ul>
-    <li>客户端(<code>ccusage report</code>)只读取本机的 AI 编程 agent 日志(JSONL),在本地聚合成「小时 × 工具 × 模型」的 token 计数后上报;<b>不统计、不上传任何代码或对话内容</b>。</li>
-    <li>同一设备以最近一次上报为准(Latest-wins):重新执行 <code>ccusage report</code> 即修正当日数据。</li>
+    <li>客户端(<code>token-usage report</code>)只读取本机的 AI 编程 agent 日志(JSONL),在本地聚合成「小时 × 工具 × 模型」的 token 计数后上报;<b>不统计、不上传任何代码或对话内容</b>。</li>
+    <li>同一设备以最近一次上报为准(Latest-wins):重新执行 <code>token-usage report</code> 即修正当日数据。</li>
     <li>每人最多绑定 3 台设备,多设备用量自动累加;按客户端本地时区的自然日汇总。</li>
   </ul>
   <h3>成本估算</h3>
@@ -23,8 +23,8 @@
   <h3>如何参与</h3>
   <ol>
     <li><a href="/register">注册</a>并在设置页生成 report token。</li>
-    <li>配置 <code>ccusage report --server &lt;地址&gt; --token &lt;token&gt;</code>,或写入 ccusage.json(<code>reportServer</code> / <code>reportToken</code>)。</li>
-    <li>手动执行或 <code>ccusage report --install-timer</code> 安装每小时自动上报。</li>
+    <li>配置 <code>token-usage report --server &lt;地址&gt; --token &lt;token&gt;</code>,或写入 <code>~/.config/token-usage/config.json</code>(<code>reportServer</code> / <code>reportToken</code>)。</li>
+    <li>手动执行或 <code>token-usage report --install-timer</code> 安装每小时自动上报。</li>
   </ol>
 </div>
 {{template "foot.html" .}}

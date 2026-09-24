@@ -6,8 +6,12 @@
 
 **Status:** ready-for-agent
 
-- [ ] 亮/暗/自动三态切换生效;显式选择优先于系统偏好,自动态跟随 prefers-color-scheme
-- [ ] 切换与刷新均无 FOUC(主题脚本先于样式生效)
-- [ ] 暗色主题下各页面(含表单、表格、榜单、flash 提示)可读,无破版
-- [ ] 样式表内颜色全部引用 design token,无散落硬编码色值
-- [ ] `go test ./internal/server/... ./internal/e2e/...` 全绿;测试断言的元素 ID 与文案未被改动
+- [x] 亮/暗/自动三态切换生效;显式选择优先于系统偏好,自动态跟随 prefers-color-scheme
+- [x] 切换与刷新均无 FOUC(主题脚本先于样式生效)
+- [x] 暗色主题下各页面(含表单、表格、榜单、flash 提示)可读,无破版
+- [x] 样式表内颜色全部引用 design token,无散落硬编码色值
+- [x] `go test ./internal/server/... ./internal/e2e/...` 全绿;测试断言的元素 ID 与文案未被改动
+
+## Comments
+
+- 实现于 commit `feat(web): 双主题设计系统与三态主题切换`(票 01)。新增 `theme_test.go` 守护 anti-FOUC 脚本、切换按钮与 `tu-themechange` 事件缝;图表固定配色为已知中间态,票 03 统一。

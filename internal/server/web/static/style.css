@@ -158,6 +158,11 @@ h1, h2, h3 { color: var(--ink); }
   position: sticky; top: 0; z-index: 5;
 }
 .topbar .brand { font-weight: 750; font-size: var(--t-lead); color: var(--ink); letter-spacing: 0.2px; }
+.brandgroup { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.localpill {
+  font-size: 11px; padding: 1px 8px; border-radius: 999px; white-space: nowrap;
+  background: var(--ok-soft); color: var(--ok);
+}
 .topbar nav { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .topbar nav a { color: var(--muted); font-size: var(--t-label); }
 .topbar nav a.active { color: var(--accent); font-weight: 600; }

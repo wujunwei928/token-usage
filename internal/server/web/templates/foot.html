@@ -1,6 +1,6 @@
 {{define "foot.html"}}
 </main>
-<footer class="foot">数据来自本地 JSONL 日志的聚合上报 · 不含代码与对话内容 · <a href="/about">上榜规则</a></footer>
+<footer class="foot">{{if .Local}}本机数据来自本地日志的进程内聚合,不发出任何网络请求 · <a href="/about">数据说明</a>{{else}}数据来自本地 JSONL 日志的聚合上报 · 不含代码与对话内容 · <a href="/about">上榜规则</a>{{end}}</footer>
 <script src="/static/echarts.min.js"></script>
 <script src="/static/app.js"></script>
 </body>
