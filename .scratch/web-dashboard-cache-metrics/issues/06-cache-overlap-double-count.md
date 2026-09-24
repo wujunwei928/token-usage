@@ -1,6 +1,6 @@
 # 06 zcode/codex 缓存重叠双重计入修复
 
-Status: ready-for-agent
+Status: resolved
 
 ## 发现
 

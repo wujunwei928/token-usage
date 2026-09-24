@@ -393,11 +393,7 @@ func numberF64(raw json.RawMessage) (float64, bool) {
 }
 
 func subtractCachedOverlapTokens(tokens geminiTokens) (uint64, uint64) {
-	cachedPortion := tokens.input
-	if tokens.cached < cachedPortion {
-		cachedPortion = tokens.cached
-	}
-	return tokens.input - cachedPortion, tokens.cached
+	return core.SubtractCachedOverlap(tokens.input, tokens.cached), tokens.cached
 }
 
 func normalizeSessionInput(tokens geminiTokens) (uint64, uint64) {

@@ -101,17 +101,6 @@ func loadDB(path string, tz *time.Location, mode core.CostMode, pricing *core.Pr
 	return append(entries, fallback...), nil
 }
 
-// subtractCachedOverlap returns the uncached portion of an OpenAI-style
-// inclusive input count (cached \u2282 prompt; zcode's GLM endpoint reports
-// totalTokens = inputTokens + outputTokens), clamped at zero. Mirrors the
-// gemini adapter's subtractCachedOverlapTokens.
-func subtractCachedOverlap(input, cached uint64) uint64 {
-	if cached >= input {
-		return 0
-	}
-	return input - cached
-}
-
 // loadAttempts reads model_usage: one row per API call attempt, in start
 // order. Zero-token attempts (e.g. cancelled before the first token) carry no
 // usage and are dropped.
@@ -138,7 +127,7 @@ func loadAttempts(db *sql.DB, sessions map[string]sessionRow, tz *time.Location,
 		usage := core.TokenUsageRaw{
 			// input_tokens is the inclusive prompt count; keep only the
 			// uncached portion so cached tokens count once.
-			InputTokens:              subtractCachedOverlap(clampU64(input), clampU64(cacheRead)+clampU64(cacheCreation)),
+			InputTokens:              core.SubtractCachedOverlap(clampU64(input), clampU64(cacheRead)+clampU64(cacheCreation)),
 			OutputTokens:             clampU64(output) + clampU64(reasoning),
 			CacheCreationInputTokens: clampU64(cacheCreation),
 			CacheReadInputTokens:     clampU64(cacheRead),
@@ -207,7 +196,7 @@ func loadMessageFallback(db *sql.DB, hasModelUsage bool, sessions map[string]ses
 		usage := core.TokenUsageRaw{
 			// Same inclusive-input semantics as model_usage: the cached
 			// portion rides inside tokens.input.
-			InputTokens:              subtractCachedOverlap(valueOf(parsed.Tokens.Input), cacheRead+cacheWrite),
+			InputTokens:              core.SubtractCachedOverlap(valueOf(parsed.Tokens.Input), cacheRead+cacheWrite),
 			OutputTokens:             valueOf(parsed.Tokens.Output) + valueOf(parsed.Tokens.Reasoning),
 			CacheCreationInputTokens: cacheWrite,
 			CacheReadInputTokens:     cacheRead,

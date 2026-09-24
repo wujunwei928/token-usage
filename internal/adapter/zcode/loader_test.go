@@ -60,7 +60,7 @@ func createFixtureDB(t *testing.T, dir string) {
 	insert("u3", "top-1", 2, 100, 10, 0, 0, 0)       // auxiliary call: counts
 	insert("u4", "top-1", 3, 300, 0, 0, 0, 0)        // failed retry: counts
 	insert("u5", "top-1", 4, 0, 0, 0, 0, 0)          // zero usage: dropped
-	insert("u6", "top-1", 5, 50, 0, 0, 0, 100)        // cached > input: clamp to 0, kept via read
+	insert("u6", "top-1", 5, 50, 0, 0, 0, 100)       // cached > input: clamp to 0, kept via read
 
 	must(`INSERT INTO message (id, session_id, time_created, data) VALUES ('m1', 'old-1', ?,
 		'{"modelID":"GLM-5.2","tokens":{"total":1210,"input":700,"output":70,"reasoning":30,"cache":{"read":400,"write":10}},"cost":0}')`,
@@ -90,7 +90,7 @@ func loadFixture(t *testing.T, mode core.CostMode) []core.LoadedEntry {
 }
 
 // Expected fixture totals: attempts u1-u4,u6 plus fallback m1. zcode's GLM
-// endpoint reports OpenAI-style inclusive input (cached \u2282 prompt), so
+// endpoint reports OpenAI-style inclusive input (cached ⊂ prompt), so
 // the loader subtracts the cached overlap; only uncached input remains.
 const (
 	wantInput      = (3000 - 2000) + (1500 - 1000) + 100 + 300 + 0 + (700 - 400 - 10)

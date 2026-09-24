@@ -1,0 +1,1466 @@
+# Commits: b9aa742 feat(web): Dashboard 缓存指标重构 + zcode/codex 缓存重叠双计修复
+# Diff: HEAD~1...HEAD (b9aa742)
+diff --git a/.scratch/web-dashboard-cache-metrics/issues/01-cache-hit-rate-definition.md b/.scratch/web-dashboard-cache-metrics/issues/01-cache-hit-rate-definition.md
+new file mode 100644
+index 0000000..d256055
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/issues/01-cache-hit-rate-definition.md
+@@ -0,0 +1,25 @@
++# 01 命中率口径与三比例分解 + 30 天趋势线
++
++Status: resolved
++
++## 事实
++
++`internal/server/query.go` Dashboard():`CacheHitRate = read/(read+write)` 全历史;
++`me.html` 用 `%.1f` 渲染 + 单段进度条。
++
++## 改动
++
++- 新增当日五计数器聚合(`TodayComposition` 或当日累加器);
++  `CacheHitRate = todayRead/(todayRead+todayWrite+todayFresh)`,配 `HasRate bool`。
++- 新增 `CacheSplit{Read,Write,Fresh}`(当日,和为 1,无数据为零值)。
++- `DayPoint` 增 `HitRate float64` + `HasRate bool`(逐日同公式)。
++- `me.html`:标签「当日缓存命中率」、`%.2f`、三段堆叠条替换单段 meter
++  (保留 `class="meter"` / `class="meter-fill"` 类名锚定 branding_test;
++  追加 `.m-write`/`.m-fresh` 修饰类)。
++- `app.js` 近 30 天图加命中率折线(第三轴,百分比,无数据日断点)。
++
++## 验收(TDD)
++
++- Go:当日 seed(读 8900/写 100/新 1000)→ rate 0.89、split {0.89,0.01,0.10};
++  昨日不同配比不影响当日值;昨日 DayPoint.HitRate 独立正确。
++- HTML:含「当日缓存命中率」、meter-split 三段。
+diff --git a/.scratch/web-dashboard-cache-metrics/issues/02-tool-model-breakdown.md b/.scratch/web-dashboard-cache-metrics/issues/02-tool-model-breakdown.md
+new file mode 100644
+index 0000000..4fc49da
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/issues/02-tool-model-breakdown.md
+@@ -0,0 +1,19 @@
++# 02 工具×模型明细表 + 图表 tooltip 增强
++
++Status: resolved
++
++## 改动
++
++- `query.go`:新增 `ToolModelRow{Tool,Model,Tokens,Cost,HitRate,HasRate}`(全历史,
++  按 tokens 降序,封顶 50 行);`ByTool`/`ByModel` 从 `[]ModelSlice` 换成
++  `[]NameStat{Name,Tokens,Cost,HitRate,HasRate}`(tokens 降序)。
++- `me.html`:新 chartbox.wide「工具 × 模型明细」表(工具/模型/Token/成本/命中率,
++  无缓存数据命中率显示 —);表格复用 .devices 风格 + .num 右对齐列。
++- `app.js`:byTool/byModel 改读 `r.Name`;柱状图 tooltip 显示
++  Token(fmtTokens)/成本/命中率;JSON 块同步新字段。
++
++## 验收(TDD)
++
++- Go:两工具两模型 seed → 行数、排序、每行 rate/cost 正确;
++  无缓存模型 rate=0 且 HasRate=true;纯零分母 HasRate=false。
++- HTML:表格表头齐全。
+diff --git a/.scratch/web-dashboard-cache-metrics/issues/03-cache-savings-card.md b/.scratch/web-dashboard-cache-metrics/issues/03-cache-savings-card.md
+new file mode 100644
+index 0000000..5ab3c4f
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/issues/03-cache-savings-card.md
+@@ -0,0 +1,19 @@
++# 03 缓存净节省 + 回本次数卡
++
++Status: resolved
++
++## 改动
++
++- `pricing.go`:新增 `CacheSavingsForHourRow(r *HourRow) float64`:
++  `(read×(Input−CacheRead) − 5m×(CacheWrite5m−Input) − 1h×(CacheWrite1h−Input))/1e6`,
++  未知模型贡献 0。
++- `query.go`:Dashboard 增 `CacheSavings float64`(当日逐行求和)与
++  `ReadPerWrite float64`(当日读÷写,写为 0 时零值)。
++- `me.html`:新卡「当日缓存净节省」fmtCost + 副行「回本 N 次/写」(0 时显示 —);
++  与此同时合并「使用工具」「使用模型」为「工具 × 模型」`N × M` 一卡。
++
++## 验收(TDD)
++
++- Go:对照 resolve() 出的卡价(claude-sonnet-4-5)手算期望值断言;
++  Dashboard 当日净节省 = 各行之和;昨日行不计入。
++- HTML:含「当日缓存净节省」与「工具 × 模型」。
+diff --git a/.scratch/web-dashboard-cache-metrics/issues/04-weekday-hour-heatmap.md b/.scratch/web-dashboard-cache-metrics/issues/04-weekday-hour-heatmap.md
+new file mode 100644
+index 0000000..1e3b5d9
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/issues/04-weekday-hour-heatmap.md
+@@ -0,0 +1,17 @@
++# 04 工作时段热力图
++
++Status: resolved
++
++## 改动
++
++- `query.go`:Dashboard 增 `Heatmap []HeatCell{Weekday(0=周一),Hour,Tokens}`,
++  全历史 7×24 全格(含零),weekday 由 date 解析 `int(t.Weekday()+6)%7`。
++- `me.html`:chartbox.wide「工作时段分布(星期 × 小时)」`#chart-heatmap`;
++  JSON 块加 heatmap。
++- `app.js`:ECharts heatmap,x 轴 0-23 时,y 轴周一..周日,visualMap 色带读
++  CSS token,tooltip 用 fmtTokens;主题切换重建照旧。
++
++## 验收(TDD)
++
++- Go:seed 已知日期+小时 → 对应格子非零,其余为零,总数 168 格。
++- HTML:含 chart-heatmap。
+diff --git a/.scratch/web-dashboard-cache-metrics/issues/05-cn-number-units.md b/.scratch/web-dashboard-cache-metrics/issues/05-cn-number-units.md
+new file mode 100644
+index 0000000..3365bbb
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/issues/05-cn-number-units.md
+@@ -0,0 +1,16 @@
++# 05 万/亿单位全站
++
++Status: resolved
++
++## 改动
++
++- `web.go` FormatTokens:`≥1e8 → %.2f亿`、`≥1e4 → %.1f万`、以下原样。
++- `app.js`:新增 JS 版 fmtTokens(同规则,<1万 千分位),应用于 hourly/daily/
++  bar/pie 的 tooltip 与数值轴 formatter(USD 轴加 $ 前缀)。
++- 测试断言迁移:server_test("5.5K"→"5500","1.5K"→"1500")、
++  e2e_test 与 e2e/web_local_test 的全部 K 串按同规则改写。
++
++## 验收(TDD)
++
++- Go:FormatTokens 表驱动测试(0/9999/10000/12345678/123456789)。
++- 全量测试绿(e2e 含)。
+diff --git a/.scratch/web-dashboard-cache-metrics/issues/06-cache-overlap-double-count.md b/.scratch/web-dashboard-cache-metrics/issues/06-cache-overlap-double-count.md
+new file mode 100644
+index 0000000..44e91f0
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/issues/06-cache-overlap-double-count.md
+@@ -0,0 +1,31 @@
++# 06 zcode/codex 缓存重叠双重计入修复
++
++Status: ready-for-agent
++
++## 发现
++
++GLM OpenAI 兼容端点的 `inputTokens`(codex 同:`prompt_tokens`)是**含缓存的
++全量 prompt**(OpenAI 语义 cached ⊂ prompt)。zcode/codex 适配器把 input 与
++cacheRead 当互斥类分别入库 → 缓存读双计。
++
++证据(用户 zcode `raw_usage_json`):`totalTokens = inputTokens + outputTokens`
++分毫不差;每请求 `input ≈ read + 1~3k`(真·新增)。结果:zcode 命中率 49%
++(真实 ≈97%),当日 token 总量虚高一倍。
++
++## 定案
++
++User 拍板:修 zcode+codex。gemini 适配器 `subtractCachedOverlapTokens`
++(parser.go:395)是仓库内现成先例。
++
++## 改动
++
++- zcode loader(DB 与 JSONL 两条路径):`Input = input - min(input, read+write)`(clamp)。
++- codex(snapshot.go codexEntries):`Input = input - min(input, cached)`。
++- 测试:zcode loader_test 与 codex 相关测试的 fixture 改为断言扣减后语义(TDD 先红后绿)。
++- 已知代价:CLI zcode/codex 报表数字与 Rust v20 参考不再字节级一致(参考实现疑似同样双计);
++  web.db 历史行需重灌:`token-usage web --since <起始日>`。
++
++## 验收
++
++- 单测:input 含重叠时,入库 Input=差值、CacheRead 不变;read>input 时 clamp 到 0。
++- 全量测试绿。
+diff --git a/.scratch/web-dashboard-cache-metrics/spec.md b/.scratch/web-dashboard-cache-metrics/spec.md
+new file mode 100644
+index 0000000..c25e340
+--- /dev/null
++++ b/.scratch/web-dashboard-cache-metrics/spec.md
+@@ -0,0 +1,48 @@
++# web Dashboard 缓存指标修正与增强
++
++Status: ready-for-agent
++
++## 背景(排查结论)
++
++`token-usage web` 的 /me Dashboard 排查出四类问题:
++
++1. **「缓存命中率 100%」假象**:`read/(read+write)`,不含 input、全历史口径、`%.1f` 进位
++   —— 三者叠加使 100.0% 频繁出现。调查确认:ccusage v20.0.24 无此指标(本仓库自创);
++   claude-usage-dashboard v1.10.0 用 `read/(input+read+creation)`;vLLM 用
++   `prefix_cache_hits / prefix_cache_queries`。业界惯例均含未缓存输入。
++2. **无按工具/模型的命中率**:数据(hourly_usage 五计数器)齐全,纯展示层缺失。
++3. **数字无中文单位**:FormatTokens 用西式 K/M/B,图表 tooltip/轴是裸数字。
++4. 长串数字、口径不透明等衍生体验问题。
++
++## 定案(grilling 两轮,user 拍板)
++
++- **口径 B**:命中率 = 缓存读 ÷(缓存读+缓存写+未缓存输入),当日口径,
++  标签「当日缓存命中率」,两位小数,无封顶。
++- **三比例分解**:命中率卡下堆叠条(读/写/未缓存,和恒 100%)。
++- **30 天命中率趋势线**加进近 30 天图(百分比轴)。
++- **工具 × 模型明细表**(工具/Token/成本/命中率);现有按工具/按模型柱状图
++  tooltip 加命中率与成本(覆盖"按模型成本视角")。
++- **缓存净节省 + 回本次数**当日卡:净节省 = Σ读×(input价−读价) − Σ写5m×(写5m价−input价)
++  − Σ写1h×(写1h价−input价);回本次数 = 当日读 ÷ 当日写。
++- **工作时段热力图**:weekday × hour,全历史,GitHub 贡献图风格。
++- **万/亿单位全站**:`≥1亿 → 1.23亿`(两位小数)、`≥1万 → 4567.8万`(一位小数)、
++  以下原样;FormatTokens + 排行榜 + 所有图表 tooltip/轴统一。
++- 卡片网格:合并「使用工具」「使用模型」为「工具 × 模型」一卡,腾位给净节省卡。
++
++## 词汇表
++
++`server/CONTEXT.md` 已新增 **Cache Hit Rate(缓存命中率)**、**Cache Savings(缓存净节省)**
++词条(实现须与词条一致)。
++
++## 不做(记录在案)
++
++今日环比、峰值时段卡、Dashboard 缓存口径开关、输出占比、MA7、迁移趋势;
++每请求/每 session 级指标(小时粒度数据边界)。
++
++## 票
++
++1. `01` 命中率口径与三比例分解 + 30 天趋势线
++2. `02` 工具×模型明细表 + 图表 tooltip 增强
++3. `03` 缓存净节省 + 回本次数卡
++4. `04` 工作时段热力图
++5. `05` 万/亿单位全站(含 e2e/server 测试断言迁移)
+diff --git a/CONTEXT.md b/CONTEXT.md
+index c75d133..9bb7d98 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -22,7 +22,7 @@ _Avoid_: retry(重试只是 Attempt 的一种)
+ agent 自身发起、非用户回合的模型调用(如生成会话标题、目标摘要);属真实消耗,计入用量。
+ 
+ **Token Usage**:
+-一个 Usage Entry 的 token 四元组:input、output、cache creation(5m/1h 写缓存)、cache read(读缓存)。
++一个 Usage Entry 的 token 四元组:input、output、cache creation(5m/1h 写缓存)、cache read(读缓存)。四类互斥——input 是未命中缓存的净输入,不含任何缓存部分(OpenAI 系 inclusive 口径由适配层扣减重叠)。
+ _Avoid_: token counts, usage stats
+ 
+ **Reasoning Tokens(思考 token)**:
+diff --git a/internal/adapter/zcode/loader.go b/internal/adapter/zcode/loader.go
+index 4b76cfb..2e0c722 100644
+--- a/internal/adapter/zcode/loader.go
++++ b/internal/adapter/zcode/loader.go
+@@ -101,6 +101,17 @@ func loadDB(path string, tz *time.Location, mode core.CostMode, pricing *core.Pr
+ 	return append(entries, fallback...), nil
+ }
+ 
++// subtractCachedOverlap returns the uncached portion of an OpenAI-style
++// inclusive input count (cached \u2282 prompt; zcode's GLM endpoint reports
++// totalTokens = inputTokens + outputTokens), clamped at zero. Mirrors the
++// gemini adapter's subtractCachedOverlapTokens.
++func subtractCachedOverlap(input, cached uint64) uint64 {
++	if cached >= input {
++		return 0
++	}
++	return input - cached
++}
++
+ // loadAttempts reads model_usage: one row per API call attempt, in start
+ // order. Zero-token attempts (e.g. cancelled before the first token) carry no
+ // usage and are dropped.
+@@ -125,7 +136,9 @@ func loadAttempts(db *sql.DB, sessions map[string]sessionRow, tz *time.Location,
+ 			return nil, err
+ 		}
+ 		usage := core.TokenUsageRaw{
+-			InputTokens:              clampU64(input),
++			// input_tokens is the inclusive prompt count; keep only the
++			// uncached portion so cached tokens count once.
++			InputTokens:              subtractCachedOverlap(clampU64(input), clampU64(cacheRead)+clampU64(cacheCreation)),
+ 			OutputTokens:             clampU64(output) + clampU64(reasoning),
+ 			CacheCreationInputTokens: clampU64(cacheCreation),
+ 			CacheReadInputTokens:     clampU64(cacheRead),
+@@ -192,7 +205,9 @@ func loadMessageFallback(db *sql.DB, hasModelUsage bool, sessions map[string]ses
+ 			cacheWrite = valueOf(parsed.Tokens.Cache.Write)
+ 		}
+ 		usage := core.TokenUsageRaw{
+-			InputTokens:              valueOf(parsed.Tokens.Input),
++			// Same inclusive-input semantics as model_usage: the cached
++			// portion rides inside tokens.input.
++			InputTokens:              subtractCachedOverlap(valueOf(parsed.Tokens.Input), cacheRead+cacheWrite),
+ 			OutputTokens:             valueOf(parsed.Tokens.Output) + valueOf(parsed.Tokens.Reasoning),
+ 			CacheCreationInputTokens: cacheWrite,
+ 			CacheReadInputTokens:     cacheRead,
+diff --git a/internal/adapter/zcode/loader_test.go b/internal/adapter/zcode/loader_test.go
+index 9f0a30f..4f12ff4 100644
+--- a/internal/adapter/zcode/loader_test.go
++++ b/internal/adapter/zcode/loader_test.go
+@@ -55,11 +55,12 @@ func createFixtureDB(t *testing.T, dir string) {
+ 			VALUES (?, ?, 'GLM-5.3', ?, ?, ?, ?, ?, ?)`,
+ 			id, session, day+offset*hour, in, out, reasoning, creation, read)
+ 	}
+-	insert("u1", "top-1", 0, 1000, 100, 50, 0, 2000) // main turn
+-	insert("u2", "sub-1", 1, 500, 50, 0, 0, 1000)    // subagent: merges into top-1
++	insert("u1", "top-1", 0, 3000, 100, 50, 0, 2000) // prompt 3000 incl. 2000 cached -> uncached 1000
++	insert("u2", "sub-1", 1, 1500, 50, 0, 0, 1000)   // subagent: merges into top-1; uncached 500
+ 	insert("u3", "top-1", 2, 100, 10, 0, 0, 0)       // auxiliary call: counts
+ 	insert("u4", "top-1", 3, 300, 0, 0, 0, 0)        // failed retry: counts
+ 	insert("u5", "top-1", 4, 0, 0, 0, 0, 0)          // zero usage: dropped
++	insert("u6", "top-1", 5, 50, 0, 0, 0, 100)        // cached > input: clamp to 0, kept via read
+ 
+ 	must(`INSERT INTO message (id, session_id, time_created, data) VALUES ('m1', 'old-1', ?,
+ 		'{"modelID":"GLM-5.2","tokens":{"total":1210,"input":700,"output":70,"reasoning":30,"cache":{"read":400,"write":10}},"cost":0}')`,
+@@ -88,18 +89,20 @@ func loadFixture(t *testing.T, mode core.CostMode) []core.LoadedEntry {
+ 	return entries
+ }
+ 
+-// Expected fixture totals: attempts u1..u4 plus fallback m1.
++// Expected fixture totals: attempts u1-u4,u6 plus fallback m1. zcode's GLM
++// endpoint reports OpenAI-style inclusive input (cached \u2282 prompt), so
++// the loader subtracts the cached overlap; only uncached input remains.
+ const (
+-	wantInput      = 1000 + 500 + 100 + 300 + 700
+-	wantOutput     = (100 + 50) + 50 + 10 + 0 + (70 + 30)
+-	wantCacheRead  = 2000 + 1000 + 400
++	wantInput      = (3000 - 2000) + (1500 - 1000) + 100 + 300 + 0 + (700 - 400 - 10)
++	wantOutput     = (100 + 50) + 50 + 10 + 0 + 0 + (70 + 30)
++	wantCacheRead  = 2000 + 1000 + 100 + 400
+ 	wantCacheWrite = 10
+ )
+ 
+ func TestLoadEntriesAttemptAccounting(t *testing.T) {
+ 	entries := loadFixture(t, core.ModeDisplay)
+-	if len(entries) != 5 {
+-		t.Fatalf("entries = %d, want 5 (u1-u4 + m1; u5 and m2 dropped)", len(entries))
++	if len(entries) != 6 {
++		t.Fatalf("entries = %d, want 6 (u1-u4,u6 + m1; u5 and m2 dropped)", len(entries))
+ 	}
+ 	var totals core.TokenCounts
+ 	for i := range entries {
+diff --git a/internal/e2e/e2e_test.go b/internal/e2e/e2e_test.go
+index 1d2b459..71927ad 100644
+--- a/internal/e2e/e2e_test.go
++++ b/internal/e2e/e2e_test.go
+@@ -199,14 +199,14 @@ func TestReportEndToEnd(t *testing.T) {
+ 
+ 	// The leaderboard page shows the aggregated numbers for today.
+ 	page := proc.getPage(t, "/?range=today")
+-	for _, want := range []string{"e2e-user", "7.1K", "claude-sonnet-4-5"} {
++	for _, want := range []string{"e2e-user", "7080", "claude-sonnet-4-5"} {
+ 		if !strings.Contains(page, want) {
+ 			t.Fatalf("leaderboard missing %q", want)
+ 		}
+ 	}
+ 	// Yesterday's line was excluded (yesterday board is empty of this user's
+ 	// 100000-token line).
+-	if page2 := proc.getPage(t, "/?range=yesterday"); strings.Contains(page2, "100.0K") {
++	if page2 := proc.getPage(t, "/?range=yesterday"); strings.Contains(page2, "10.0万") {
+ 		t.Fatalf("yesterday line leaked into snapshot: %s", page2)
+ 	}
+ 
+@@ -219,7 +219,7 @@ func TestReportEndToEnd(t *testing.T) {
+ 		t.Fatalf("rerun failed: %s", stdout)
+ 	}
+ 	page = proc.getPage(t, "/?range=today")
+-	if strings.Contains(page, "7.1K") {
++	if strings.Contains(page, "7080") {
+ 		t.Fatal("latest-wins did not replace the day's data")
+ 	}
+ 	if !strings.Contains(page, "120") {
+@@ -310,18 +310,19 @@ func TestMultiAgentEndToEnd(t *testing.T) {
+ 		t.Fatalf("multi-agent report failed: %s", out)
+ 	}
+ 
+-	// Totals: claude 1100 (replay deduped to one) + codex 2800
+-	// (input 2000 + cache-read 500 + output 300) = 3900.
++	// Totals: claude 1100 (replay deduped to one) + codex 2300
++	// (inclusive input 2000 - 500 cached overlap + cache-read 500 +
++	// output 300) = 3400.
+ 	page := proc.getPage(t, "/?range=today")
+-	if !strings.Contains(page, "3.9K") {
+-		t.Fatalf("multi-agent total missing (want 3.9K): %s", page)
++	if !strings.Contains(page, "3400") {
++		t.Fatalf("multi-agent total missing (want 3400): %s", page)
+ 	}
+-	// Tool split: codex filter shows codex only (2800 = 2.8K).
++	// Tool split: codex filter shows codex only (2300, raw under 1万).
+ 	codexPage := proc.getPage(t, "/?range=today&tool=codex")
+-	if !strings.Contains(codexPage, "2.8K") {
++	if !strings.Contains(codexPage, "2300") {
+ 		t.Fatalf("codex tool slice wrong: %s", codexPage)
+ 	}
+-	if strings.Contains(proc.getPage(t, "/?range=today&tool=codex"), "1.1K") {
++	if strings.Contains(proc.getPage(t, "/?range=today&tool=codex"), "1100") {
+ 		t.Fatal("claude usage leaked into codex filter")
+ 	}
+ }
+@@ -359,12 +360,12 @@ func TestBackfillEndToEnd(t *testing.T) {
+ 
+ 	// The 30-day board shows the full backfilled window.
+ 	page := proc.getPage(t, "/?range=30d")
+-	if !strings.Contains(page, "6.3K") {
+-		t.Fatalf("30d board missing 6.3K: %s", page)
++	if !strings.Contains(page, "6300") {
++		t.Fatalf("30d board missing 6300: %s", page)
+ 	}
+-	// Day 3 only: exactly day-before-yesterday's row (1100 = 1.1K).
+-	if page := proc.getPage(t, "/?range=daybefore"); !strings.Contains(page, "1.1K") {
+-		t.Fatalf("daybefore board missing 1.1K: %s", page)
++	// Day 3 only: exactly day-before-yesterday's row (1100, raw under 1万).
++	if page := proc.getPage(t, "/?range=daybefore"); !strings.Contains(page, "1100") {
++		t.Fatalf("daybefore board missing 1100: %s", page)
+ 	}
+ 
+ 	// Latest-wins per date: rerun backfill with an edited log for day -1 only.
+@@ -376,7 +377,7 @@ func TestBackfillEndToEnd(t *testing.T) {
+ 	if code != 0 {
+ 		t.Fatalf("backfill rerun failed: %s", stdout)
+ 	}
+-	if page := proc.getPage(t, "/?range=30d"); !strings.Contains(page, "4.8K") {
++	if page := proc.getPage(t, "/?range=30d"); !strings.Contains(page, "4750") {
+ 		t.Fatalf("rerun total wrong (want 4750): %s", page)
+ 	}
+ }
+diff --git a/internal/e2e/web_local_test.go b/internal/e2e/web_local_test.go
+index b5ebc2f..f16b56c 100644
+--- a/internal/e2e/web_local_test.go
++++ b/internal/e2e/web_local_test.go
+@@ -113,9 +113,9 @@ func TestWebLocalEndToEnd(t *testing.T) {
+ 		t.Fatalf("local root did not redirect to /me: %d %q", root.StatusCode, root.Header.Get("Location"))
+ 	}
+ 	// First-run backfill: yesterday's 1100 lands with today's 120 in the
+-	// cumulative card (1100 + 120 = 1220 → 1.2K).
++	// cumulative card (1100 + 120 = 1220, raw under 1万).
+ 	page = proc.getPage(t, "/me")
+-	if !strings.Contains(page, "1.2K") {
++	if !strings.Contains(page, "1220") {
+ 		t.Fatalf("cumulative total missing backfilled history:\n%s", proc.logDump(t))
+ 	}
+ 
+@@ -126,13 +126,13 @@ func TestWebLocalEndToEnd(t *testing.T) {
+ 	deadline := time.Now().Add(10 * time.Second)
+ 	for time.Now().Before(deadline) {
+ 		page := proc.getPage(t, "/me")
+-		if strings.Contains(page, "7.1K") {
++		if strings.Contains(page, "7080") {
+ 			break
+ 		}
+ 		time.Sleep(200 * time.Millisecond)
+ 	}
+-	if !strings.Contains(proc.getPage(t, "/me"), "7.1K") {
+-		t.Fatalf("refreshed total 7.1K missing after interval:\n%s", proc.logDump(t))
++	if !strings.Contains(proc.getPage(t, "/me"), "7080") {
++		t.Fatalf("refreshed total 7080 missing after interval:\n%s", proc.logDump(t))
+ 	}
+ }
+ 
+diff --git a/internal/report/snapshot.go b/internal/report/snapshot.go
+index f16b540..711af35 100644
+--- a/internal/report/snapshot.go
++++ b/internal/report/snapshot.go
+@@ -175,7 +175,9 @@ func claudeDailyEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+ }
+ 
+ // codexEntries converts Codex token events into LoadedEntry rows (cached
+-// input maps to cache-read; Codex has no cache-write counters).
++// input maps to cache-read; Codex has no cache-write counters). Codex
++// reports OpenAI-style inclusive input (cached ⊂ prompt), so the uncached
++// portion is what lands in InputTokens — cached tokens count exactly once.
+ func codexEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+ 	events, err := codex.LoadCodexEvents(shared)
+ 	if err != nil {
+@@ -194,7 +196,7 @@ func codexEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
+ 			model = *e.Model
+ 		}
+ 		usage := core.TokenUsageRaw{
+-			InputTokens:          e.InputTokens,
++			InputTokens:          codex.NonCachedInputTokens(e.InputTokens, e.CachedInputTokens),
+ 			OutputTokens:         e.OutputTokens,
+ 			CacheReadInputTokens: e.CachedInputTokens,
+ 		}
+diff --git a/internal/report/snapshot_codex_test.go b/internal/report/snapshot_codex_test.go
+new file mode 100644
+index 0000000..62dd088
+--- /dev/null
++++ b/internal/report/snapshot_codex_test.go
+@@ -0,0 +1,48 @@
++package report
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++
++	"github.com/wujunwei928/token-usage/internal/core"
++)
++
++// Ticket 06 (cache-overlap double count): Codex's OpenAI-style token_count
++// reports an INCLUSIVE input (cached ⊂ prompt — cf. the codex cost module's
++// NonCachedInputTokens). The unified Usage Entry keeps input uncached, so
++// codexEntries must subtract the cached overlap instead of double counting.
++func TestCodexEntriesSubtractsCachedOverlap(t *testing.T) {
++	dir := t.TempDir()
++	sessions := filepath.Join(dir, "sessions", "rollout-1")
++	if err := os.MkdirAll(sessions, 0o755); err != nil {
++		t.Fatal(err)
++	}
++	line := `{"timestamp":"2026-08-15T01:00:00.000Z","type":"event_msg","payload":{"type":"token_count",` +
++		`"info":{"model":"gpt-5.3-codex","last_token_usage":{"input_tokens":2000,"cached_input_tokens":500,` +
++		`"output_tokens":300,"reasoning_output_tokens":0,"total_tokens":2500},` +
++		`"total_token_usage":{"input_tokens":2000,"cached_input_tokens":500,"output_tokens":300,` +
++		`"reasoning_output_tokens":0,"total_tokens":2500}}}}`
++	if err := os.WriteFile(filepath.Join(sessions, "session-x.jsonl"), []byte(line+"\n"), 0o644); err != nil {
++		t.Fatal(err)
++	}
++	t.Setenv("CODEX_HOME", dir)
++	utc := "UTC"
++	entries, err := codexEntries(&core.SharedArgs{Timezone: &utc, Offline: true})
++	if err != nil {
++		t.Fatalf("codexEntries: %v", err)
++	}
++	if len(entries) != 1 {
++		t.Fatalf("entries = %d, want 1", len(entries))
++	}
++	u := entries[0].Data.Message.Usage
++	if u.InputTokens != 1500 {
++		t.Errorf("input = %d, want 1500 (2000 inclusive - 500 cached)", u.InputTokens)
++	}
++	if u.CacheReadInputTokens != 500 {
++		t.Errorf("cache read = %d, want 500", u.CacheReadInputTokens)
++	}
++	if u.OutputTokens != 300 {
++		t.Errorf("output = %d, want 300", u.OutputTokens)
++	}
++}
+diff --git a/internal/server/branding_test.go b/internal/server/branding_test.go
+index 33ca518..c7cb265 100644
+--- a/internal/server/branding_test.go
++++ b/internal/server/branding_test.go
+@@ -67,9 +67,10 @@ func TestServeModeBrandingUnchanged(t *testing.T) {
+ 	}
+ }
+ 
+-// Dashboard density (web-restyle ticket 04): featured stat cards, a CSS
+-// progress meter on the cache-hit card, the refresh control promoted to the
+-// topbar, and a proper devices table head.
++// Dashboard density (web-restyle ticket 04): featured stat cards, the
++// three-segment cache split meter on the hit-rate card (cache-metrics
++// ticket 01), the refresh control promoted to the topbar, and a proper
++// devices table head.
+ func TestDashboardDensityLayout(t *testing.T) {
+ 	_, mux := newLocalWeb(t, WithLocalRoot(), WithRefresh(func() error { return nil }))
+ 	body := getFrom(t, mux, "127.0.0.1:53812", "/me").Body.String()
+@@ -77,8 +78,8 @@ func TestDashboardDensityLayout(t *testing.T) {
+ 	if !strings.Contains(body, `class="scard main"`) {
+ 		t.Error("dashboard: missing featured stat cards (.scard.main)")
+ 	}
+-	if !strings.Contains(body, `class="meter"`) || !strings.Contains(body, `class="meter-fill"`) {
+-		t.Error("dashboard: cache-hit card missing CSS progress meter")
++	if !strings.Contains(body, `class="meter meter-split"`) || !strings.Contains(body, `class="meter-fill"`) {
++		t.Error("dashboard: cache-hit card missing CSS split meter")
+ 	}
+ 	if strings.Count(body, `action="/refresh"`) != 1 || !strings.Contains(body, "刷新数据") {
+ 		t.Error("dashboard: refresh control must live in the topbar exactly once")
+diff --git a/internal/server/dashboard_metrics_test.go b/internal/server/dashboard_metrics_test.go
+new file mode 100644
+index 0000000..81543e9
+--- /dev/null
++++ b/internal/server/dashboard_metrics_test.go
+@@ -0,0 +1,247 @@
++package server
++
++import (
++	"context"
++	"strings"
++	"testing"
++	"time"
++)
++
++// Ticket 01/02/03/04 data-layer seams: the dashboard aggregates cache metrics
++// under the B definition (read / (read+write+input), the claude-usage-dashboard
++// and vLLM convention — see .scratch/web-dashboard-cache-metrics/spec.md).
++
++func TestDashboardCacheHitRateTodayOnly(t *testing.T) {
++	store, pricing, srv := newTestServer(t)
++	_, token := seedUser(t, store, "hit")
++	today := time.Now().Format("2006-01-02")
++	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
++
++	postReport(t, srv, token, samplePayload("h1", today,
++		HourRow{Hour: 9, Tool: "claude", Model: "claude-sonnet-4-5",
++			Input: 1000, Output: 100, CacheRead: 8900, Cache5m: 100},
++	))
++	postReport(t, srv, token, samplePayload("h2", yesterday,
++		HourRow{Hour: 9, Tool: "claude", Model: "claude-sonnet-4-5",
++			Input: 500, Output: 50, CacheRead: 4500, Cache5m: 500},
++	))
++
++	user, _ := store.UserByName(context.Background(), "hit")
++	data := store.Dashboard(context.Background(), user, pricing)
++
++	// Today: 8900 / (8900 + 100 + 1000) = 0.89 — yesterday must not leak in.
++	if !data.HasRate || diff(data.CacheHitRate, 0.89) {
++		t.Fatalf("today hit rate = %v (hasRate %v), want 0.89", data.CacheHitRate, data.HasRate)
++	}
++	// Three-way split sums to 1 with the right proportions.
++	if diff(data.CacheSplit.Read, 0.89) || diff(data.CacheSplit.Write, 0.01) || diff(data.CacheSplit.Fresh, 0.10) {
++		t.Fatalf("split = %+v, want {0.89 0.01 0.10}", data.CacheSplit)
++	}
++	// Daily points carry their own rate: yesterday 4500/5500 ≈ 0.8182.
++	var yest *DayPoint
++	for i := range data.Daily30 {
++		if data.Daily30[i].Date == yesterday {
++			yest = &data.Daily30[i]
++		}
++	}
++	if yest == nil || !yest.HasRate || diff(yest.HitRate, 4500.0/5500.0) {
++		t.Fatalf("yesterday daily rate wrong: %+v", yest)
++	}
++	// Payback: 8900 reads / 100 writes = 89.
++	if diff(data.ReadPerWrite, 89) {
++		t.Fatalf("read-per-write = %v, want 89", data.ReadPerWrite)
++	}
++}
++
++func TestDashboardCacheHitRateNoData(t *testing.T) {
++	store, pricing, srv := newTestServer(t)
++	_, token := seedUser(t, store, "empty")
++	postReport(t, srv, token, samplePayload("e1", time.Now().Format("2006-01-02"),
++		HourRow{Hour: 9, Tool: "codex", Model: "gpt-5", Input: 300, Output: 200},
++	))
++	user, _ := store.UserByName(context.Background(), "empty")
++	data := store.Dashboard(context.Background(), user, pricing)
++	// Codex-style rows: no cache at all → rate 0 but defined (fresh input > 0).
++	if !data.HasRate || data.CacheHitRate != 0 {
++		t.Fatalf("no-cache day rate = %v hasRate %v, want 0/true", data.CacheHitRate, data.HasRate)
++	}
++	if diff(data.CacheSplit.Fresh, 1) {
++		t.Fatalf("split %+v, want fresh=1", data.CacheSplit)
++	}
++	if data.ReadPerWrite != 0 {
++		t.Fatalf("read-per-write = %v, want 0 (no writes)", data.ReadPerWrite)
++	}
++}
++
++func TestDashboardToolModelRows(t *testing.T) {
++	store, pricing, srv := newTestServer(t)
++	_, token := seedUser(t, store, "cross")
++	today := time.Now().Format("2006-01-02")
++	postReport(t, srv, token, samplePayload("c1", today,
++		HourRow{Hour: 9, Tool: "claude", Model: "claude-sonnet-4-5",
++			Input: 1000, Output: 100, CacheRead: 8900, Cache5m: 100},
++		HourRow{Hour: 10, Tool: "codex", Model: "gpt-5", Input: 300, Output: 200},
++	))
++	user, _ := store.UserByName(context.Background(), "cross")
++	data := store.Dashboard(context.Background(), user, pricing)
++
++	if len(data.ToolModels) != 2 {
++		t.Fatalf("tool×model rows = %d, want 2: %+v", len(data.ToolModels), data.ToolModels)
++	}
++	// Sorted by tokens desc: claude 10100 > codex 500.
++	first := data.ToolModels[0]
++	if first.Tool != "claude" || first.Model != "claude-sonnet-4-5" {
++		t.Fatalf("top row = %+v, want claude/claude-sonnet-4-5", first)
++	}
++	if !first.HasRate || diff(first.HitRate, 0.89) || first.Cost <= 0 {
++		t.Fatalf("claude row rate/cost wrong: %+v", first)
++	}
++	second := data.ToolModels[1]
++	if second.Tool != "codex" || !second.HasRate || second.HitRate != 0 || second.Cost <= 0 {
++		t.Fatalf("codex row wrong: %+v", second)
++	}
++	// ByTool/ByModel now carry rate+cost under NameStat.
++	if len(data.ByTool) != 2 || data.ByTool[0].Name != "claude" || !data.ByTool[0].HasRate ||
++		diff(data.ByTool[0].HitRate, 0.89) || data.ByTool[0].Cost <= 0 {
++		t.Fatalf("ByTool wrong: %+v", data.ByTool)
++	}
++	if len(data.ByModel) != 2 || data.ByModel[0].Name != "claude-sonnet-4-5" {
++		t.Fatalf("ByModel wrong: %+v", data.ByModel)
++	}
++}
++
++func TestCacheSavingsMath(t *testing.T) {
++	table, err := LoadPricing("")
++	if err != nil {
++		t.Fatal(err)
++	}
++	model := "claude-sonnet-4-5"
++	card, ok := table.Card(model)
++	if !ok {
++		t.Fatalf("seed card missing for %s", model)
++	}
++	row := HourRow{Tool: "claude", Model: model, Input: 1_000_000,
++		CacheRead: 2_000_000, Cache5m: 1_000_000, Cache1h: 500_000}
++	want := (float64(row.CacheRead)*(card.Input-card.CacheRead) -
++		float64(row.Cache5m)*(card.CacheWrite5m-card.Input) -
++		float64(row.Cache1h)*(card.CacheWrite1h-card.Input)) / 1e6
++	got := table.CacheSavingsForHourRow(&row)
++	if d := got - want; d > 0.01 || d < -0.01 {
++		t.Fatalf("savings: got %v want %v (card %+v)", got, want, card)
++	}
++	// Unknown model: no card, no estimate.
++	if got := table.CacheSavingsForHourRow(&HourRow{Model: "nope", Input: 100, CacheRead: 100}); got != 0 {
++		t.Fatalf("unknown model savings = %v, want 0", got)
++	}
++}
++
++func TestDashboardCacheSavingsTodayOnly(t *testing.T) {
++	store, pricing, srv := newTestServer(t)
++	_, token := seedUser(t, store, "save")
++	today := time.Now().Format("2006-01-02")
++	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
++	postReport(t, srv, token, samplePayload("s1", today,
++		HourRow{Hour: 9, Tool: "claude", Model: "claude-sonnet-4-5",
++			Input: 1000, Output: 100, CacheRead: 8900, Cache5m: 100},
++	))
++	postReport(t, srv, token, samplePayload("s2", yesterday,
++		HourRow{Hour: 9, Tool: "claude", Model: "claude-sonnet-4-5",
++			Input: 100, Output: 10, CacheRead: 100000, Cache5m: 1000},
++	))
++	user, _ := store.UserByName(context.Background(), "save")
++	data := store.Dashboard(context.Background(), user, pricing)
++
++	card, _ := pricing.Card("claude-sonnet-4-5")
++	want := (8900*(card.Input-card.CacheRead) - 100*(card.CacheWrite5m-card.Input)) / 1e6
++	if d := data.CacheSavings - want; d > 1e-9 || d < -1e-9 {
++		t.Fatalf("today savings = %v, want %v (yesterday must not leak)", data.CacheSavings, want)
++	}
++}
++
++func TestDashboardHeatmap(t *testing.T) {
++	store, pricing, srv := newTestServer(t)
++	_, token := seedUser(t, store, "heat")
++	today := time.Now().Format("2006-01-02")
++	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
++	postReport(t, srv, token, samplePayload("t1", today,
++		HourRow{Hour: 9, Tool: "claude", Model: "m", Input: 100, Output: 50},
++	))
++	postReport(t, srv, token, samplePayload("t2", yesterday,
++		HourRow{Hour: 10, Tool: "claude", Model: "m", Input: 70, Output: 30},
++	))
++	user, _ := store.UserByName(context.Background(), "heat")
++	data := store.Dashboard(context.Background(), user, pricing)
++
++	if len(data.Heatmap) != 7*24 {
++		t.Fatalf("heatmap cells = %d, want 168", len(data.Heatmap))
++	}
++	wdToday := int(time.Now().Weekday()+6) % 7
++	wdYest := int(time.Now().AddDate(0, 0, -1).Weekday()+6) % 7
++	find := func(wd, hour int) uint64 {
++		for _, c := range data.Heatmap {
++			if c.Weekday == wd && c.Hour == hour {
++				return c.Tokens
++			}
++		}
++		return 0
++	}
++	if got := find(wdToday, 9); got != 150 {
++		t.Fatalf("today 9:00 cell = %d, want 150", got)
++	}
++	if got := find(wdYest, 10); got != 100 {
++		t.Fatalf("yesterday 10:00 cell = %d, want 100", got)
++	}
++	if got := find(wdToday, 10); got != 0 {
++		t.Fatalf("empty cell leaked: %d", got)
++	}
++}
++
++// Ticket 05: Chinese number units (万/亿) replace the western K/M/B across the
++// web UI — FormatTokens and its JS twin in app.js.
++func TestFormatTokensCNUnits(t *testing.T) {
++	cases := []struct {
++		v    uint64
++		want string
++	}{
++		{0, "0"},
++		{42, "42"},
++		{9999, "9999"},
++		{10_000, "1.0万"},
++		{55_500, "5.5万"},
++		{7_100, "7100"}, // e2e fixture: stays raw under 1万
++		{12_345_678, "1234.6万"},
++		{123_456_789, "1.23亿"},
++		{9_999_999_999, "100.00亿"},
++	}
++	for _, tc := range cases {
++		if got := FormatTokens(tc.v); got != tc.want {
++			t.Errorf("FormatTokens(%d) = %q, want %q", tc.v, got, tc.want)
++		}
++	}
++}
++
++// diff reports whether a and b differ by more than 1e-9 (float helper).
++func diff(a, b float64) bool {
++	d := a - b
++	return d > 1e-9 || d < -1e-9
++}
++
++// Ticket 01/02/03/04 HTML surface: labels, the split meter, the breakdown
++// table and the heatmap box all render on /me.
++func TestDashboardMetricsHTML(t *testing.T) {
++	_, mux := newLocalWeb(t)
++	body := getFrom(t, mux, "127.0.0.1:53812", "/me").Body.String()
++	for _, want := range []string{
++		"当日缓存命中率",
++		"当日缓存净节省",
++		"工具 × 模型",
++		"meter-split",
++		"chart-heatmap",
++		"工具 × 模型明细",
++		"命中率",
++	} {
++		if !strings.Contains(body, want) {
++			t.Errorf("dashboard missing %q", want)
++		}
++	}
++}
+diff --git a/internal/server/pricing.go b/internal/server/pricing.go
+index b2b29be..e51c410 100644
+--- a/internal/server/pricing.go
++++ b/internal/server/pricing.go
+@@ -171,6 +171,21 @@ func (t *PricingTable) CostForHourRow(r *HourRow) float64 {
+ 		float64(r.Cache1h)*card.CacheWrite1h) / 1e6
+ }
+ 
++// CacheSavingsForHourRow prices one cell's Cache Savings: what the cache
++// reads saved by billing at the read rate instead of the input rate, minus
++// the write premium paid to populate the cache. Unknown models contribute 0
++// (no rate card, no honest estimate).
++func (t *PricingTable) CacheSavingsForHourRow(r *HourRow) float64 {
++	card, ok := t.resolve(r.Model)
++	if !ok {
++		return 0
++	}
++	saved := float64(r.CacheRead) * (card.Input - card.CacheRead)
++	premium := float64(r.Cache5m)*(card.CacheWrite5m-card.Input) +
++		float64(r.Cache1h)*(card.CacheWrite1h-card.Input)
++	return (saved - premium) / 1e6
++}
++
+ // Card returns the display card for a model.
+ func (t *PricingTable) Card(model string) (ModelPrice, bool) {
+ 	return t.resolve(model)
+diff --git a/internal/server/query.go b/internal/server/query.go
+index 1390e1a..b78d84d 100644
+--- a/internal/server/query.go
++++ b/internal/server/query.go
+@@ -2,6 +2,7 @@ package server
+ 
+ import (
+ 	"context"
++	"sort"
+ 	"time"
+ )
+ 
+@@ -245,20 +246,64 @@ func (s *Store) CommunityTotals(ctx context.Context, f Filters, pricing *Pricing
+ type DashboardData struct {
+ 	Today        string
+ 	HourlyToday  []HourToolPoint // 当日 hour×tool 时间线
+-	Daily30      []DayPoint      // 近 30 天用量与成本
+-	ByTool       []ModelSlice
+-	ByModel      []ModelSlice
+-	Composition  Composition
++	Daily30      []DayPoint      // 近 30 天用量、成本与命中率
++	ByTool       []NameStat
++	ByModel      []NameStat
++	ToolModels   []ToolModelRow // 工具×模型交叉明细(全历史,token 降序)
++	Heatmap      []HeatCell     // 星期×小时工作节律(全历史,7×24 全格)
++	Composition  Composition    // 全历史五类构成(饼图)
+ 	Devices      []DeviceView
+ 	TodayTokens  uint64
+ 	TodayCost    float64
+ 	TotalTokens  uint64
+-	CacheHitRate float64
++	CacheHitRate float64    // 当日输入命中率:读/(读+写+未缓存输入);HasRate 为真时有效
++	CacheSplit   CacheSplit // 当日输入侧三比例分解,和为 1
++	HasRate      bool
++	CacheSavings float64 // 当日缓存净节省(USD)
++	ReadPerWrite float64 // 当日回本次数:读÷写;零写时为 0
+ 	ActiveDays   int
+ 	Streak       int
+ 	FlaggedToday bool
+ }
+ 
++// CacheSplit is the input-side three-way split: cache read / cache write /
++// fresh (uncached) input. Proportions sum to 1 whenever any input flowed.
++type CacheSplit struct {
++	Read, Write, Fresh float64
++}
++
++// NameStat is one tool's or model's aggregate with cost and hit rate.
++type NameStat struct {
++	Name    string
++	Tokens  uint64
++	Cost    float64
++	HitRate float64
++	HasRate bool
++}
++
++// nameAgg accumulates one dimension's counters behind a NameStat/ToolModelRow.
++type nameAgg struct {
++	tokens, read, write, fresh uint64
++	cost                       float64
++}
++
++// ToolModelRow is one (tool, model) cross of the breakdown table.
++type ToolModelRow struct {
++	Tool    string
++	Model   string
++	Tokens  uint64
++	Cost    float64
++	HitRate float64
++	HasRate bool
++}
++
++// HeatCell is one weekday-hour aggregate (Weekday 0 = Monday).
++type HeatCell struct {
++	Weekday int
++	Hour    int
++	Tokens  uint64
++}
++
+ // HourToolPoint is one hour's per-tool split.
+ type HourToolPoint struct {
+ 	Hour   int
+@@ -266,11 +311,24 @@ type HourToolPoint struct {
+ 	Tools  map[string]uint64
+ }
+ 
+-// DayPoint is one day's tokens and cost.
++// DayPoint is one day's tokens, cost and cache hit rate.
+ type DayPoint struct {
+-	Date   string
+-	Tokens uint64
+-	Cost   float64
++	Date    string
++	Tokens  uint64
++	Cost    float64
++	HitRate float64
++	HasRate bool
++}
++
++// cacheHitRate is the B-definition rate: cache reads over the whole input
++// side (reads + writes + fresh input). Also reports whether the denominator
++// existed at all (a pure-output day has no rate).
++func cacheHitRate(read, write, fresh uint64) (float64, bool) {
++	total := read + write + fresh
++	if total == 0 {
++		return 0, false
++	}
++	return float64(read) / float64(total), true
+ }
+ 
+ // Composition is the five-class token split.
+@@ -286,6 +344,22 @@ type DeviceView struct {
+ 	Flagged  bool
+ }
+ 
++// dayAgg is one date's DayPoint plus the input-side counters behind its rate.
++type dayAgg struct {
++	point              DayPoint
++	read, write, fresh uint64
++}
++
++// accName returns m[key], seeding a zero aggregate on first touch.
++func accName[K comparable](m map[K]*nameAgg, key K) *nameAgg {
++	a, ok := m[key]
++	if !ok {
++		a = &nameAgg{}
++		m[key] = a
++	}
++	return a
++}
++
+ // Dashboard builds the personal page data for one user.
+ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable) DashboardData {
+ 	rows, err := s.fetchRows(ctx, Filters{User: user, IncludeFlagged: true})
+@@ -295,28 +369,64 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
+ 	today := time.Now().Format("2006-01-02")
+ 	data := DashboardData{Today: today}
+ 	hourly := map[int]map[string]uint64{}
+-	daily := map[string]*DayPoint{}
+-	tools := map[string]uint64{}
+-	models := map[string]uint64{}
++	daily := map[string]*dayAgg{}
++	acc := accName[string]
++	tools := map[string]*nameAgg{}
++	models := map[string]*nameAgg{}
++	type tmKey struct{ tool, model string }
++	tms := map[tmKey]*nameAgg{}
++	tmOrder := []tmKey{}
++	var heat [7][24]uint64
+ 	dates := map[string]bool{}
+ 	var firstDate string
++	var todayRead, todayWrite, todayFresh uint64
+ 	for i := range rows {
+ 		r := &rows[i]
+ 		cell := UsageCell{Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
+ 		total := cell.TokensIn(true)
+-		cost := pricing.CostForHourRow(&HourRow{Hour: r.Hour, Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h})
++		hr := &HourRow{Hour: r.Hour, Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
++		cost := pricing.CostForHourRow(hr)
+ 		data.TotalTokens += total
+ 		data.Composition.Input += r.Input
+ 		data.Composition.Output += r.Output
+ 		data.Composition.CacheRead += r.CacheRead
+ 		data.Composition.Cache5m += r.Cache5m
+ 		data.Composition.Cache1h += r.Cache1h
+-		tools[r.Tool] += total
+-		models[r.Model] += total
++		tmk := tmKey{r.Tool, r.Model}
++		if _, seen := tms[tmk]; !seen {
++			tmOrder = append(tmOrder, tmk)
++		}
++		for _, a := range []*nameAgg{acc(tools, r.Tool), acc(models, r.Model), accName(tms, tmk)} {
++			a.tokens += total
++			a.cost += cost
++			a.read += r.CacheRead
++			a.write += r.Cache5m + r.Cache1h
++			a.fresh += r.Input
++		}
++		if t, perr := time.Parse("2006-01-02", r.Date); perr == nil {
++			heat[int(t.Weekday()+6)%7][r.Hour] += total
++		}
+ 		dates[r.Date] = true
++		day, ok := daily[r.Date]
++		if !ok {
++			day = &dayAgg{point: DayPoint{Date: r.Date}}
++			daily[r.Date] = day
++			if firstDate == "" || r.Date < firstDate {
++				firstDate = r.Date
++			}
++		}
++		day.point.Tokens += total
++		day.point.Cost += cost
++		day.read += r.CacheRead
++		day.write += r.Cache5m + r.Cache1h
++		day.fresh += r.Input
+ 		if r.Date == today {
+ 			data.TodayTokens += total
+ 			data.TodayCost += cost
++			data.CacheSavings += pricing.CacheSavingsForHourRow(hr)
++			todayRead += r.CacheRead
++			todayWrite += r.Cache5m + r.Cache1h
++			todayFresh += r.Input
+ 			if r.Flagged {
+ 				data.FlaggedToday = true
+ 			}
+@@ -325,16 +435,6 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
+ 			}
+ 			hourly[r.Hour][r.Tool] += total
+ 		}
+-		day, ok := daily[r.Date]
+-		if !ok {
+-			day = &DayPoint{Date: r.Date}
+-			daily[r.Date] = day
+-			if firstDate == "" || r.Date < firstDate {
+-				firstDate = r.Date
+-			}
+-		}
+-		day.Tokens += total
+-		day.Cost += cost
+ 	}
+ 	for hour := 0; hour < 24; hour++ {
+ 		point := HourToolPoint{Hour: hour, Tools: map[string]uint64{}}
+@@ -349,19 +449,48 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
+ 	for d, err := time.Parse("2006-01-02", start); err == nil && !d.After(time.Now()); d = d.AddDate(0, 0, 1) {
+ 		date := d.Format("2006-01-02")
+ 		point := DayPoint{Date: date}
+-		if p, ok := daily[date]; ok {
+-			point = *p
++		if agg, ok := daily[date]; ok {
++			point = agg.point
++			point.HitRate, point.HasRate = cacheHitRate(agg.read, agg.write, agg.fresh)
+ 		}
+ 		data.Daily30 = append(data.Daily30, point)
+ 	}
+-	data.ByTool = sortedSlices(tools)
+-	data.ByModel = sortedSlices(models)
++	data.ByTool = sortedNameStats(tools)
++	data.ByModel = sortedNameStats(models)
++	for _, key := range tmOrder {
++		a := tms[key]
++		rate, has := cacheHitRate(a.read, a.write, a.fresh)
++		data.ToolModels = append(data.ToolModels, ToolModelRow{Tool: key.tool, Model: key.model, Tokens: a.tokens, Cost: a.cost, HitRate: rate, HasRate: has})
++	}
++	sort.SliceStable(data.ToolModels, func(i, j int) bool {
++		if data.ToolModels[i].Tokens != data.ToolModels[j].Tokens {
++			return data.ToolModels[i].Tokens > data.ToolModels[j].Tokens
++		}
++		if data.ToolModels[i].Tool != data.ToolModels[j].Tool {
++			return data.ToolModels[i].Tool < data.ToolModels[j].Tool
++		}
++		return data.ToolModels[i].Model < data.ToolModels[j].Model
++	})
++	if len(data.ToolModels) > 50 {
++		data.ToolModels = data.ToolModels[:50]
++	}
++	for wd := 0; wd < 7; wd++ {
++		for hour := 0; hour < 24; hour++ {
++			data.Heatmap = append(data.Heatmap, HeatCell{Weekday: wd, Hour: hour, Tokens: heat[wd][hour]})
++		}
++	}
+ 	data.ActiveDays = len(dates)
+ 	data.Streak = dayStreak(daily, today)
+-	var readPlusWrite uint64
+-	readPlusWrite = data.Composition.CacheRead + data.Composition.Cache5m + data.Composition.Cache1h
+-	if readPlusWrite > 0 {
+-		data.CacheHitRate = float64(data.Composition.CacheRead) / float64(readPlusWrite)
++	data.CacheHitRate, data.HasRate = cacheHitRate(todayRead, todayWrite, todayFresh)
++	if total := todayRead + todayWrite + todayFresh; total > 0 {
++		data.CacheSplit = CacheSplit{
++			Read:  float64(todayRead) / float64(total),
++			Write: float64(todayWrite) / float64(total),
++			Fresh: float64(todayFresh) / float64(total),
++		}
++	}
++	if todayWrite > 0 {
++		data.ReadPerWrite = float64(todayRead) / float64(todayWrite)
+ 	}
+ 	devices, _ := s.UserDevices(ctx, user.ID)
+ 	for _, d := range devices {
+@@ -375,18 +504,19 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
+ 	return data
+ }
+ 
+-func sortedSlices(m map[string]uint64) []ModelSlice {
+-	out := make([]ModelSlice, 0, len(m))
+-	for name, tokens := range m {
+-		out = append(out, ModelSlice{Model: name, Tokens: tokens})
++func sortedNameStats(m map[string]*nameAgg) []NameStat {
++	out := make([]NameStat, 0, len(m))
++	for name, a := range m {
++		rate, has := cacheHitRate(a.read, a.write, a.fresh)
++		out = append(out, NameStat{Name: name, Tokens: a.tokens, Cost: a.cost, HitRate: rate, HasRate: has})
+ 	}
+-	sortModelSlices(out)
++	sort.SliceStable(out, func(i, j int) bool { return out[i].Tokens > out[j].Tokens })
+ 	return out
+ }
+ 
+ // dayStreak counts consecutive days with data ending at today (or yesterday,
+ // so the streak survives until the day's first report).
+-func dayStreak(daily map[string]*DayPoint, today string) int {
++func dayStreak(daily map[string]*dayAgg, today string) int {
+ 	layout := "2006-01-02"
+ 	cursor, err := time.Parse(layout, today)
+ 	if err != nil {
+@@ -397,7 +527,7 @@ func dayStreak(daily map[string]*DayPoint, today string) int {
+ 	}
+ 	streak := 0
+ 	for {
+-		if p, ok := daily[cursor.Format(layout)]; ok && p.Tokens > 0 {
++		if p, ok := daily[cursor.Format(layout)]; ok && p.point.Tokens > 0 {
+ 			streak++
+ 			cursor = cursor.AddDate(0, 0, -1)
+ 			continue
+diff --git a/internal/server/server_test.go b/internal/server/server_test.go
+index 3444771..39807f5 100644
+--- a/internal/server/server_test.go
++++ b/internal/server/server_test.go
+@@ -223,13 +223,13 @@ func TestLeaderboardPageAndFilters(t *testing.T) {
+ 	if !strings.Contains(page, "alice") || !strings.Contains(page, "bob") {
+ 		t.Fatal("leaderboard missing users")
+ 	}
+-	if !strings.Contains(page, "5.5K") {
++	if !strings.Contains(page, "5500") {
+ 		t.Fatal("alice total 5500 not shown (cache included by default)")
+ 	}
+ 	// Cache-off board reorders: alice 1500 vs bob 700 — order stays but the
+ 	// number changes.
+ 	page = get("/?range=today&cache=0")
+-	if !strings.Contains(page, "1.5K") {
++	if !strings.Contains(page, "1500") {
+ 		t.Fatal("cache-off total not shown")
+ 	}
+ 	// Tool filter codex → only bob.
+diff --git a/internal/server/web.go b/internal/server/web.go
+index ace747c..9765ea2 100644
+--- a/internal/server/web.go
++++ b/internal/server/web.go
+@@ -509,15 +509,14 @@ func (w *Web) handleProfile(resp http.ResponseWriter, r *http.Request, user *Use
+ // Formatting helpers shared by templates
+ // ---------------------------------------------------------------------------
+ 
+-// FormatTokens renders a token count with compact units.
++// FormatTokens renders a token count with Chinese compact units (万/亿),
++// matching the all-Chinese UI; sub-1万 counts stay exact.
+ func FormatTokens(v uint64) string {
+ 	switch {
+-	case v >= 1_000_000_000:
+-		return fmt.Sprintf("%.2fB", float64(v)/1e9)
+-	case v >= 1_000_000:
+-		return fmt.Sprintf("%.2fM", float64(v)/1e6)
+-	case v >= 1_000:
+-		return fmt.Sprintf("%.1fK", float64(v)/1e3)
++	case v >= 100_000_000:
++		return fmt.Sprintf("%.2f亿", float64(v)/1e8)
++	case v >= 10_000:
++		return fmt.Sprintf("%.1f万", float64(v)/1e4)
+ 	default:
+ 		return strconv.FormatUint(v, 10)
+ 	}
+diff --git a/internal/server/web/static/app.js b/internal/server/web/static/app.js
+index d36e31d..ee6166a 100644
+--- a/internal/server/web/static/app.js
++++ b/internal/server/web/static/app.js
+@@ -85,12 +85,38 @@
+     return tip;
+   }
+ 
++  // Chinese compact units, twin of Go FormatTokens: ≥1亿 two decimals,
++  // ≥1万 one decimal, below stays exact with zh-CN grouping.
++  function fmtTokens(n) {
++    if (n >= 1e8) return (n / 1e8).toFixed(2) + '亿';
++    if (n >= 1e4) return (n / 1e4).toFixed(1) + '万';
++    return (+n).toLocaleString('zh-CN');
++  }
++
++  function fmtRate(r) {
++    return r == null ? '—' : (r * 100).toFixed(2) + '%';
++  }
++
++  // Axis-trigger tooltip listing each series with its own unit.
++  function axisTip(units) {
++    return function (params) {
++      if (!params || !params.length) return '';
++      var lines = [params[0].axisValueLabel || params[0].name];
++      params.forEach(function (p) {
++        if (p.value == null) return;
++        var unit = units[p.seriesName] || fmtTokens;
++        lines.push(p.marker + ' ' + p.seriesName + '  ' + unit(p.value));
++      });
++      return lines.join('<br/>');
++    };
++  }
++
+   function valueAxis(t) {
+     return {
+       type: 'value',
+       axisLine: { show: false },
+       axisTick: { show: false },
+-      axisLabel: { color: t.axis, fontSize: 11 },
++      axisLabel: { color: t.axis, fontSize: 11, formatter: function (v) { return fmtTokens(v); } },
+       splitLine: { lineStyle: { color: t.grid } },
+     };
+   }
+@@ -122,7 +148,7 @@
+     var toolNames = Object.keys(tools).sort();
+     var hours = data.hourly.map(function (p) { return p.Hour + ':00'; });
+     mount('chart-hourly', {
+-      tooltip: tooltip(t, { trigger: 'axis' }),
++      tooltip: tooltip(t, { trigger: 'axis', formatter: axisTip({}) }),
+       legend: legend(t),
+       grid: { left: 60, right: 20, top: 30, bottom: 30 },
+       xAxis: categoryAxis(t, hours),
+@@ -136,15 +162,28 @@
+       }),
+     });
+ 
+-    // 30-day tokens + cost dual axis.
++    // 30-day tokens + cost dual axis, cache-hit-rate line on a percent axis.
+     mount('chart-daily', {
+-      tooltip: tooltip(t, { trigger: 'axis' }),
++      tooltip: tooltip(t, {
++        trigger: 'axis',
++        formatter: axisTip({
++          cost: function (v) { return '$' + (+v).toFixed(4); },
++          '命中率': function (v) { return (+v).toFixed(2) + '%'; },
++        }),
++      }),
+       legend: legend(t),
+-      grid: { left: 60, right: 60, top: 30, bottom: 30 },
++      grid: { left: 60, right: 100, top: 30, bottom: 30 },
+       xAxis: categoryAxis(t, data.daily.map(function (d) { return d.Date.slice(5); })),
+       yAxis: [
+         Object.assign(valueAxis(t), { name: 'tokens', nameTextStyle: { color: t.axis } }),
+-        Object.assign(valueAxis(t), { name: 'USD', nameTextStyle: { color: t.axis }, splitLine: { show: false } }),
++        Object.assign(valueAxis(t), {
++          name: 'USD', nameTextStyle: { color: t.axis }, splitLine: { show: false },
++          axisLabel: { color: t.axis, fontSize: 11, formatter: function (v) { return '$' + v; } },
++        }),
++        Object.assign(valueAxis(t), {
++          name: '命中率', nameTextStyle: { color: t.axis }, splitLine: { show: false }, min: 0, max: 100, offset: 46,
++          axisLabel: { color: t.axis, fontSize: 11, formatter: function (v) { return v + '%'; } },
++        }),
+       ],
+       series: [
+         {
+@@ -157,17 +196,32 @@
+           itemStyle: { color: t.cats[2] }, lineStyle: { color: t.cats[2] },
+           data: data.daily.map(function (d) { return +d.Cost.toFixed(4); }),
+         },
++        {
++          name: '命中率', type: 'line', yAxisIndex: 2, smooth: true,
++          itemStyle: { color: t.cats[1] }, lineStyle: { color: t.cats[1] },
++          data: data.daily.map(function (d) { return d.HasRate ? +(d.HitRate * 100).toFixed(2) : null; }),
++        },
+       ],
+     });
+ 
+     function barOf(id, rows, color) {
+       mount(id, {
+-        tooltip: tooltip(t),
++        tooltip: tooltip(t, {
++          formatter: function (p) {
++            var r = rows[p.dataIndex];
++            if (!r) return '';
++            var lines = [p.marker + ' ' + r.Name];
++            lines.push('Token:' + fmtTokens(r.Tokens));
++            if (r.Cost) lines.push('成本:$' + r.Cost.toFixed(4));
++            lines.push('命中率:' + fmtRate(r.HasRate ? r.HitRate : null));
++            return lines.join('<br/>');
++          },
++        }),
+         grid: { left: 110, right: 20, top: 10, bottom: 30 },
+         xAxis: valueAxis(t),
+         yAxis: {
+           type: 'category',
+-          data: rows.map(function (r) { return r.Model; }).reverse(),
++          data: rows.map(function (r) { return r.Name; }).reverse(),
+           axisLine: { lineStyle: { color: t.grid } },
+           axisTick: { show: false },
+           axisLabel: { color: t.axis, fontSize: 11 },
+@@ -184,7 +238,12 @@
+     barOf('chart-model', data.byModel.slice(0, 8), t.cats[0]);
+ 
+     mount('chart-compose', {
+-      tooltip: tooltip(t, { trigger: 'item' }),
++      tooltip: tooltip(t, {
++        trigger: 'item',
++        formatter: function (p) {
++          return p.marker + ' ' + p.name + ':' + fmtTokens(p.value);
++        },
++      }),
+       series: [{
+         type: 'pie', radius: ['40%', '70%'],
+         label: { color: t.text, formatter: '{b}\n{d}%' },
+@@ -197,6 +256,46 @@
+         ].filter(function (d) { return d.value > 0; }),
+       }],
+     });
++
++    // Weekday × hour heatmap of the all-time working rhythm.
++    var wdNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
++    var heat = (data.heatmap || []).map(function (c) { return [c.Hour, c.Weekday, c.Tokens]; });
++    var heatMax = heat.reduce(function (m, c) { return Math.max(m, c[2]); }, 0) || 1;
++    mount('chart-heatmap', {
++      tooltip: tooltip(t, {
++        formatter: function (p) {
++          return wdNames[p.value[1]] + ' ' + p.value[0] + ':00 · ' + fmtTokens(p.value[2]);
++        },
++      }),
++      grid: { left: 44, right: 10, top: 8, bottom: 60 },
++      xAxis: {
++        type: 'category',
++        data: Array.from({ length: 24 }, function (_, h) { return h; }),
++        axisLine: { lineStyle: { color: t.grid } },
++        axisTick: { show: false },
++        axisLabel: { color: t.axis, fontSize: 10, interval: 1 },
++        splitArea: { show: true, areaStyle: { color: [t.tipBg, 'transparent'] } },
++      },
++      yAxis: {
++        type: 'category',
++        data: wdNames,
++        axisLine: { lineStyle: { color: t.grid } },
++        axisTick: { show: false },
++        axisLabel: { color: t.axis, fontSize: 11 },
++      },
++      visualMap: {
++        min: 0, max: heatMax, calculable: false,
++        orient: 'horizontal', left: 'center', bottom: 0, itemWidth: 12, itemHeight: 90,
++        textStyle: { color: t.axis, fontSize: 10 },
++        formatter: function (v) { return fmtTokens(+v); },
++        inRange: { color: [t.grid, t.cats[5], t.cats[1]] },
++      },
++      series: [{
++        type: 'heatmap',
++        data: heat,
++        itemStyle: { borderColor: t.tipBg, borderWidth: 1 },
++      }],
++    });
+   }
+ 
+   build();
+diff --git a/internal/server/web/static/style.css b/internal/server/web/static/style.css
+index e18c488..ac1e8f0 100644
+--- a/internal/server/web/static/style.css
++++ b/internal/server/web/static/style.css
+@@ -323,6 +323,14 @@ select {
+   background: var(--bg-soft); overflow: hidden;
+ }
+ .meter-fill { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
++.meter-split { display: flex; height: 6px; }
++.meter-split .meter-fill { flex: 0 0 auto; border-radius: 0; }
++.meter-split .meter-fill:first-child { border-radius: 999px 0 0 999px; }
++.meter-split .meter-fill:last-child { border-radius: 0 999px 999px 0; }
++.meter-split .meter-fill:only-child { border-radius: inherit; }
++.m-write { background: var(--cat-3); }
++.m-fresh { background: var(--line-strong); }
++.ssub { margin-top: 4px; color: var(--muted); font-size: var(--t-caption); }
+ .charts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+ .chartbox {
+   background: var(--card); border: 1px solid var(--line);
+@@ -341,6 +349,8 @@ select {
+ .devices td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
+ .devices th:last-child, .devices td:last-child { text-align: right; }
+ .devices tr:last-child td { border-bottom: 0; }
++.devices th.num, .devices td.num { text-align: right; font-variant-numeric: tabular-nums; }
++#chart-heatmap { height: 300px; }
+ 
+ /* --------------------------------------------------------------- tables ---- */
+ 
+diff --git a/internal/server/web/templates/me.html b/internal/server/web/templates/me.html
+index 7910ff9..a882616 100644
+--- a/internal/server/web/templates/me.html
++++ b/internal/server/web/templates/me.html
+@@ -13,12 +13,19 @@
+ <section class="statgrid">
+   <div class="scard main"><div class="slabel">当日消耗</div><div class="svalue">{{fmtTokens $d.TodayTokens}}</div></div>
+   <div class="scard main"><div class="slabel">当日成本估算</div><div class="svalue">{{fmtCost $d.TodayCost}}</div></div>
+-  <div class="scard"><div class="slabel">缓存命中率</div><div class="svalue">{{printf "%.1f" (mul100 $d.CacheHitRate)}}%</div><div class="meter"><i class="meter-fill" style="width: {{printf "%.1f" (mul100 $d.CacheHitRate)}}%"></i></div></div>
++  <div class="scard"><div class="slabel">当日缓存命中率</div>
++    <div class="svalue">{{if $d.HasRate}}{{printf "%.2f" (mul100 $d.CacheHitRate)}}%{{else}}—{{end}}</div>
++    <div class="meter meter-split" title="缓存读 {{printf "%.0f" (mul100 $d.CacheSplit.Read)}}% · 缓存写 {{printf "%.0f" (mul100 $d.CacheSplit.Write)}}% · 未缓存 {{printf "%.0f" (mul100 $d.CacheSplit.Fresh)}}%">
++      <i class="meter-fill" style="width: {{printf "%.2f" (mul100 $d.CacheSplit.Read)}}%"></i>
++      <i class="meter-fill m-write" style="width: {{printf "%.2f" (mul100 $d.CacheSplit.Write)}}%"></i>
++      <i class="meter-fill m-fresh" style="width: {{printf "%.2f" (mul100 $d.CacheSplit.Fresh)}}%"></i>
++    </div>
++  </div>
++  <div class="scard"><div class="slabel">当日缓存净节省</div><div class="svalue">{{fmtCost $d.CacheSavings}}</div><div class="ssub">{{if $d.ReadPerWrite}}回本 {{printf "%.1f" $d.ReadPerWrite}} 次/写{{else}}回本 — 次/写{{end}}</div></div>
+   <div class="scard"><div class="slabel">连续活跃</div><div class="svalue">{{$d.Streak}} 天</div></div>
+   <div class="scard"><div class="slabel">活跃天数</div><div class="svalue">{{$d.ActiveDays}} 天</div></div>
+   <div class="scard"><div class="slabel">累计消耗</div><div class="svalue">{{fmtTokens $d.TotalTokens}}</div></div>
+-  <div class="scard"><div class="slabel">使用工具</div><div class="svalue">{{$d.ByTool | len}}</div></div>
+-  <div class="scard"><div class="slabel">使用模型</div><div class="svalue">{{$d.ByModel | len}}</div></div>
++  <div class="scard"><div class="slabel">工具 × 模型</div><div class="svalue">{{$d.ByTool | len}} × {{$d.ByModel | len}}</div></div>
+ </section>
+ {{if $d.FlaggedToday}}<div class="flash warn">{{if .Local}}⚠ 当日用量超过异常阈值。{{else}}⚠ 当日用量超过异常阈值,已从排行榜隐藏,数据保留可在本页查看。{{end}}</div>{{end}}
+ 
+@@ -28,6 +35,15 @@
+   <div class="chartbox"><h3>按工具</h3><div id="chart-tool" class="chart"></div></div>
+   <div class="chartbox"><h3>按模型</h3><div id="chart-model" class="chart"></div></div>
+   <div class="chartbox"><h3>Token 构成</h3><div id="chart-compose" class="chart"></div></div>
++  <div class="chartbox wide"><h3>工具 × 模型明细</h3>
++    {{if $d.ToolModels}}
++    <table class="devices">
++      <thead><tr><th>工具</th><th>模型</th><th class="num">Token</th><th class="num">成本</th><th class="num">命中率</th></tr></thead>
++      <tbody>{{range $d.ToolModels}}<tr><td class="mono">{{.Tool}}</td><td class="mono">{{.Model}}</td><td class="num">{{fmtTokens .Tokens}}</td><td class="num">{{fmtCost .Cost}}</td><td class="num">{{if .HasRate}}{{printf "%.2f" (mul100 .HitRate)}}%{{else}}—{{end}}</td></tr>{{end}}</tbody>
++    </table>
++    {{else}}<div class="empty">暂无数据</div>{{end}}
++  </div>
++  <div class="chartbox wide"><h3>工作时段分布(星期 × 小时)</h3><div id="chart-heatmap" class="chart"></div></div>
+   <div class="chartbox"><h3>设备</h3>
+     <table class="devices">
+       <thead><tr><th>设备</th><th>标签</th><th>最近同步</th></tr></thead>
+@@ -41,6 +57,8 @@
+   "daily": {{json $d.Daily30}},
+   "byTool": {{json $d.ByTool}},
+   "byModel": {{json $d.ByModel}},
++  "toolModels": {{json $d.ToolModels}},
++  "heatmap": {{json $d.Heatmap}},
+   "compose": {{json $d.Composition}}
+ }</script>
+ {{template "foot.html" .}}
+diff --git a/server/CONTEXT.md b/server/CONTEXT.md
+index 696ef74..67ddc4d 100644
+--- a/server/CONTEXT.md
++++ b/server/CONTEXT.md
+@@ -52,6 +52,14 @@ _Avoid_: local mode UI, offline dashboard
+ **Cache 口径**:
+ 榜单汇总是否计入缓存 token 的开关:含缓存(全部四类)或仅新增(input+output)。
+ 
++**Cache Hit Rate(缓存命中率)**:
++输入侧 token 中由缓存读出的占比:缓存读 ÷(缓存读 + 缓存写 + 未缓存输入)。未缓存输入计入分母,故理论上到不了 100%。区别于 Cache 复用率(缓存读 ÷ 缓存读写总量),后者仅作辅助指标。
++_Avoid_: 复用率, cache efficiency
++
++**Cache Savings(缓存净节省)**:
++假设无缓存时本应按输入价计费的费用与实际缓存计费的差额(读便宜、写溢价,均为净值);附带指标「回本次数」= 缓存读 ÷ 缓存写。
++_Avoid_: discount, 省钱金额
++
+ **Cost Estimate**:
+ 服务端按公开价格表对 token 折算的成本估算,非账单金额。
+ _Avoid_: billing, spend

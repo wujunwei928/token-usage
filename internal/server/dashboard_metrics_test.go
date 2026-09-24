@@ -81,12 +81,14 @@ func TestDashboardToolModelRows(t *testing.T) {
 		HourRow{Hour: 9, Tool: "claude", Model: "claude-sonnet-4-5",
 			Input: 1000, Output: 100, CacheRead: 8900, Cache5m: 100},
 		HourRow{Hour: 10, Tool: "codex", Model: "gpt-5", Input: 300, Output: 200},
+		// Pure-output row: no input-side tokens at all → no definable rate.
+		HourRow{Hour: 11, Tool: "amp", Model: "amp-1", Output: 10},
 	))
 	user, _ := store.UserByName(context.Background(), "cross")
 	data := store.Dashboard(context.Background(), user, pricing)
 
-	if len(data.ToolModels) != 2 {
-		t.Fatalf("tool×model rows = %d, want 2: %+v", len(data.ToolModels), data.ToolModels)
+	if len(data.ToolModels) != 3 {
+		t.Fatalf("tool×model rows = %d, want 3: %+v", len(data.ToolModels), data.ToolModels)
 	}
 	// Sorted by tokens desc: claude 10100 > codex 500.
 	first := data.ToolModels[0]
@@ -100,12 +102,16 @@ func TestDashboardToolModelRows(t *testing.T) {
 	if second.Tool != "codex" || !second.HasRate || second.HitRate != 0 || second.Cost <= 0 {
 		t.Fatalf("codex row wrong: %+v", second)
 	}
+	third := data.ToolModels[2]
+	if third.Tool != "amp" || third.HasRate || third.HitRate != 0 {
+		t.Fatalf("pure-output row must have HasRate=false: %+v", third)
+	}
 	// ByTool/ByModel now carry rate+cost under NameStat.
-	if len(data.ByTool) != 2 || data.ByTool[0].Name != "claude" || !data.ByTool[0].HasRate ||
+	if len(data.ByTool) != 3 || data.ByTool[0].Name != "claude" || !data.ByTool[0].HasRate ||
 		diff(data.ByTool[0].HitRate, 0.89) || data.ByTool[0].Cost <= 0 {
 		t.Fatalf("ByTool wrong: %+v", data.ByTool)
 	}
-	if len(data.ByModel) != 2 || data.ByModel[0].Name != "claude-sonnet-4-5" {
+	if len(data.ByModel) != 3 || data.ByModel[0].Name != "claude-sonnet-4-5" {
 		t.Fatalf("ByModel wrong: %+v", data.ByModel)
 	}
 }

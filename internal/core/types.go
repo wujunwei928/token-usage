@@ -31,6 +31,19 @@ func TotalUsageTokens(u TokenUsageRaw) uint64 {
 	return u.InputTokens + u.OutputTokens + u.CacheCreationTokenCount() + u.CacheReadInputTokens
 }
 
+// SubtractCachedOverlap returns the uncached portion of an OpenAI-style
+// inclusive input count (cached ⊂ prompt — providers like GLM report
+// totalTokens = inputTokens + outputTokens), clamped at zero. Token Usage's
+// four classes are mutually exclusive, so adapters fed inclusive counts
+// normalize through this before producing Usage Entries (zcode, codex,
+// gemini).
+func SubtractCachedOverlap(inputTokens, cachedTokens uint64) uint64 {
+	if cachedTokens >= inputTokens {
+		return 0
+	}
+	return inputTokens - cachedTokens
+}
+
 // Speed values recognized in raw usage objects.
 const (
 	SpeedStandard = "standard"

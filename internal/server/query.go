@@ -62,6 +62,19 @@ type rawRow struct {
 	Flagged   bool
 }
 
+// cell returns the row's Usage Cell: the five counters keyed by tool+model.
+func (r *rawRow) cell() UsageCell {
+	return UsageCell{Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output,
+		CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
+}
+
+// hourRow returns the row's Hourly Usage cell (the counters plus the hour).
+func (r *rawRow) hourRow() HourRow {
+	c := r.cell()
+	return HourRow{Hour: r.Hour, Tool: c.Tool, Model: c.Model, Input: c.Input,
+		Output: c.Output, CacheRead: c.CacheRead, Cache5m: c.Cache5m, Cache1h: c.Cache1h}
+}
+
 // fetchRows loads the filtered Hourly Usage rows with user identity joined.
 func (s *Store) fetchRows(ctx context.Context, f Filters) ([]rawRow, error) {
 	where := "h.flagged = 0"
@@ -166,9 +179,10 @@ func (s *Store) Leaderboard(ctx context.Context, f Filters, pricing *PricingTabl
 			accs[r.UserID] = a
 			order = append(order, r.UserID)
 		}
-		cell := UsageCell{Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
+		cell := r.cell()
+		hr := r.hourRow()
 		a.tokens += cell.TokensIn(f.IncludeCache)
-		a.cost += pricing.CostForHourRow(&HourRow{Hour: r.Hour, Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h})
+		a.cost += pricing.CostForHourRow(&hr)
 		a.devices[r.DeviceID] = true
 		a.models[r.Model] += cell.TokensIn(f.IncludeCache)
 		if r.Flagged {
@@ -382,10 +396,10 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 	var todayRead, todayWrite, todayFresh uint64
 	for i := range rows {
 		r := &rows[i]
-		cell := UsageCell{Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
+		cell := r.cell()
 		total := cell.TokensIn(true)
-		hr := &HourRow{Hour: r.Hour, Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
-		cost := pricing.CostForHourRow(hr)
+		hr := r.hourRow()
+		cost := pricing.CostForHourRow(&hr)
 		data.TotalTokens += total
 		data.Composition.Input += r.Input
 		data.Composition.Output += r.Output
@@ -423,7 +437,7 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 		if r.Date == today {
 			data.TodayTokens += total
 			data.TodayCost += cost
-			data.CacheSavings += pricing.CacheSavingsForHourRow(hr)
+			data.CacheSavings += pricing.CacheSavingsForHourRow(&hr)
 			todayRead += r.CacheRead
 			todayWrite += r.Cache5m + r.Cache1h
 			todayFresh += r.Input

@@ -104,10 +104,7 @@ func codexConfigRequestsFastServiceTier(content string) bool {
 // NonCachedInputTokens returns the input tokens that were not served from
 // cache.
 func NonCachedInputTokens(inputTokens, cachedInputTokens uint64) uint64 {
-	if cachedInputTokens >= inputTokens {
-		return 0
-	}
-	return inputTokens - cachedInputTokens
+	return core.SubtractCachedOverlap(inputTokens, cachedInputTokens)
 }
 
 // CalculateModelCost prices one model's usage under the speed policy,
