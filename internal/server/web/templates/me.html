@@ -12,7 +12,7 @@
 
 <section class="statgrid">
   <div class="scard main"><div class="slabel">当日消耗</div><div class="svalue">{{fmtTokens $d.TodayTokens}}</div></div>
-  <div class="scard main"><div class="slabel">当日成本估算 {{if $d.CostEstimated}}<span class="badgetag warn">估算</span>{{end}}</div><div class="svalue">{{fmtCost $d.TodayCost}}</div></div>
+  <div class="scard main"><div class="slabel">当日成本估算 {{if $d.CostEstimated}}<span class="badgetag warn">估算</span>{{end}}</div><div class="svalue">{{fmtCost $d.TodayCost}}</div><div class="ssub">按当前价目折算,非账单</div></div>
   <div class="scard"><div class="slabel">当日缓存命中率</div>
     <div class="svalue">{{if $d.HasRate}}{{printf "%.2f" (mul100 $d.CacheHitRate)}}%{{else}}—{{end}}</div>
     <div class="meter meter-split" title="缓存读 {{printf "%.0f" (mul100 $d.CacheSplit.Read)}}% · 缓存写 {{printf "%.0f" (mul100 $d.CacheSplit.Write)}}% · 未缓存 {{printf "%.0f" (mul100 $d.CacheSplit.Fresh)}}%">

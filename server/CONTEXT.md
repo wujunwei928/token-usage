@@ -62,7 +62,9 @@ _Avoid_: discount, 省钱金额
 
 **Cost Estimate**:
 服务端按公开价格表对 token 折算的成本估算,非账单金额。
-_Avoid_: billing, spend
+价目用启动时最新的一份:调价或纠错会按当前价目**追溯重算全部历史**
+(估算语义;换代不改历史,行上存的是当时模型名)。
+_Avoid_: billing, spend, bill
 
 **Anomaly Flag**:
 单设备单日用量超过阈值时打的标记;被标记设备当日不进入 Leaderboard,数据保留且本人可见。
