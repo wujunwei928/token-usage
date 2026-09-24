@@ -37,6 +37,7 @@
       <a href="/me" {{if eq .Title "我的 Token"}}class="active"{{end}}>我的 Token</a>
       <span class="who">{{.User.Name}}</span>
       {{if not .Local}}<form class="inline" method="post" action="/logout"><button class="linklike">退出</button></form>{{end}}
+      {{if .Local}}<form class="inline" method="post" action="/refresh"><button class="btn-primary small" type="submit">↻ 刷新数据</button></form>{{end}}
     {{else}}
       {{if not .Local}}
       <a href="/login">登录</a>

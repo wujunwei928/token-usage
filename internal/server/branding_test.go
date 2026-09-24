@@ -55,6 +55,33 @@ func TestServeModeBrandingUnchanged(t *testing.T) {
 	}
 }
 
+// Dashboard density (web-restyle ticket 04): featured stat cards, a CSS
+// progress meter on the cache-hit card, the refresh control promoted to the
+// topbar, and a proper devices table head.
+func TestDashboardDensityLayout(t *testing.T) {
+	_, mux := newLocalWeb(t, WithLocalRoot(), WithRefresh(func() error { return nil }))
+	body := getFrom(t, mux, "127.0.0.1:53812", "/me").Body.String()
+
+	if !strings.Contains(body, `class="scard main"`) {
+		t.Error("dashboard: missing featured stat cards (.scard.main)")
+	}
+	if !strings.Contains(body, `class="meter"`) || !strings.Contains(body, `class="meter bar"`) {
+		t.Error("dashboard: cache-hit card missing CSS progress meter")
+	}
+	if strings.Count(body, `action="/refresh"`) != 1 || !strings.Contains(body, "刷新数据") {
+		t.Error("dashboard: refresh control must live in the topbar exactly once")
+	}
+	if !strings.Contains(body, "<thead>") || !strings.Contains(body, "最近同步") {
+		t.Error("dashboard: devices table missing a header row")
+	}
+	// asserted texts from the e2e suite stay intact
+	for _, want := range []string{"当日消耗", "缓存命中率", "连续活跃"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard: asserted label %q disappeared", want)
+		}
+	}
+}
+
 // Rebrand guard (ADR 0008): templates must not regress to `ccusage` copy.
 func TestTemplatesNoCcusageCopy(t *testing.T) {
 	var files []string
