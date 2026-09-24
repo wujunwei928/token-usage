@@ -18,3 +18,4 @@
 - 模板零外链(rg https?:// 仅命中示例文案);全部资产走 /static 内嵌。
 - `go test -count=1 ./...`:server、e2e 全绿;golden 与 terminal 两个包在基线 edd0686 即同样失败(存量环境问题,与本工程无关,已用 git worktree 复核)。
 - `rg -i ccusage internal/server` 仅命中守护测试自身。
+- 双轴 code-review(Standards P1×1+P2×3,Spec P2×5):P1 进度条裁剪 bug 与全部 P2 已在 commit 9337cef 修复并回写 spec;评审确认零外链/断言物/serve 不变量全部守住。

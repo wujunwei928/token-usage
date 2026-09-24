@@ -1,6 +1,6 @@
 # Spec: web 面板样式重设计(web-restyle)
 
-Status: ready-for-agent(方案与拆票均已确认,票据已发布至 issues/)
+Status: 已实现并过双轴评审(6/6 票完成,commit 1049da7…9337cef)
 
 ## Problem Statement
 
