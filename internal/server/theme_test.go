@@ -50,6 +50,28 @@ func TestThemeInfrastructureOnEveryPage(t *testing.T) {
 	}
 }
 
+// Charts must skin themselves from the CSS design tokens (single palette
+// source) and rebuild — not restyle in place — when the theme flips.
+func TestChartsReadTokensAndReskin(t *testing.T) {
+	_, mux := newLocalWeb(t)
+	resp := getFrom(t, mux, "127.0.0.1:53812", "/static/app.js")
+	if resp.Code != 200 {
+		t.Fatalf("app.js status %d", resp.Code)
+	}
+	js := resp.Body.String()
+	for _, want := range []string{
+		"getComputedStyle",          // palette resolved at runtime
+		"--cat-",                    // series colors come from design tokens
+		"--chart-grid",              // axis/grid colors too
+		"addEventListener('tu-themechange'", // rebuild seam
+		"dispose",                   // rebuild = dispose + re-init
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js missing %q for chart theming", want)
+		}
+	}
+}
+
 // The stylesheet must be token-driven dual-theme: a [data-theme="dark"]
 // override block and no raw hex colors outside :root token definitions.
 func TestStylesheetDualTheme(t *testing.T) {

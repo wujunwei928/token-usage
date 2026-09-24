@@ -40,105 +40,166 @@
 
 // Dashboard chart wiring: reads the JSON block the SSR template emits and
 // renders it with ECharts. Pages without #dash-data do nothing.
+// All colors resolve from the CSS design tokens at runtime, and the charts
+// rebuild (dispose + re-init) on 'tu-themechange' so light/dark flip in
+// place without another data round-trip.
 (function () {
   var block = document.getElementById('dash-data');
   if (!block || typeof echarts === 'undefined') return;
   var data = JSON.parse(block.textContent);
 
-  var PALETTE = ['#5b5bd6', '#00b3a4', '#f5b301', '#e0791a', '#5c7cfa', '#d6336c', '#74b816', '#862e9c'];
+  var instances = [];
 
-  function chart(id) {
-    var el = document.getElementById(id);
-    if (!el) return null;
-    return echarts.init(el);
+  function token(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
 
-  // Hourly timeline: stacked bars per tool.
-  var hourly = chart('chart-hourly');
-  if (hourly) {
+  function theme() {
+    return {
+      cats: ['--cat-1', '--cat-2', '--cat-3', '--cat-4', '--cat-5', '--cat-6', '--cat-7', '--cat-8'].map(token),
+      text: token('--chart-text'),
+      axis: token('--chart-axis'),
+      grid: token('--chart-grid'),
+      tipBg: token('--tooltip-bg'),
+      tipInk: token('--tooltip-ink'),
+      tipLine: token('--tooltip-line'),
+    };
+  }
+
+  function mount(id, option) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var c = echarts.init(el);
+    c.setOption(option);
+    instances.push(c);
+  }
+
+  function tooltip(t, extra) {
+    var tip = {
+      backgroundColor: t.tipBg,
+      borderColor: t.tipLine,
+      textStyle: { color: t.tipInk },
+    };
+    for (var k in (extra || {})) tip[k] = extra[k];
+    return tip;
+  }
+
+  function valueAxis(t) {
+    return {
+      type: 'value',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: t.axis },
+      splitLine: { lineStyle: { color: t.grid } },
+    };
+  }
+
+  function categoryAxis(t, names) {
+    return {
+      type: 'category',
+      data: names,
+      axisLine: { lineStyle: { color: t.grid } },
+      axisTick: { show: false },
+      axisLabel: { color: t.axis },
+    };
+  }
+
+  function legend(t) {
+    return { top: 0, textStyle: { color: t.text } };
+  }
+
+  function build() {
+    instances.forEach(function (c) { c.dispose(); });
+    instances = [];
+    var t = theme();
+
+    // Hourly timeline: stacked bars per tool.
     var tools = {};
     data.hourly.forEach(function (p) {
-      Object.keys(p.Tools).forEach(function (t) { tools[t] = true; });
+      Object.keys(p.Tools).forEach(function (tool) { tools[tool] = true; });
     });
     var toolNames = Object.keys(tools).sort();
     var hours = data.hourly.map(function (p) { return p.Hour + ':00'; });
-    var series = toolNames.map(function (t, i) {
-      return {
-        name: t, type: 'bar', stack: 'total', barMaxWidth: 26,
-        itemStyle: { color: PALETTE[i % PALETTE.length] },
-        data: data.hourly.map(function (p) { return p.Tools[t] || 0; }),
-      };
-    });
-    hourly.setOption({
-      tooltip: { trigger: 'axis' },
-      legend: { top: 0 },
+    mount('chart-hourly', {
+      tooltip: tooltip(t, { trigger: 'axis' }),
+      legend: legend(t),
       grid: { left: 60, right: 20, top: 30, bottom: 30 },
-      xAxis: { type: 'category', data: hours },
-      yAxis: { type: 'value' },
-      series: series,
+      xAxis: categoryAxis(t, hours),
+      yAxis: valueAxis(t),
+      series: toolNames.map(function (name, i) {
+        return {
+          name: name, type: 'bar', stack: 'total', barMaxWidth: 26,
+          itemStyle: { color: t.cats[i % t.cats.length] },
+          data: data.hourly.map(function (p) { return p.Tools[name] || 0; }),
+        };
+      }),
     });
-  }
 
-  // 30-day tokens + cost dual axis.
-  var daily = chart('chart-daily');
-  if (daily) {
-    daily.setOption({
-      tooltip: { trigger: 'axis' },
-      legend: { top: 0 },
+    // 30-day tokens + cost dual axis.
+    mount('chart-daily', {
+      tooltip: tooltip(t, { trigger: 'axis' }),
+      legend: legend(t),
       grid: { left: 60, right: 60, top: 30, bottom: 30 },
-      xAxis: { type: 'category', data: data.daily.map(function (d) { return d.Date.slice(5); }) },
+      xAxis: categoryAxis(t, data.daily.map(function (d) { return d.Date.slice(5); })),
       yAxis: [
-        { type: 'value', name: 'tokens' },
-        { type: 'value', name: 'USD', splitLine: { show: false } },
+        Object.assign(valueAxis(t), { name: 'tokens', nameTextStyle: { color: t.axis } }),
+        Object.assign(valueAxis(t), { name: 'USD', nameTextStyle: { color: t.axis }, splitLine: { show: false } }),
       ],
       series: [
         {
-          name: 'tokens', type: 'bar', barMaxWidth: 22, itemStyle: { color: '#5b5bd6' },
+          name: 'tokens', type: 'bar', barMaxWidth: 22,
+          itemStyle: { color: t.cats[0] },
           data: data.daily.map(function (d) { return d.Tokens; }),
         },
         {
-          name: 'cost', type: 'line', yAxisIndex: 1, smooth: true, itemStyle: { color: '#f5b301' },
+          name: 'cost', type: 'line', yAxisIndex: 1, smooth: true,
+          itemStyle: { color: t.cats[2] }, lineStyle: { color: t.cats[2] },
           data: data.daily.map(function (d) { return +d.Cost.toFixed(4); }),
         },
       ],
     });
-  }
 
-  function barOf(id, rows, color) {
-    var c = chart(id);
-    if (!c) return;
-    c.setOption({
-      tooltip: {},
-      grid: { left: 110, right: 20, top: 10, bottom: 30 },
-      xAxis: { type: 'value' },
-      yAxis: { type: 'category', data: rows.map(function (r) { return r.Model; }).reverse() },
-      series: [{
-        type: 'bar', barMaxWidth: 18, itemStyle: { color: color, borderRadius: [0, 6, 6, 0] },
-        data: rows.map(function (r) { return r.Tokens; }).reverse(),
-      }],
-    });
-  }
+    function barOf(id, rows, color) {
+      mount(id, {
+        tooltip: tooltip(t),
+        grid: { left: 110, right: 20, top: 10, bottom: 30 },
+        xAxis: valueAxis(t),
+        yAxis: {
+          type: 'category',
+          data: rows.map(function (r) { return r.Model; }).reverse(),
+          axisLine: { lineStyle: { color: t.grid } },
+          axisTick: { show: false },
+          axisLabel: { color: t.axis },
+        },
+        series: [{
+          type: 'bar', barMaxWidth: 18,
+          itemStyle: { color: color, borderRadius: [0, 6, 6, 0] },
+          data: rows.map(function (r) { return r.Tokens; }).reverse(),
+        }],
+      });
+    }
 
-  barOf('chart-tool', data.byTool, '#00b3a4');
-  barOf('chart-model', data.byModel.slice(0, 8), '#5b5bd6');
+    barOf('chart-tool', data.byTool, t.cats[1]);
+    barOf('chart-model', data.byModel.slice(0, 8), t.cats[0]);
 
-  var compose = chart('chart-compose');
-  if (compose) {
-    compose.setOption({
-      tooltip: { trigger: 'item' },
+    mount('chart-compose', {
+      tooltip: tooltip(t, { trigger: 'item' }),
       series: [{
         type: 'pie', radius: ['40%', '70%'],
-        label: { formatter: '{b}\n{d}%' },
+        label: { color: t.text, formatter: '{b}\n{d}%' },
         data: [
-          { name: '输入', value: data.compose.Input, itemStyle: { color: '#5b5bd6' } },
-          { name: '输出', value: data.compose.Output, itemStyle: { color: '#00b3a4' } },
-          { name: '缓存读', value: data.compose.CacheRead, itemStyle: { color: '#f5b301' } },
-          { name: '缓存写 5m', value: data.compose.Cache5m, itemStyle: { color: '#e0791a' } },
-          { name: '缓存写 1h', value: data.compose.Cache1h, itemStyle: { color: '#d6336c' } },
+          { name: '输入', value: data.compose.Input, itemStyle: { color: t.cats[0] } },
+          { name: '输出', value: data.compose.Output, itemStyle: { color: t.cats[1] } },
+          { name: '缓存读', value: data.compose.CacheRead, itemStyle: { color: t.cats[2] } },
+          { name: '缓存写 5m', value: data.compose.Cache5m, itemStyle: { color: t.cats[3] } },
+          { name: '缓存写 1h', value: data.compose.Cache1h, itemStyle: { color: t.cats[5] } },
         ].filter(function (d) { return d.value > 0; }),
       }],
     });
   }
+
+  build();
+  window.addEventListener('tu-themechange', build);
 
   window.addEventListener('resize', function () {
     document.querySelectorAll('.chart').forEach(function (el) {
