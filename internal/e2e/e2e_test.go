@@ -199,14 +199,14 @@ func TestReportEndToEnd(t *testing.T) {
 
 	// The leaderboard page shows the aggregated numbers for today.
 	page := proc.getPage(t, "/?range=today")
-	for _, want := range []string{"e2e-user", "7.1K", "claude-sonnet-4-5"} {
+	for _, want := range []string{"e2e-user", "7080", "claude-sonnet-4-5"} {
 		if !strings.Contains(page, want) {
 			t.Fatalf("leaderboard missing %q", want)
 		}
 	}
 	// Yesterday's line was excluded (yesterday board is empty of this user's
 	// 100000-token line).
-	if page2 := proc.getPage(t, "/?range=yesterday"); strings.Contains(page2, "100.0K") {
+	if page2 := proc.getPage(t, "/?range=yesterday"); strings.Contains(page2, "10.0万") {
 		t.Fatalf("yesterday line leaked into snapshot: %s", page2)
 	}
 
@@ -219,7 +219,7 @@ func TestReportEndToEnd(t *testing.T) {
 		t.Fatalf("rerun failed: %s", stdout)
 	}
 	page = proc.getPage(t, "/?range=today")
-	if strings.Contains(page, "7.1K") {
+	if strings.Contains(page, "7080") {
 		t.Fatal("latest-wins did not replace the day's data")
 	}
 	if !strings.Contains(page, "120") {
@@ -310,18 +310,19 @@ func TestMultiAgentEndToEnd(t *testing.T) {
 		t.Fatalf("multi-agent report failed: %s", out)
 	}
 
-	// Totals: claude 1100 (replay deduped to one) + codex 2800
-	// (input 2000 + cache-read 500 + output 300) = 3900.
+	// Totals: claude 1100 (replay deduped to one) + codex 2300
+	// (inclusive input 2000 - 500 cached overlap + cache-read 500 +
+	// output 300) = 3400.
 	page := proc.getPage(t, "/?range=today")
-	if !strings.Contains(page, "3.9K") {
-		t.Fatalf("multi-agent total missing (want 3.9K): %s", page)
+	if !strings.Contains(page, "3400") {
+		t.Fatalf("multi-agent total missing (want 3400): %s", page)
 	}
-	// Tool split: codex filter shows codex only (2800 = 2.8K).
+	// Tool split: codex filter shows codex only (2300, raw under 1万).
 	codexPage := proc.getPage(t, "/?range=today&tool=codex")
-	if !strings.Contains(codexPage, "2.8K") {
+	if !strings.Contains(codexPage, "2300") {
 		t.Fatalf("codex tool slice wrong: %s", codexPage)
 	}
-	if strings.Contains(proc.getPage(t, "/?range=today&tool=codex"), "1.1K") {
+	if strings.Contains(proc.getPage(t, "/?range=today&tool=codex"), "1100") {
 		t.Fatal("claude usage leaked into codex filter")
 	}
 }
@@ -359,12 +360,12 @@ func TestBackfillEndToEnd(t *testing.T) {
 
 	// The 30-day board shows the full backfilled window.
 	page := proc.getPage(t, "/?range=30d")
-	if !strings.Contains(page, "6.3K") {
-		t.Fatalf("30d board missing 6.3K: %s", page)
+	if !strings.Contains(page, "6300") {
+		t.Fatalf("30d board missing 6300: %s", page)
 	}
-	// Day 3 only: exactly day-before-yesterday's row (1100 = 1.1K).
-	if page := proc.getPage(t, "/?range=daybefore"); !strings.Contains(page, "1.1K") {
-		t.Fatalf("daybefore board missing 1.1K: %s", page)
+	// Day 3 only: exactly day-before-yesterday's row (1100, raw under 1万).
+	if page := proc.getPage(t, "/?range=daybefore"); !strings.Contains(page, "1100") {
+		t.Fatalf("daybefore board missing 1100: %s", page)
 	}
 
 	// Latest-wins per date: rerun backfill with an edited log for day -1 only.
@@ -376,7 +377,7 @@ func TestBackfillEndToEnd(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("backfill rerun failed: %s", stdout)
 	}
-	if page := proc.getPage(t, "/?range=30d"); !strings.Contains(page, "4.8K") {
+	if page := proc.getPage(t, "/?range=30d"); !strings.Contains(page, "4750") {
 		t.Fatalf("rerun total wrong (want 4750): %s", page)
 	}
 }

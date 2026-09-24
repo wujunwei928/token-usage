@@ -67,9 +67,10 @@ func TestServeModeBrandingUnchanged(t *testing.T) {
 	}
 }
 
-// Dashboard density (web-restyle ticket 04): featured stat cards, a CSS
-// progress meter on the cache-hit card, the refresh control promoted to the
-// topbar, and a proper devices table head.
+// Dashboard density (web-restyle ticket 04): featured stat cards, the
+// three-segment cache split meter on the hit-rate card (cache-metrics
+// ticket 01), the refresh control promoted to the topbar, and a proper
+// devices table head.
 func TestDashboardDensityLayout(t *testing.T) {
 	_, mux := newLocalWeb(t, WithLocalRoot(), WithRefresh(func() error { return nil }))
 	body := getFrom(t, mux, "127.0.0.1:53812", "/me").Body.String()
@@ -77,8 +78,8 @@ func TestDashboardDensityLayout(t *testing.T) {
 	if !strings.Contains(body, `class="scard main"`) {
 		t.Error("dashboard: missing featured stat cards (.scard.main)")
 	}
-	if !strings.Contains(body, `class="meter"`) || !strings.Contains(body, `class="meter-fill"`) {
-		t.Error("dashboard: cache-hit card missing CSS progress meter")
+	if !strings.Contains(body, `class="meter meter-split"`) || !strings.Contains(body, `class="meter-fill"`) {
+		t.Error("dashboard: cache-hit card missing CSS split meter")
 	}
 	if strings.Count(body, `action="/refresh"`) != 1 || !strings.Contains(body, "刷新数据") {
 		t.Error("dashboard: refresh control must live in the topbar exactly once")

@@ -113,9 +113,9 @@ func TestWebLocalEndToEnd(t *testing.T) {
 		t.Fatalf("local root did not redirect to /me: %d %q", root.StatusCode, root.Header.Get("Location"))
 	}
 	// First-run backfill: yesterday's 1100 lands with today's 120 in the
-	// cumulative card (1100 + 120 = 1220 → 1.2K).
+	// cumulative card (1100 + 120 = 1220, raw under 1万).
 	page = proc.getPage(t, "/me")
-	if !strings.Contains(page, "1.2K") {
+	if !strings.Contains(page, "1220") {
 		t.Fatalf("cumulative total missing backfilled history:\n%s", proc.logDump(t))
 	}
 
@@ -126,13 +126,13 @@ func TestWebLocalEndToEnd(t *testing.T) {
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		page := proc.getPage(t, "/me")
-		if strings.Contains(page, "7.1K") {
+		if strings.Contains(page, "7080") {
 			break
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	if !strings.Contains(proc.getPage(t, "/me"), "7.1K") {
-		t.Fatalf("refreshed total 7.1K missing after interval:\n%s", proc.logDump(t))
+	if !strings.Contains(proc.getPage(t, "/me"), "7080") {
+		t.Fatalf("refreshed total 7080 missing after interval:\n%s", proc.logDump(t))
 	}
 }
 

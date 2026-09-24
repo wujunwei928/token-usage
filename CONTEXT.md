@@ -22,7 +22,7 @@ _Avoid_: retry(重试只是 Attempt 的一种)
 agent 自身发起、非用户回合的模型调用(如生成会话标题、目标摘要);属真实消耗,计入用量。
 
 **Token Usage**:
-一个 Usage Entry 的 token 四元组:input、output、cache creation(5m/1h 写缓存)、cache read(读缓存)。
+一个 Usage Entry 的 token 四元组:input、output、cache creation(5m/1h 写缓存)、cache read(读缓存)。四类互斥——input 是未命中缓存的净输入,不含任何缓存部分(OpenAI 系 inclusive 口径由适配层扣减重叠)。
 _Avoid_: token counts, usage stats
 
 **Reasoning Tokens(思考 token)**:

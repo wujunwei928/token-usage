@@ -171,6 +171,21 @@ func (t *PricingTable) CostForHourRow(r *HourRow) float64 {
 		float64(r.Cache1h)*card.CacheWrite1h) / 1e6
 }
 
+// CacheSavingsForHourRow prices one cell's Cache Savings: what the cache
+// reads saved by billing at the read rate instead of the input rate, minus
+// the write premium paid to populate the cache. Unknown models contribute 0
+// (no rate card, no honest estimate).
+func (t *PricingTable) CacheSavingsForHourRow(r *HourRow) float64 {
+	card, ok := t.resolve(r.Model)
+	if !ok {
+		return 0
+	}
+	saved := float64(r.CacheRead) * (card.Input - card.CacheRead)
+	premium := float64(r.Cache5m)*(card.CacheWrite5m-card.Input) +
+		float64(r.Cache1h)*(card.CacheWrite1h-card.Input)
+	return (saved - premium) / 1e6
+}
+
 // Card returns the display card for a model.
 func (t *PricingTable) Card(model string) (ModelPrice, bool) {
 	return t.resolve(model)

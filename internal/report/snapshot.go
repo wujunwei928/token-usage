@@ -175,7 +175,9 @@ func claudeDailyEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 }
 
 // codexEntries converts Codex token events into LoadedEntry rows (cached
-// input maps to cache-read; Codex has no cache-write counters).
+// input maps to cache-read; Codex has no cache-write counters). Codex
+// reports OpenAI-style inclusive input (cached ⊂ prompt), so the uncached
+// portion is what lands in InputTokens — cached tokens count exactly once.
 func codexEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 	events, err := codex.LoadCodexEvents(shared)
 	if err != nil {
@@ -194,7 +196,7 @@ func codexEntries(shared *core.SharedArgs) ([]core.LoadedEntry, error) {
 			model = *e.Model
 		}
 		usage := core.TokenUsageRaw{
-			InputTokens:          e.InputTokens,
+			InputTokens:          codex.NonCachedInputTokens(e.InputTokens, e.CachedInputTokens),
 			OutputTokens:         e.OutputTokens,
 			CacheReadInputTokens: e.CachedInputTokens,
 		}

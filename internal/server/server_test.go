@@ -223,13 +223,13 @@ func TestLeaderboardPageAndFilters(t *testing.T) {
 	if !strings.Contains(page, "alice") || !strings.Contains(page, "bob") {
 		t.Fatal("leaderboard missing users")
 	}
-	if !strings.Contains(page, "5.5K") {
+	if !strings.Contains(page, "5500") {
 		t.Fatal("alice total 5500 not shown (cache included by default)")
 	}
 	// Cache-off board reorders: alice 1500 vs bob 700 — order stays but the
 	// number changes.
 	page = get("/?range=today&cache=0")
-	if !strings.Contains(page, "1.5K") {
+	if !strings.Contains(page, "1500") {
 		t.Fatal("cache-off total not shown")
 	}
 	// Tool filter codex → only bob.

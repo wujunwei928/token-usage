@@ -52,6 +52,14 @@ _Avoid_: local mode UI, offline dashboard
 **Cache 口径**:
 榜单汇总是否计入缓存 token 的开关:含缓存(全部四类)或仅新增(input+output)。
 
+**Cache Hit Rate(缓存命中率)**:
+输入侧 token 中由缓存读出的占比:缓存读 ÷(缓存读 + 缓存写 + 未缓存输入)。未缓存输入计入分母,故理论上到不了 100%。区别于 Cache 复用率(缓存读 ÷ 缓存读写总量),后者仅作辅助指标。
+_Avoid_: 复用率, cache efficiency
+
+**Cache Savings(缓存净节省)**:
+假设无缓存时本应按输入价计费的费用与实际缓存计费的差额(读便宜、写溢价,均为净值);附带指标「回本次数」= 缓存读 ÷ 缓存写。
+_Avoid_: discount, 省钱金额
+
 **Cost Estimate**:
 服务端按公开价格表对 token 折算的成本估算,非账单金额。
 _Avoid_: billing, spend

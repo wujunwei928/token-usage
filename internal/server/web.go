@@ -509,15 +509,14 @@ func (w *Web) handleProfile(resp http.ResponseWriter, r *http.Request, user *Use
 // Formatting helpers shared by templates
 // ---------------------------------------------------------------------------
 
-// FormatTokens renders a token count with compact units.
+// FormatTokens renders a token count with Chinese compact units (万/亿),
+// matching the all-Chinese UI; sub-1万 counts stay exact.
 func FormatTokens(v uint64) string {
 	switch {
-	case v >= 1_000_000_000:
-		return fmt.Sprintf("%.2fB", float64(v)/1e9)
-	case v >= 1_000_000:
-		return fmt.Sprintf("%.2fM", float64(v)/1e6)
-	case v >= 1_000:
-		return fmt.Sprintf("%.1fK", float64(v)/1e3)
+	case v >= 100_000_000:
+		return fmt.Sprintf("%.2f亿", float64(v)/1e8)
+	case v >= 10_000:
+		return fmt.Sprintf("%.1f万", float64(v)/1e4)
 	default:
 		return strconv.FormatUint(v, 10)
 	}

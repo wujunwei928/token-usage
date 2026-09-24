@@ -55,11 +55,12 @@ func createFixtureDB(t *testing.T, dir string) {
 			VALUES (?, ?, 'GLM-5.3', ?, ?, ?, ?, ?, ?)`,
 			id, session, day+offset*hour, in, out, reasoning, creation, read)
 	}
-	insert("u1", "top-1", 0, 1000, 100, 50, 0, 2000) // main turn
-	insert("u2", "sub-1", 1, 500, 50, 0, 0, 1000)    // subagent: merges into top-1
+	insert("u1", "top-1", 0, 3000, 100, 50, 0, 2000) // prompt 3000 incl. 2000 cached -> uncached 1000
+	insert("u2", "sub-1", 1, 1500, 50, 0, 0, 1000)   // subagent: merges into top-1; uncached 500
 	insert("u3", "top-1", 2, 100, 10, 0, 0, 0)       // auxiliary call: counts
 	insert("u4", "top-1", 3, 300, 0, 0, 0, 0)        // failed retry: counts
 	insert("u5", "top-1", 4, 0, 0, 0, 0, 0)          // zero usage: dropped
+	insert("u6", "top-1", 5, 50, 0, 0, 0, 100)        // cached > input: clamp to 0, kept via read
 
 	must(`INSERT INTO message (id, session_id, time_created, data) VALUES ('m1', 'old-1', ?,
 		'{"modelID":"GLM-5.2","tokens":{"total":1210,"input":700,"output":70,"reasoning":30,"cache":{"read":400,"write":10}},"cost":0}')`,
@@ -88,18 +89,20 @@ func loadFixture(t *testing.T, mode core.CostMode) []core.LoadedEntry {
 	return entries
 }
 
-// Expected fixture totals: attempts u1..u4 plus fallback m1.
+// Expected fixture totals: attempts u1-u4,u6 plus fallback m1. zcode's GLM
+// endpoint reports OpenAI-style inclusive input (cached \u2282 prompt), so
+// the loader subtracts the cached overlap; only uncached input remains.
 const (
-	wantInput      = 1000 + 500 + 100 + 300 + 700
-	wantOutput     = (100 + 50) + 50 + 10 + 0 + (70 + 30)
-	wantCacheRead  = 2000 + 1000 + 400
+	wantInput      = (3000 - 2000) + (1500 - 1000) + 100 + 300 + 0 + (700 - 400 - 10)
+	wantOutput     = (100 + 50) + 50 + 10 + 0 + 0 + (70 + 30)
+	wantCacheRead  = 2000 + 1000 + 100 + 400
 	wantCacheWrite = 10
 )
 
 func TestLoadEntriesAttemptAccounting(t *testing.T) {
 	entries := loadFixture(t, core.ModeDisplay)
-	if len(entries) != 5 {
-		t.Fatalf("entries = %d, want 5 (u1-u4 + m1; u5 and m2 dropped)", len(entries))
+	if len(entries) != 6 {
+		t.Fatalf("entries = %d, want 6 (u1-u4,u6 + m1; u5 and m2 dropped)", len(entries))
 	}
 	var totals core.TokenCounts
 	for i := range entries {

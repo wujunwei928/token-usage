@@ -13,12 +13,19 @@
 <section class="statgrid">
   <div class="scard main"><div class="slabel">当日消耗</div><div class="svalue">{{fmtTokens $d.TodayTokens}}</div></div>
   <div class="scard main"><div class="slabel">当日成本估算</div><div class="svalue">{{fmtCost $d.TodayCost}}</div></div>
-  <div class="scard"><div class="slabel">缓存命中率</div><div class="svalue">{{printf "%.1f" (mul100 $d.CacheHitRate)}}%</div><div class="meter"><i class="meter-fill" style="width: {{printf "%.1f" (mul100 $d.CacheHitRate)}}%"></i></div></div>
+  <div class="scard"><div class="slabel">当日缓存命中率</div>
+    <div class="svalue">{{if $d.HasRate}}{{printf "%.2f" (mul100 $d.CacheHitRate)}}%{{else}}—{{end}}</div>
+    <div class="meter meter-split" title="缓存读 {{printf "%.0f" (mul100 $d.CacheSplit.Read)}}% · 缓存写 {{printf "%.0f" (mul100 $d.CacheSplit.Write)}}% · 未缓存 {{printf "%.0f" (mul100 $d.CacheSplit.Fresh)}}%">
+      <i class="meter-fill" style="width: {{printf "%.2f" (mul100 $d.CacheSplit.Read)}}%"></i>
+      <i class="meter-fill m-write" style="width: {{printf "%.2f" (mul100 $d.CacheSplit.Write)}}%"></i>
+      <i class="meter-fill m-fresh" style="width: {{printf "%.2f" (mul100 $d.CacheSplit.Fresh)}}%"></i>
+    </div>
+  </div>
+  <div class="scard"><div class="slabel">当日缓存净节省</div><div class="svalue">{{fmtCost $d.CacheSavings}}</div><div class="ssub">{{if $d.ReadPerWrite}}回本 {{printf "%.1f" $d.ReadPerWrite}} 次/写{{else}}回本 — 次/写{{end}}</div></div>
   <div class="scard"><div class="slabel">连续活跃</div><div class="svalue">{{$d.Streak}} 天</div></div>
   <div class="scard"><div class="slabel">活跃天数</div><div class="svalue">{{$d.ActiveDays}} 天</div></div>
   <div class="scard"><div class="slabel">累计消耗</div><div class="svalue">{{fmtTokens $d.TotalTokens}}</div></div>
-  <div class="scard"><div class="slabel">使用工具</div><div class="svalue">{{$d.ByTool | len}}</div></div>
-  <div class="scard"><div class="slabel">使用模型</div><div class="svalue">{{$d.ByModel | len}}</div></div>
+  <div class="scard"><div class="slabel">工具 × 模型</div><div class="svalue">{{$d.ByTool | len}} × {{$d.ByModel | len}}</div></div>
 </section>
 {{if $d.FlaggedToday}}<div class="flash warn">{{if .Local}}⚠ 当日用量超过异常阈值。{{else}}⚠ 当日用量超过异常阈值,已从排行榜隐藏,数据保留可在本页查看。{{end}}</div>{{end}}
 
@@ -28,6 +35,15 @@
   <div class="chartbox"><h3>按工具</h3><div id="chart-tool" class="chart"></div></div>
   <div class="chartbox"><h3>按模型</h3><div id="chart-model" class="chart"></div></div>
   <div class="chartbox"><h3>Token 构成</h3><div id="chart-compose" class="chart"></div></div>
+  <div class="chartbox wide"><h3>工具 × 模型明细</h3>
+    {{if $d.ToolModels}}
+    <table class="devices">
+      <thead><tr><th>工具</th><th>模型</th><th class="num">Token</th><th class="num">成本</th><th class="num">命中率</th></tr></thead>
+      <tbody>{{range $d.ToolModels}}<tr><td class="mono">{{.Tool}}</td><td class="mono">{{.Model}}</td><td class="num">{{fmtTokens .Tokens}}</td><td class="num">{{fmtCost .Cost}}</td><td class="num">{{if .HasRate}}{{printf "%.2f" (mul100 .HitRate)}}%{{else}}—{{end}}</td></tr>{{end}}</tbody>
+    </table>
+    {{else}}<div class="empty">暂无数据</div>{{end}}
+  </div>
+  <div class="chartbox wide"><h3>工作时段分布(星期 × 小时)</h3><div id="chart-heatmap" class="chart"></div></div>
   <div class="chartbox"><h3>设备</h3>
     <table class="devices">
       <thead><tr><th>设备</th><th>标签</th><th>最近同步</th></tr></thead>
@@ -41,6 +57,8 @@
   "daily": {{json $d.Daily30}},
   "byTool": {{json $d.ByTool}},
   "byModel": {{json $d.ByModel}},
+  "toolModels": {{json $d.ToolModels}},
+  "heatmap": {{json $d.Heatmap}},
   "compose": {{json $d.Composition}}
 }</script>
 {{template "foot.html" .}}

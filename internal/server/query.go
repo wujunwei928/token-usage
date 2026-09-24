@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"sort"
 	"time"
 )
 
@@ -245,18 +246,62 @@ func (s *Store) CommunityTotals(ctx context.Context, f Filters, pricing *Pricing
 type DashboardData struct {
 	Today        string
 	HourlyToday  []HourToolPoint // 当日 hour×tool 时间线
-	Daily30      []DayPoint      // 近 30 天用量与成本
-	ByTool       []ModelSlice
-	ByModel      []ModelSlice
-	Composition  Composition
+	Daily30      []DayPoint      // 近 30 天用量、成本与命中率
+	ByTool       []NameStat
+	ByModel      []NameStat
+	ToolModels   []ToolModelRow // 工具×模型交叉明细(全历史,token 降序)
+	Heatmap      []HeatCell     // 星期×小时工作节律(全历史,7×24 全格)
+	Composition  Composition    // 全历史五类构成(饼图)
 	Devices      []DeviceView
 	TodayTokens  uint64
 	TodayCost    float64
 	TotalTokens  uint64
-	CacheHitRate float64
+	CacheHitRate float64    // 当日输入命中率:读/(读+写+未缓存输入);HasRate 为真时有效
+	CacheSplit   CacheSplit // 当日输入侧三比例分解,和为 1
+	HasRate      bool
+	CacheSavings float64 // 当日缓存净节省(USD)
+	ReadPerWrite float64 // 当日回本次数:读÷写;零写时为 0
 	ActiveDays   int
 	Streak       int
 	FlaggedToday bool
+}
+
+// CacheSplit is the input-side three-way split: cache read / cache write /
+// fresh (uncached) input. Proportions sum to 1 whenever any input flowed.
+type CacheSplit struct {
+	Read, Write, Fresh float64
+}
+
+// NameStat is one tool's or model's aggregate with cost and hit rate.
+type NameStat struct {
+	Name    string
+	Tokens  uint64
+	Cost    float64
+	HitRate float64
+	HasRate bool
+}
+
+// nameAgg accumulates one dimension's counters behind a NameStat/ToolModelRow.
+type nameAgg struct {
+	tokens, read, write, fresh uint64
+	cost                       float64
+}
+
+// ToolModelRow is one (tool, model) cross of the breakdown table.
+type ToolModelRow struct {
+	Tool    string
+	Model   string
+	Tokens  uint64
+	Cost    float64
+	HitRate float64
+	HasRate bool
+}
+
+// HeatCell is one weekday-hour aggregate (Weekday 0 = Monday).
+type HeatCell struct {
+	Weekday int
+	Hour    int
+	Tokens  uint64
 }
 
 // HourToolPoint is one hour's per-tool split.
@@ -266,11 +311,24 @@ type HourToolPoint struct {
 	Tools  map[string]uint64
 }
 
-// DayPoint is one day's tokens and cost.
+// DayPoint is one day's tokens, cost and cache hit rate.
 type DayPoint struct {
-	Date   string
-	Tokens uint64
-	Cost   float64
+	Date    string
+	Tokens  uint64
+	Cost    float64
+	HitRate float64
+	HasRate bool
+}
+
+// cacheHitRate is the B-definition rate: cache reads over the whole input
+// side (reads + writes + fresh input). Also reports whether the denominator
+// existed at all (a pure-output day has no rate).
+func cacheHitRate(read, write, fresh uint64) (float64, bool) {
+	total := read + write + fresh
+	if total == 0 {
+		return 0, false
+	}
+	return float64(read) / float64(total), true
 }
 
 // Composition is the five-class token split.
@@ -286,6 +344,22 @@ type DeviceView struct {
 	Flagged  bool
 }
 
+// dayAgg is one date's DayPoint plus the input-side counters behind its rate.
+type dayAgg struct {
+	point              DayPoint
+	read, write, fresh uint64
+}
+
+// accName returns m[key], seeding a zero aggregate on first touch.
+func accName[K comparable](m map[K]*nameAgg, key K) *nameAgg {
+	a, ok := m[key]
+	if !ok {
+		a = &nameAgg{}
+		m[key] = a
+	}
+	return a
+}
+
 // Dashboard builds the personal page data for one user.
 func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable) DashboardData {
 	rows, err := s.fetchRows(ctx, Filters{User: user, IncludeFlagged: true})
@@ -295,28 +369,64 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 	today := time.Now().Format("2006-01-02")
 	data := DashboardData{Today: today}
 	hourly := map[int]map[string]uint64{}
-	daily := map[string]*DayPoint{}
-	tools := map[string]uint64{}
-	models := map[string]uint64{}
+	daily := map[string]*dayAgg{}
+	acc := accName[string]
+	tools := map[string]*nameAgg{}
+	models := map[string]*nameAgg{}
+	type tmKey struct{ tool, model string }
+	tms := map[tmKey]*nameAgg{}
+	tmOrder := []tmKey{}
+	var heat [7][24]uint64
 	dates := map[string]bool{}
 	var firstDate string
+	var todayRead, todayWrite, todayFresh uint64
 	for i := range rows {
 		r := &rows[i]
 		cell := UsageCell{Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
 		total := cell.TokensIn(true)
-		cost := pricing.CostForHourRow(&HourRow{Hour: r.Hour, Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h})
+		hr := &HourRow{Hour: r.Hour, Tool: r.Tool, Model: r.Model, Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, Cache5m: r.Cache5m, Cache1h: r.Cache1h}
+		cost := pricing.CostForHourRow(hr)
 		data.TotalTokens += total
 		data.Composition.Input += r.Input
 		data.Composition.Output += r.Output
 		data.Composition.CacheRead += r.CacheRead
 		data.Composition.Cache5m += r.Cache5m
 		data.Composition.Cache1h += r.Cache1h
-		tools[r.Tool] += total
-		models[r.Model] += total
+		tmk := tmKey{r.Tool, r.Model}
+		if _, seen := tms[tmk]; !seen {
+			tmOrder = append(tmOrder, tmk)
+		}
+		for _, a := range []*nameAgg{acc(tools, r.Tool), acc(models, r.Model), accName(tms, tmk)} {
+			a.tokens += total
+			a.cost += cost
+			a.read += r.CacheRead
+			a.write += r.Cache5m + r.Cache1h
+			a.fresh += r.Input
+		}
+		if t, perr := time.Parse("2006-01-02", r.Date); perr == nil {
+			heat[int(t.Weekday()+6)%7][r.Hour] += total
+		}
 		dates[r.Date] = true
+		day, ok := daily[r.Date]
+		if !ok {
+			day = &dayAgg{point: DayPoint{Date: r.Date}}
+			daily[r.Date] = day
+			if firstDate == "" || r.Date < firstDate {
+				firstDate = r.Date
+			}
+		}
+		day.point.Tokens += total
+		day.point.Cost += cost
+		day.read += r.CacheRead
+		day.write += r.Cache5m + r.Cache1h
+		day.fresh += r.Input
 		if r.Date == today {
 			data.TodayTokens += total
 			data.TodayCost += cost
+			data.CacheSavings += pricing.CacheSavingsForHourRow(hr)
+			todayRead += r.CacheRead
+			todayWrite += r.Cache5m + r.Cache1h
+			todayFresh += r.Input
 			if r.Flagged {
 				data.FlaggedToday = true
 			}
@@ -325,16 +435,6 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 			}
 			hourly[r.Hour][r.Tool] += total
 		}
-		day, ok := daily[r.Date]
-		if !ok {
-			day = &DayPoint{Date: r.Date}
-			daily[r.Date] = day
-			if firstDate == "" || r.Date < firstDate {
-				firstDate = r.Date
-			}
-		}
-		day.Tokens += total
-		day.Cost += cost
 	}
 	for hour := 0; hour < 24; hour++ {
 		point := HourToolPoint{Hour: hour, Tools: map[string]uint64{}}
@@ -349,19 +449,48 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 	for d, err := time.Parse("2006-01-02", start); err == nil && !d.After(time.Now()); d = d.AddDate(0, 0, 1) {
 		date := d.Format("2006-01-02")
 		point := DayPoint{Date: date}
-		if p, ok := daily[date]; ok {
-			point = *p
+		if agg, ok := daily[date]; ok {
+			point = agg.point
+			point.HitRate, point.HasRate = cacheHitRate(agg.read, agg.write, agg.fresh)
 		}
 		data.Daily30 = append(data.Daily30, point)
 	}
-	data.ByTool = sortedSlices(tools)
-	data.ByModel = sortedSlices(models)
+	data.ByTool = sortedNameStats(tools)
+	data.ByModel = sortedNameStats(models)
+	for _, key := range tmOrder {
+		a := tms[key]
+		rate, has := cacheHitRate(a.read, a.write, a.fresh)
+		data.ToolModels = append(data.ToolModels, ToolModelRow{Tool: key.tool, Model: key.model, Tokens: a.tokens, Cost: a.cost, HitRate: rate, HasRate: has})
+	}
+	sort.SliceStable(data.ToolModels, func(i, j int) bool {
+		if data.ToolModels[i].Tokens != data.ToolModels[j].Tokens {
+			return data.ToolModels[i].Tokens > data.ToolModels[j].Tokens
+		}
+		if data.ToolModels[i].Tool != data.ToolModels[j].Tool {
+			return data.ToolModels[i].Tool < data.ToolModels[j].Tool
+		}
+		return data.ToolModels[i].Model < data.ToolModels[j].Model
+	})
+	if len(data.ToolModels) > 50 {
+		data.ToolModels = data.ToolModels[:50]
+	}
+	for wd := 0; wd < 7; wd++ {
+		for hour := 0; hour < 24; hour++ {
+			data.Heatmap = append(data.Heatmap, HeatCell{Weekday: wd, Hour: hour, Tokens: heat[wd][hour]})
+		}
+	}
 	data.ActiveDays = len(dates)
 	data.Streak = dayStreak(daily, today)
-	var readPlusWrite uint64
-	readPlusWrite = data.Composition.CacheRead + data.Composition.Cache5m + data.Composition.Cache1h
-	if readPlusWrite > 0 {
-		data.CacheHitRate = float64(data.Composition.CacheRead) / float64(readPlusWrite)
+	data.CacheHitRate, data.HasRate = cacheHitRate(todayRead, todayWrite, todayFresh)
+	if total := todayRead + todayWrite + todayFresh; total > 0 {
+		data.CacheSplit = CacheSplit{
+			Read:  float64(todayRead) / float64(total),
+			Write: float64(todayWrite) / float64(total),
+			Fresh: float64(todayFresh) / float64(total),
+		}
+	}
+	if todayWrite > 0 {
+		data.ReadPerWrite = float64(todayRead) / float64(todayWrite)
 	}
 	devices, _ := s.UserDevices(ctx, user.ID)
 	for _, d := range devices {
@@ -375,18 +504,19 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 	return data
 }
 
-func sortedSlices(m map[string]uint64) []ModelSlice {
-	out := make([]ModelSlice, 0, len(m))
-	for name, tokens := range m {
-		out = append(out, ModelSlice{Model: name, Tokens: tokens})
+func sortedNameStats(m map[string]*nameAgg) []NameStat {
+	out := make([]NameStat, 0, len(m))
+	for name, a := range m {
+		rate, has := cacheHitRate(a.read, a.write, a.fresh)
+		out = append(out, NameStat{Name: name, Tokens: a.tokens, Cost: a.cost, HitRate: rate, HasRate: has})
 	}
-	sortModelSlices(out)
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Tokens > out[j].Tokens })
 	return out
 }
 
 // dayStreak counts consecutive days with data ending at today (or yesterday,
 // so the streak survives until the day's first report).
-func dayStreak(daily map[string]*DayPoint, today string) int {
+func dayStreak(daily map[string]*dayAgg, today string) int {
 	layout := "2006-01-02"
 	cursor, err := time.Parse(layout, today)
 	if err != nil {
@@ -397,7 +527,7 @@ func dayStreak(daily map[string]*DayPoint, today string) int {
 	}
 	streak := 0
 	for {
-		if p, ok := daily[cursor.Format(layout)]; ok && p.Tokens > 0 {
+		if p, ok := daily[cursor.Format(layout)]; ok && p.point.Tokens > 0 {
 			streak++
 			cursor = cursor.AddDate(0, 0, -1)
 			continue
