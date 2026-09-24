@@ -398,11 +398,54 @@ select {
 
 .foot { text-align: center; color: var(--muted); font-size: var(--t-caption); padding: 20px; }
 
-/* ------------------------------------------------------------ responsive ----
-   (single wide breakpoint here; the narrow tier lands with ticket 05)      */
+/* ------------------------------------------------------------ motion ---- */
+
+.themebtn, .btn-primary, .chip, .linklike,
+body, .topbar, .flash,
+.tcard, .scard, .chartbox, .panel, .prose, .authbox, .filterbar, .rankcard, .code {
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.tcard:hover, .scard:hover, .chartbox:hover, .panel:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-2);
+}
+.rankcard:hover { border-color: var(--line-strong); box-shadow: var(--shadow-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ------------------------------------------------------------ responsive -- */
 
 @media (max-width: 900px) {
   .totals, .statgrid { grid-template-columns: repeat(2, 1fr); }
   .charts { grid-template-columns: 1fr; }
   .chartbox.wide { grid-column: span 1; }
+}
+
+@media (max-width: 640px) {
+  .container { margin: 16px auto 40px; padding: 0 14px; }
+  .topbar { padding: 10px 14px; }
+  .topbar nav { gap: 12px; }
+  .pagehead h1 { font-size: 24px; }
+
+  .totals, .statgrid { grid-template-columns: 1fr; }
+  .scard.main { grid-column: auto; }
+
+  .rankcard { flex-wrap: wrap; }
+  .rankcard .nums { flex-basis: 100%; text-align: left; }
+
+  .filterbar { padding: 10px 12px; }
+  .selects { gap: 10px; }
+
+  .authbox { margin: 28px auto; padding: 20px; }
+  .prose { padding: 16px 18px; }
+
+  .pricetable { display: block; overflow-x: auto; white-space: nowrap; }
 }

@@ -88,3 +88,28 @@ func TestStylesheetDualTheme(t *testing.T) {
 		t.Error("stylesheet missing core design tokens (--bg/--accent)")
 	}
 }
+
+// Responsive tiers and restrained motion (web-restyle ticket 05): two
+// breakpoints (640/900), cards that restack instead of overflowing, and
+// transition-level motion that respects reduced-motion users.
+func TestStylesheetResponsiveMotion(t *testing.T) {
+	_, mux := newLocalWeb(t)
+	resp := getFrom(t, mux, "127.0.0.1:53812", "/static/style.css")
+	if resp.Code != 200 {
+		t.Fatalf("style.css status %d", resp.Code)
+	}
+	css := resp.Body.String()
+	for _, want := range []string{
+		"@media (max-width: 900px)",
+		"@media (max-width: 640px)",   // narrow tier
+		"prefers-reduced-motion",      // motion opt-out
+		"transition:",                 // hover/motion is transition-level
+	} {
+		if !strings.Contains(css, want) {
+			t.Errorf("stylesheet missing %q", want)
+		}
+	}
+	if strings.Contains(css, "@keyframes") {
+		t.Error("restrained motion: no keyframe animations expected")
+	}
+}
