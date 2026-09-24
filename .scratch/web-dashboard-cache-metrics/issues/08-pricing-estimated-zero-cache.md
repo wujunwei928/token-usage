@@ -1,6 +1,6 @@
 # 08 价目失真修复:glm-5.3 estimated 卡缓存价 $0 + 配置目录价目自动加载
 
-Status: ready-for-agent
+Status: resolved
 
 ## 发现
 
