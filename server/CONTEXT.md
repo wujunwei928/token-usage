@@ -42,6 +42,10 @@ _Avoid_: ranking, board
 单用户个人统计页:指标卡、当日小时时间线、近 30 天趋势、按工具/模型/构成/设备的分布。
 _Avoid_: profile, panel
 
+**Local Panel(本机面板)**:
+`web` 命令在回环本机模式下的界面形态:「Token 用量」品牌、免登录、以 Dashboard 为全部内容;与社区部署的「Token 排行榜」品牌互斥,复用同一套模板与设计系统。
+_Avoid_: local mode UI, offline dashboard
+
 **Tool**:
 用量所属的编程 agent(claude、codex 等),榜单筛选维度之一;对应 CLI 域的 Agent Adapter,面向展示时称 Tool。
 

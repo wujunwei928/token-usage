@@ -1,3 +1,43 @@
+// Theme controller: three states (auto / dark / light) persisted under
+// 'tu-theme'. The inline bootstrap in head.html has already resolved the
+// preference to data-theme before first paint; this controller cycles the
+// stored preference on click, keeps auto mode live against OS theme changes,
+// and broadcasts 'tu-themechange' so charts (and anything else) can re-skin.
+(function () {
+  var KEY = 'tu-theme';
+  var ORDER = ['auto', 'dark', 'light'];
+  var TITLES = { auto: '主题:跟随系统', dark: '主题:暗色', light: '主题:亮色' };
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+
+  function resolve(pref) {
+    return pref === 'dark' ||
+      (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark' : 'light';
+  }
+
+  function apply(pref) {
+    root.dataset.theme = resolve(pref);
+    root.dataset.themePref = pref;
+    if (btn) btn.title = TITLES[pref];
+    try { localStorage.setItem(KEY, pref); } catch (e) { /* private mode */ }
+    window.dispatchEvent(new CustomEvent('tu-themechange', {
+      detail: { pref: pref, theme: root.dataset.theme },
+    }));
+  }
+
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var cur = root.dataset.themePref || 'auto';
+      apply(ORDER[(ORDER.indexOf(cur) + 1) % ORDER.length]);
+    });
+  }
+
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+    if ((root.dataset.themePref || 'auto') === 'auto') apply('auto');
+  });
+})();
+
 // Dashboard chart wiring: reads the JSON block the SSR template emits and
 // renders it with ECharts. Pages without #dash-data do nothing.
 (function () {
