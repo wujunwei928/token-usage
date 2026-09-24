@@ -51,6 +51,10 @@ func TestDashboardCacheHitRateTodayOnly(t *testing.T) {
 	if diff(data.ReadPerWrite, 89) {
 		t.Fatalf("read-per-write = %v, want 89", data.ReadPerWrite)
 	}
+	// claude-sonnet-4-5 is a seed-priced model: no estimation badge.
+	if data.CostEstimated {
+		t.Fatal("CostEstimated must be false for seed-priced models")
+	}
 }
 
 func TestDashboardCacheHitRateNoData(t *testing.T) {

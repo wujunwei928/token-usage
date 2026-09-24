@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -57,6 +58,21 @@ type overrideDoc struct {
 type PricingTable struct {
 	seed      *core.PricingMap
 	overrides map[string]ModelPrice
+}
+
+// ConfigPricingPath returns the ADR 0007-namespaced pricing override file
+// and whether it exists; absence is the normal no-override case, so callers
+// only pass the path to LoadPricing when it is there.
+func ConfigPricingPath() (string, bool) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", false
+	}
+	path := filepath.Join(dir, "token-usage", "model-prices.json")
+	if _, err := os.Stat(path); err != nil {
+		return path, false
+	}
+	return path, true
 }
 
 // LoadPricing builds the server pricing table. overridePath may be empty; a
@@ -132,13 +148,24 @@ func (t *PricingTable) resolve(model string) (ModelPrice, bool) {
 		return pricingToCard(model, p, SourceSeed), true
 	}
 	// Family fallback: strip trailing '-'-segments (newest-version suffixes
-	// first) and retry the fuzzy chain on each ancestor name.
+	// first) and retry the fuzzy chain on each ancestor name. Ancestor cards
+	// with $0 cache rates are unusable for cache-heavy traffic (a whole day of
+	// reads would price at zero), so zero cache rates are derived from the
+	// input price instead: read 0.1×, write 5m 1.25×, write 1h 2× (the last
+	// matches pricingToCard's standing derivation).
 	if model != "" {
 		parts := strings.Split(model, "-")
 		for end := len(parts) - 1; end >= 1; end-- {
 			family := strings.Join(parts[:end], "-")
 			if p := t.seed.Find(family); p != nil {
-				return pricingToCard(model, p, SourceFamily), true
+				card := pricingToCard(model, p, SourceFamily)
+				if card.CacheRead == 0 && card.Input > 0 {
+					card.CacheRead = 0.1 * card.Input
+				}
+				if card.CacheWrite5m == 0 && card.Input > 0 {
+					card.CacheWrite5m = 1.25 * card.Input
+				}
+				return card, true
 			}
 		}
 	}

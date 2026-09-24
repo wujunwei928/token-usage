@@ -258,26 +258,27 @@ func (s *Store) CommunityTotals(ctx context.Context, f Filters, pricing *Pricing
 
 // DashboardData is everything /me renders.
 type DashboardData struct {
-	Today        string
-	HourlyToday  []HourToolPoint // 当日 hour×tool 时间线
-	Daily30      []DayPoint      // 近 30 天用量、成本与命中率
-	ByTool       []NameStat
-	ByModel      []NameStat
-	ToolModels   []ToolModelRow // 工具×模型交叉明细(全历史,token 降序)
-	Heatmap      []HeatCell     // 星期×小时工作节律(全历史,7×24 全格)
-	Composition  Composition    // 全历史五类构成(饼图)
-	Devices      []DeviceView
-	TodayTokens  uint64
-	TodayCost    float64
-	TotalTokens  uint64
-	CacheHitRate float64    // 当日输入命中率:读/(读+写+未缓存输入);HasRate 为真时有效
-	CacheSplit   CacheSplit // 当日输入侧三比例分解,和为 1
-	HasRate      bool
-	CacheSavings float64 // 当日缓存净节省(USD)
-	ReadPerWrite float64 // 当日回本次数:读÷写;零写时为 0
-	ActiveDays   int
-	Streak       int
-	FlaggedToday bool
+	Today         string
+	HourlyToday   []HourToolPoint // 当日 hour×tool 时间线
+	Daily30       []DayPoint      // 近 30 天用量、成本与命中率
+	ByTool        []NameStat
+	ByModel       []NameStat
+	ToolModels    []ToolModelRow // 工具×模型交叉明细(全历史,token 降序)
+	Heatmap       []HeatCell     // 星期×小时工作节律(全历史,7×24 全格)
+	Composition   Composition    // 全历史五类构成(饼图)
+	Devices       []DeviceView
+	TodayTokens   uint64
+	TodayCost     float64
+	TotalTokens   uint64
+	CacheHitRate  float64    // 当日输入命中率:读/(读+写+未缓存输入);HasRate 为真时有效
+	CacheSplit    CacheSplit // 当日输入侧三比例分解,和为 1
+	HasRate       bool
+	CacheSavings  float64 // 当日缓存净节省(USD)
+	ReadPerWrite  float64 // 当日回本次数:读÷写;零写时为 0
+	CostEstimated bool    // 当日成本用到了 family 估算价(角标提醒)
+	ActiveDays    int
+	Streak        int
+	FlaggedToday  bool
 }
 
 // CacheSplit is the input-side three-way split: cache read / cache write /
@@ -438,6 +439,9 @@ func (s *Store) Dashboard(ctx context.Context, user *User, pricing *PricingTable
 			data.TodayTokens += total
 			data.TodayCost += cost
 			data.CacheSavings += pricing.CacheSavingsForHourRow(&hr)
+			if pricing.Estimated(r.Model) {
+				data.CostEstimated = true
+			}
 			todayRead += r.CacheRead
 			todayWrite += r.Cache5m + r.Cache1h
 			todayFresh += r.Input

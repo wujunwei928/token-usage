@@ -51,6 +51,12 @@ func runServerServe(cmd *cobra.Command, args []string) error {
 	flags := cmd.Flags()
 	addr, _ := flags.GetString("addr")
 	pricingPath, _ := flags.GetString("pricing")
+	if pricingPath == "" {
+		// 与 web 命令一致:ADR 0007 命名空间的价目覆盖存在即生效。
+		if p, ok := server.ConfigPricingPath(); ok {
+			pricingPath = p
+		}
+	}
 
 	store, dbPath, err := openStoreFromFlags(cmd)
 	if err != nil {

@@ -67,6 +67,12 @@ func runWeb(cmd *cobra.Command, args []string) error {
 		name = defaultLocalUserName()
 	}
 	pricingPath, _ := flags.GetString("pricing")
+	if pricingPath == "" {
+		// ADR 0007 命名空间的价目覆盖:存在即生效,免每次传 --pricing。
+		if p, ok := server.ConfigPricingPath(); ok {
+			pricingPath = p
+		}
+	}
 	refreshEvery, _ := flags.GetDuration("refresh")
 	if refreshEvery <= 0 {
 		return fmt.Errorf("--refresh must be a positive duration (got %s)", refreshEvery)
