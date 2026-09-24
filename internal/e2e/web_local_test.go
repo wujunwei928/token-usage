@@ -22,7 +22,7 @@ func startWeb(t *testing.T, dbDir, home, claudeDir string, refresh time.Duration
 	t.Helper()
 	addr := freePort(t)
 	port := strings.TrimPrefix(addr, "127.0.0.1:")
-	args := []string{"web", "--port", port, "--db", filepath.Join(dbDir, "web.db")}
+	args := []string{"web", "--port", port, "--db", filepath.Join(dbDir, "web.db"), "--offline"}
 	if refresh > 0 {
 		args = append(args, "--refresh", refresh.String())
 	}

@@ -1211,6 +1211,11 @@ func modelsDevPricing() *PricingMap {
 	})
 }
 
+// LiveModelsDevPricing exposes the lazily fetched live models.dev catalog for
+// other packages (the server's resolve tier); nil when unreachable. Failure
+// backoff applies, so a nil here is cheap to re-check.
+func LiveModelsDevPricing() *PricingMap { return modelsDevPricing() }
+
 func loadModelsDevPricing(fetchJSON func() (string, error)) (*PricingMap, bool) {
 	body, err := fetchJSON()
 	if err != nil {

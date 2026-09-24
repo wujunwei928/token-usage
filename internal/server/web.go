@@ -369,6 +369,8 @@ func (w *Web) handlePricing(resp http.ResponseWriter, r *http.Request) {
 			note = "override"
 		case SourceFamily:
 			note = "estimated"
+		case SourceLive:
+			note = "live"
 		default:
 			note = "official"
 		}

@@ -44,6 +44,7 @@ func newServerServeCommand() *cobra.Command {
 	flags.String("addr", "127.0.0.1:8787", "listen address (loopback by default; set 0.0.0.0:8787 when deploying)")
 	addDBFlag(cmd)
 	flags.String("pricing", "", "model-prices.json override path")
+	flags.Bool("offline", false, "skip the live models.dev pricing fetch at startup")
 	return cmd
 }
 
@@ -67,6 +68,15 @@ func runServerServe(cmd *cobra.Command, args []string) error {
 	pricing, err := server.LoadPricing(pricingPath)
 	if err != nil {
 		return err
+	}
+	// 与 web 命令一致:启动拉一次 models.dev,失败/离线则禁用网络层。
+	offline, _ := flags.GetBool("offline")
+	if !offline {
+		if pricing.EnableLiveModelsDev(true) {
+			fmt.Fprintln(cmd.ErrOrStderr(), "[pricing] models.dev 实时价目已加载")
+		} else {
+			fmt.Fprintln(cmd.ErrOrStderr(), "[pricing] models.dev 不可达,沿用内嵌快照+覆盖文件")
+		}
 	}
 
 	mux := http.NewServeMux()

@@ -43,6 +43,7 @@ func newWebCommand() *cobra.Command {
 	flags.String("db", "", "SQLite database path (default <user config dir>/token-usage/web.db)")
 	flags.String("name", "", "local user name (default: OS user name)")
 	flags.String("pricing", "", "model-prices.json override path")
+	flags.Bool("offline", false, "skip the live models.dev pricing fetch at startup")
 	flags.String("since", "", "backfill start date YYYY-MM-DD (default: 29 days back, first run only; an explicit value re-runs the backfill for that range)")
 	flags.Duration("refresh", 15*time.Minute, "re-aggregate today's local usage every interval")
 	return cmd
@@ -88,6 +89,16 @@ func runWeb(cmd *cobra.Command, args []string) error {
 	pricing, err := server.LoadPricing(pricingPath)
 	if err != nil {
 		return err
+	}
+	// 启动时拉一次 models.dev 实时价目(用户免手动同步);失败或 --offline
+	// 则沿用内嵌快照 + 覆盖文件,并在请求路径上禁用网络层。
+	offline, _ := flags.GetBool("offline")
+	if !offline {
+		if pricing.EnableLiveModelsDev(true) {
+			fmt.Fprintln(cmd.ErrOrStderr(), "[pricing] models.dev 实时价目已加载")
+		} else {
+			fmt.Fprintln(cmd.ErrOrStderr(), "[pricing] models.dev 不可达,沿用内嵌快照+覆盖文件")
+		}
 	}
 
 	localUser, err := ensureLocalUser(cmd.Context(), store, name)

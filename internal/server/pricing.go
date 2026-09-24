@@ -27,6 +27,7 @@ type PriceSource string
 const (
 	SourceOverride PriceSource = "override"  // model-prices.json entry
 	SourceSeed     PriceSource = "official"  // embedded LiteLLM/built-in snapshot
+	SourceLive     PriceSource = "live"      // models.dev catalog fetched at startup
 	SourceFamily   PriceSource = "estimated" // family-prefix estimate
 )
 
@@ -58,6 +59,23 @@ type overrideDoc struct {
 type PricingTable struct {
 	seed      *core.PricingMap
 	overrides map[string]ModelPrice
+	// live is the optional models.dev catalog tier, consulted between the
+	// seed and the family fallback. nil means the tier is disabled (offline
+	// or unreachable), keeping request paths free of network stalls.
+	live func() *core.PricingMap
+}
+
+// EnableLiveModelsDev arms the live models.dev tier. With warm=true it
+// fetches once immediately: on success later lookups hit the cached catalog;
+// on failure the tier is disabled for the process so request handlers never
+// stall on the network. Returns whether the catalog is live.
+func (t *PricingTable) EnableLiveModelsDev(warm bool) bool {
+	t.live = core.LiveModelsDevPricing
+	if warm && t.live() == nil {
+		t.live = nil
+		return false
+	}
+	return true
 }
 
 // ConfigPricingPath returns the ADR 0007-namespaced pricing override file
@@ -146,6 +164,14 @@ func (t *PricingTable) resolve(model string) (ModelPrice, bool) {
 	}
 	if p := t.seed.Find(model); p != nil {
 		return pricingToCard(model, p, SourceSeed), true
+	}
+	// Live models.dev tier: startup-fetched catalog entries win over family
+	// estimates (published rates beat derived ones) but never over the
+	// embedded snapshot or the user's overrides.
+	if t.live != nil {
+		if p := t.live().Find(model); p != nil {
+			return pricingToCard(model, p, SourceLive), true
+		}
 	}
 	// Family fallback: strip trailing '-'-segments (newest-version suffixes
 	// first) and retry the fuzzy chain on each ancestor name. Ancestor cards
