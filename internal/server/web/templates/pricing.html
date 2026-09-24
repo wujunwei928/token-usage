@@ -2,7 +2,7 @@
 {{template "head.html" .}}
 <div class="pagehead">
   <h1>模型价格表</h1>
-  <p class="muted">Cost Estimate 按此表折算(USD / 1M tokens);来源分为 official(快照单价)、live(models.dev 实时价,启动时拉取)与 estimated(家族兜底估算)。覆盖文件(config 目录 model-prices.json)优先于全部来源。1h 缓存写入按 2× 输入价计。</p>
+  <p class="muted">Cost Estimate 按此表折算(USD / 1M tokens);来源分为 official(快照单价)、live(models.dev 实时价,启动拉取,同名模型固定取官方 provider 第一方价)与 estimated(家族兜底估算)。覆盖文件(config 目录 model-prices.json)优先于全部来源。1h 缓存写入按 2× 输入价计。</p>
 </div>
 <table class="pricetable">
   <thead><tr><th>模型</th><th>输入</th><th>输出</th><th>缓存读</th><th>缓存写 5m</th><th>缓存写 1h</th><th>来源</th></tr></thead>

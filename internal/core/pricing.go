@@ -388,55 +388,171 @@ func (m *PricingMap) loadModelsDevJSONMissing(doc string) (int, bool) {
 	if !ok {
 		return 0, false
 	}
-	loaded := 0
+	// Same-name entries arrive from dozens of providers and Go map iteration
+	// is randomized, so collect candidates per model ID first and pick a
+	// deterministic winner instead of first-come-first-served.
+	candidates := map[string][]modelsDevCandidate{}
 	if parsed.providers != nil {
-		for _, provider := range parsed.providers {
-			loaded += m.loadModelsDevModels(provider.Models)
+		for providerKey, provider := range parsed.providers {
+			collectModelsDevCandidates(candidates, providerKey, provider.Models)
 		}
-		return loaded, true
+	} else {
+		collectModelsDevCandidates(candidates, "", parsed.models)
 	}
-	return m.loadModelsDevModels(parsed.models), true
+	loaded := 0
+	for modelID, cands := range candidates {
+		if _, exists := m.entries[modelID]; exists {
+			continue
+		}
+		winner, ok := pickModelsDevCandidate(modelID, cands)
+		if !ok {
+			continue
+		}
+		m.insertModelsDevModel(modelID, winner)
+		loaded++
+	}
+	m.clearFindCache()
+	return loaded, true
 }
 
-func (m *PricingMap) loadModelsDevModels(models map[string]modelsDevModel) int {
-	loaded := 0
+type modelsDevCandidate struct {
+	provider string
+	model    modelsDevModel
+}
+
+func collectModelsDevCandidates(dst map[string][]modelsDevCandidate, providerKey string, models map[string]modelsDevModel) {
 	for modelKey, model := range models {
 		modelID := modelKey
 		if model.ID != nil {
 			modelID = *model.ID
 		}
-		if _, exists := m.entries[modelID]; exists {
-			continue
-		}
-		if model.Cost == nil || model.Cost.Input == nil || model.Cost.Output == nil {
-			continue
-		}
-		input := *model.Cost.Input / 1_000_000.0
-		output := *model.Cost.Output / 1_000_000.0
-		cacheReadExplicit := model.Cost.CacheRead != nil
-		cacheCreate := input * 1.25
-		if model.Cost.CacheWrite != nil {
-			cacheCreate = *model.Cost.CacheWrite / 1_000_000.0
-		}
-		cacheRead := input * 0.1
-		if model.Cost.CacheRead != nil {
-			cacheRead = *model.Cost.CacheRead / 1_000_000.0
-		}
-		m.entries[modelID] = Pricing{
-			Input:             input,
-			Output:            output,
-			CacheCreate:       cacheCreate,
-			CacheRead:         cacheRead,
-			CacheReadExplicit: cacheReadExplicit,
-			FastMultiplier:    1.0,
-		}
-		if model.Limit != nil && model.Limit.Context != nil {
-			m.contextLimits[modelID] = *model.Limit.Context
-		}
-		loaded++
+		dst[modelID] = append(dst[modelID], modelsDevCandidate{provider: providerKey, model: model})
 	}
-	m.clearFindCache()
-	return loaded
+}
+
+// modelsDevRank scores a candidate: official provider first, then a nonzero
+// listing over $0 coding-plan relay metering, then an explicit cache-read
+// rate over a derived one.
+type modelsDevRank struct{ official, priced, explicitRead bool }
+
+// betterModelsDevRank reports whether r beats best; the provider key breaks
+// ties ascending so repeated loads stay byte-stable.
+func betterModelsDevRank(r, best modelsDevRank, providerKey, bestProvider string) bool {
+	if r.official != best.official {
+		return r.official
+	}
+	if r.priced != best.priced {
+		return r.priced
+	}
+	if r.explicitRead != best.explicitRead {
+		return r.explicitRead
+	}
+	return providerKey < bestProvider
+}
+
+// pickModelsDevCandidate chooses one entry per duplicated model ID: the
+// official provider's first-party rate when mapped, else a deterministic
+// best-ranked reseller listing.
+func pickModelsDevCandidate(modelID string, cands []modelsDevCandidate) (modelsDevCandidate, bool) {
+	official, _ := officialProviderFor(modelID)
+	var best modelsDevCandidate
+	var bestRank modelsDevRank
+	haveBest := false
+	for _, c := range cands {
+		if c.model.Cost == nil || c.model.Cost.Input == nil || c.model.Cost.Output == nil {
+			continue // unusable listing
+		}
+		isOfficial := c.provider != "" && c.provider == official
+		// A $0 listing from the official provider is a genuinely free tier;
+		// from anyone else it is subscription-relay metering, not a list
+		// price, and must not price real usage at zero.
+		if !isOfficial && !(*c.model.Cost.Input > 0 || *c.model.Cost.Output > 0) {
+			continue
+		}
+		r := modelsDevRank{
+			official:     isOfficial,
+			priced:       *c.model.Cost.Input > 0 || *c.model.Cost.Output > 0,
+			explicitRead: c.model.Cost.CacheRead != nil,
+		}
+		if !haveBest || betterModelsDevRank(r, bestRank, c.provider, best.provider) {
+			best, bestRank, haveBest = c, r, true
+		}
+	}
+	return best, haveBest
+}
+
+func (m *PricingMap) insertModelsDevModel(modelID string, c modelsDevCandidate) {
+	model := c.model
+	input := *model.Cost.Input / 1_000_000.0
+	output := *model.Cost.Output / 1_000_000.0
+	cacheReadExplicit := model.Cost.CacheRead != nil
+	cacheCreate := input * 1.25
+	if model.Cost.CacheWrite != nil {
+		cacheCreate = *model.Cost.CacheWrite / 1_000_000.0
+	}
+	cacheRead := input * 0.1
+	if model.Cost.CacheRead != nil {
+		cacheRead = *model.Cost.CacheRead / 1_000_000.0
+	}
+	m.entries[modelID] = Pricing{
+		Input:             input,
+		Output:            output,
+		CacheCreate:       cacheCreate,
+		CacheRead:         cacheRead,
+		CacheReadExplicit: cacheReadExplicit,
+		FastMultiplier:    1.0,
+	}
+	if model.Limit != nil && model.Limit.Context != nil {
+		m.contextLimits[modelID] = *model.Limit.Context
+	}
+}
+
+// officialModelProviders maps a lowercase model-ID prefix to the models.dev
+// provider key publishing its first-party rates. Same-name entries from
+// resellers (and $0 metered coding-plan relays) lose to these
+// deterministically. Keys verified against the live models.dev catalog.
+var officialModelProviders = map[string]string{
+	"glm":         "zai",
+	"gpt":         "openai",
+	"o1":          "openai",
+	"o3":          "openai",
+	"o4":          "openai",
+	"codex":       "openai",
+	"claude":      "anthropic",
+	"gemini":      "google",
+	"gemma":       "google",
+	"nano-banana": "google",
+	"veo":         "google",
+	"imagen":      "google",
+	"grok":        "xai",
+	"deepseek":    "deepseek",
+	"qwen":        "alibaba",
+	"qwq":         "alibaba",
+	"qvq":         "alibaba",
+	"kimi":        "moonshotai",
+	"k2":          "moonshotai",
+	"minimax":     "minimax",
+	"mistral":     "mistral",
+	"magistral":   "mistral",
+	"devstral":    "mistral",
+	"ministral":   "mistral",
+	"pixtral":     "mistral",
+	"codestral":   "mistral",
+	"command":     "cohere",
+	"doubao":      "volcengine",
+}
+
+// officialProviderFor reports the official provider key for a model ID via
+// longest lowercase prefix match.
+func officialProviderFor(modelID string) (string, bool) {
+	id := strings.ToLower(modelID)
+	bestLen, best := 0, ""
+	for prefix, provider := range officialModelProviders {
+		if len(prefix) > bestLen && strings.HasPrefix(id, prefix) {
+			bestLen, best = len(prefix), provider
+		}
+	}
+	return best, best != ""
 }
 
 // ---------------------------------------------------------------------------
