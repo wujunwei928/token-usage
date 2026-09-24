@@ -157,7 +157,8 @@ func pricingToCard(model string, p *core.Pricing, source PriceSource) ModelPrice
 }
 
 // resolve returns the rate card for a model: override first, then the seed
-// table's fuzzy match, then the family-prefix estimate.
+// table's fuzzy match, then the live models.dev catalog, then the
+// family-prefix estimate.
 func (t *PricingTable) resolve(model string) (ModelPrice, bool) {
 	if card, ok := t.overrides[model]; ok {
 		return card, true
