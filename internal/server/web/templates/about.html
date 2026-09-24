@@ -3,16 +3,24 @@
 <div class="pagehead"><h1>数据说明</h1></div>
 <div class="prose">
   <h3>数据是怎么来的</h3>
+  {{if .Local}}
+  <ul>
+    <li><code>token-usage web</code> 在进程内读取本机的 AI 编程 agent 日志(JSONL),聚合成「小时 × 工具 × 模型」的 token 计数,口径与 <code>token-usage report</code> 完全一致;<b>不统计、不发出任何代码或对话内容</b>。</li>
+    <li>聚合结果仅存入本机数据库,原始日志与聚合数据都不离开本机;服务常驻期间自动保持当日新鲜,也可在顶栏手动「刷新数据」。</li>
+  </ul>
+  {{else}}
   <ul>
     <li>客户端(<code>token-usage report</code>)只读取本机的 AI 编程 agent 日志(JSONL),在本地聚合成「小时 × 工具 × 模型」的 token 计数后上报;<b>不统计、不上传任何代码或对话内容</b>。</li>
     <li>同一设备以最近一次上报为准(Latest-wins):重新执行 <code>token-usage report</code> 即修正当日数据。</li>
     <li>每人最多绑定 3 台设备,多设备用量自动累加;按客户端本地时区的自然日汇总。</li>
   </ul>
+  {{end}}
   <h3>成本估算</h3>
   <ul>
     <li>成本为服务端按公开价格表折算的估算值,不是账单;价格表见<a href="/pricing">这里</a>。</li>
     <li>未知模型按模型家族兜底估算,并在价格表中标注 estimated。</li>
   </ul>
+  {{if not .Local}}
   <h3>上榜规则</h3>
   <ul>
     <li>按 token 数量排名,按天汇总;支持按工具 / 模型 / 城市 / 时间范围 / 缓存口径筛选。</li>
@@ -26,6 +34,7 @@
     <li>配置 <code>token-usage report --server &lt;地址&gt; --token &lt;token&gt;</code>,或写入 <code>~/.config/token-usage/config.json</code>(<code>reportServer</code> / <code>reportToken</code>)。</li>
     <li>手动执行或 <code>token-usage report --install-timer</code> 安装每小时自动上报。</li>
   </ol>
+  {{end}}
 </div>
 {{template "foot.html" .}}
 {{end}}

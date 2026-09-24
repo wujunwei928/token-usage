@@ -6,7 +6,11 @@
 
 **Status:** ready-for-agent
 
-- [ ] 375px 宽度无横向滚动,统计卡、图表、榜单卡片、表单页均可读
-- [ ] 导航在窄屏换行呈现,无折叠菜单、无新增菜单 JS
-- [ ] 动效仅 hover/过渡级(约 150–200ms),主题切换带全局色彩过渡
-- [ ] `go test ./internal/server/... ./internal/e2e/...` 全绿
+- [x] 375px 宽度无横向滚动,统计卡、图表、榜单卡片、表单页均可读
+- [x] 导航在窄屏换行呈现,无折叠菜单、无新增菜单 JS
+- [x] 动效仅 hover/过渡级(约 150–200ms),主题切换带全局色彩过渡
+- [x] `go test ./internal/server/... ./internal/e2e/...` 全绿
+
+## Comments
+
+- 实现于 commit e59dbbc。640/900 两档 + reduced-motion 豁免;无 keyframes。

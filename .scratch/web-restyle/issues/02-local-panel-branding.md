@@ -6,7 +6,11 @@
 
 **Status:** ready-for-agent
 
-- [ ] web 模式:品牌、title、页头、页脚为「Token 用量 · 本机数据 · 不出网」,导航无排行榜/登录/注册
-- [ ] serve 模式:社区页面品牌与结构与从前一致(仅承袭 01 的视觉升级)
-- [ ] 模板内 `ccusage` 字样清零,设置页示例命令与现配置名词一致、可照抄运行
-- [ ] e2e 断言文本(「我的 Token」「刷新数据」)未被改动,`go test ./internal/server/... ./internal/e2e/...` 全绿
+- [x] web 模式:品牌、title、页头、页脚为「Token 用量 · 本机数据 · 不出网」,导航无排行榜/登录/注册
+- [x] serve 模式:社区页面品牌与结构与从前一致(仅承袭 01 的视觉升级)
+- [x] 模板内 `ccusage` 字样清零,设置页示例命令与现配置名词一致、可照抄运行
+- [x] e2e 断言文本(「我的 Token」「刷新数据」)未被改动,`go test ./internal/server/... ./internal/e2e/...` 全绿
+
+## Comments
+
+- 实现于 commit 0703890。render() 默认从 localRoot 推导 Local,所有页面共享分支;新增 branding_test.go(双模式品牌 + ccusage 防回退守护)。

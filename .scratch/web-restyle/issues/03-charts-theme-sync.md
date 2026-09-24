@@ -6,8 +6,12 @@
 
 **Status:** ready-for-agent
 
-- [ ] 三态切换(含自动态跟随系统)时五张图表全部同步换肤,无需手动刷新
-- [ ] 切换以重建实例实现,不重发任何数据请求
-- [ ] 调色板来源于 CSS token;数据系列色阶映射自 token,无独立于设计系统的色值
-- [ ] 窄拖窗口后图表尺寸正确(resize 处理不回退)
-- [ ] `chart-hourly`、`dash-data` 等断言 ID 不变,`go test ./internal/server/... ./internal/e2e/...` 全绿
+- [x] 三态切换(含自动态跟随系统)时五张图表全部同步换肤,无需手动刷新
+- [x] 切换以重建实例实现,不重发任何数据请求
+- [x] 调色板来源于 CSS token;数据系列色阶映射自 token,无独立于设计系统的色值
+- [x] 窄拖窗口后图表尺寸正确(resize 处理不回退)
+- [x] `chart-hourly`、`dash-data` 等断言 ID 不变,`go test ./internal/server/... ./internal/e2e/...` 全绿
+
+## Comments
+
+- 实现于 commit fef9227。option 构建函数化(theme() → mount()),palette/axis/tooltip 全走 token;主题切换 dispose+重建。

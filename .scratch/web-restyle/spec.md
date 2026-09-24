@@ -79,7 +79,7 @@ Status: ready-for-agent(方案与拆票均已确认,票据已发布至 issues/)
 | `internal/server/web/static/app.js` | 图表主题函数化、token 化调色板、换肤重建 |
 | `server/CONTEXT.md` | 已新增 Local Panel 词条 ✅ |
 
-不新增 Go 代码改动(模板数据已备);`login.html`/`register.html`/`pricing.html` 仅被设计系统顺带覆盖,不单独优化。
+Go 侧仅一行改动(评审后回补到面上):`render()` 默认从 localRoot 推导 Local,使全部页面共享本机分支。`login.html`/`register.html`/`pricing.html` 仅被设计系统顺带覆盖,不单独优化。
 
 ## Acceptance Criteria
 

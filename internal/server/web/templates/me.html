@@ -13,14 +13,14 @@
 <section class="statgrid">
   <div class="scard main"><div class="slabel">当日消耗</div><div class="svalue">{{fmtTokens $d.TodayTokens}}</div></div>
   <div class="scard main"><div class="slabel">当日成本估算</div><div class="svalue">{{fmtCost $d.TodayCost}}</div></div>
-  <div class="scard"><div class="slabel">缓存命中率</div><div class="svalue">{{printf "%.1f" (mul100 $d.CacheHitRate)}}%</div><div class="meter"><i class="meter bar" style="width: {{printf "%.1f" (mul100 $d.CacheHitRate)}}%"></i></div></div>
+  <div class="scard"><div class="slabel">缓存命中率</div><div class="svalue">{{printf "%.1f" (mul100 $d.CacheHitRate)}}%</div><div class="meter"><i class="meter-fill" style="width: {{printf "%.1f" (mul100 $d.CacheHitRate)}}%"></i></div></div>
   <div class="scard"><div class="slabel">连续活跃</div><div class="svalue">{{$d.Streak}} 天</div></div>
   <div class="scard"><div class="slabel">活跃天数</div><div class="svalue">{{$d.ActiveDays}} 天</div></div>
   <div class="scard"><div class="slabel">累计消耗</div><div class="svalue">{{fmtTokens $d.TotalTokens}}</div></div>
   <div class="scard"><div class="slabel">使用工具</div><div class="svalue">{{$d.ByTool | len}}</div></div>
   <div class="scard"><div class="slabel">使用模型</div><div class="svalue">{{$d.ByModel | len}}</div></div>
 </section>
-{{if $d.FlaggedToday}}<div class="flash warn">⚠ 当日用量超过异常阈值,已从排行榜隐藏,数据保留可在本页查看。</div>{{end}}
+{{if $d.FlaggedToday}}<div class="flash warn">{{if .Local}}⚠ 当日用量超过异常阈值。{{else}}⚠ 当日用量超过异常阈值,已从排行榜隐藏,数据保留可在本页查看。{{end}}</div>{{end}}
 
 <section class="charts">
   <div class="chartbox wide"><h3>当日用量时间线(按小时 × 工具)</h3><div id="chart-hourly" class="chart"></div></div>

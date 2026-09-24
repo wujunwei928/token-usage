@@ -34,6 +34,18 @@ func TestLocalPanelBranding(t *testing.T) {
 			t.Errorf("local mode: community chrome leaked: %q", leftover)
 		}
 	}
+
+	// The data-explainer must match the local voice too: no report
+	// onboarding, no leaderboard rules.
+	about := getFrom(t, mux, "127.0.0.1:53812", "/about").Body.String()
+	if !strings.Contains(about, "不离开本机") {
+		t.Error("local /about: missing local-mode data explanation")
+	}
+	for _, leftover := range []string{`href="/register"`, "上榜规则", "如何参与", "--server"} {
+		if strings.Contains(about, leftover) {
+			t.Errorf("local /about: community onboarding leaked: %q", leftover)
+		}
+	}
 }
 
 func TestServeModeBrandingUnchanged(t *testing.T) {
@@ -65,7 +77,7 @@ func TestDashboardDensityLayout(t *testing.T) {
 	if !strings.Contains(body, `class="scard main"`) {
 		t.Error("dashboard: missing featured stat cards (.scard.main)")
 	}
-	if !strings.Contains(body, `class="meter"`) || !strings.Contains(body, `class="meter bar"`) {
+	if !strings.Contains(body, `class="meter"`) || !strings.Contains(body, `class="meter-fill"`) {
 		t.Error("dashboard: cache-hit card missing CSS progress meter")
 	}
 	if strings.Count(body, `action="/refresh"`) != 1 || !strings.Contains(body, "刷新数据") {

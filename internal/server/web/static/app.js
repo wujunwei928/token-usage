@@ -27,6 +27,7 @@
   }
 
   if (btn) {
+    btn.title = TITLES[root.dataset.themePref || 'auto'];
     btn.addEventListener('click', function () {
       var cur = root.dataset.themePref || 'auto';
       apply(ORDER[(ORDER.indexOf(cur) + 1) % ORDER.length]);
@@ -89,7 +90,7 @@
       type: 'value',
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: t.axis },
+      axisLabel: { color: t.axis, fontSize: 11 },
       splitLine: { lineStyle: { color: t.grid } },
     };
   }
@@ -100,12 +101,12 @@
       data: names,
       axisLine: { lineStyle: { color: t.grid } },
       axisTick: { show: false },
-      axisLabel: { color: t.axis },
+      axisLabel: { color: t.axis, fontSize: 11 },
     };
   }
 
   function legend(t) {
-    return { top: 0, textStyle: { color: t.text } };
+    return { top: 0, textStyle: { color: t.text, fontSize: 12 } };
   }
 
   function build() {
@@ -169,7 +170,7 @@
           data: rows.map(function (r) { return r.Model; }).reverse(),
           axisLine: { lineStyle: { color: t.grid } },
           axisTick: { show: false },
-          axisLabel: { color: t.axis },
+          axisLabel: { color: t.axis, fontSize: 11 },
         },
         series: [{
           type: 'bar', barMaxWidth: 18,
